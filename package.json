@@ -1,0 +1,16 @@
+{
+  "name": "afinia",
+  "version": "0.1.0",
+  "engines": {
+    "pnpm": ">=8"
+  },
+  "scripts": {
+    "ingest:db:generate": "pnpm --filter afinia-ingest db:generate",
+    "common:generate:types": "pnpm --filter afinia-common generate:types",
+    "web:dev": "pnpm --filter afinia-web dev"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}

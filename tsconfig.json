@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "strict": true
+  },
+  "references": [
+    {
+      "path": "apps/web"
+    },
+    {
+      "path": "apps/ingest"
+    },
+    {
+      "path": "packages/common"
+    }
+  ]
+}

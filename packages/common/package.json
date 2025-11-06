@@ -1,0 +1,22 @@
+{
+  "name": "afinia-common",
+  "version": "0.1.0",
+  "description": "",
+  "exports": {
+    "./types/up-api": "./types/up-api.ts",
+    "./types/up-api/overrides": "./types/up-api-overrides.ts",
+    "./clients": "./src/clients.ts"
+  },
+  "scripts": {
+    "generate:types": "pnpm exec openapi-typescript --enum https://raw.githubusercontent.com/up-banking/api/refs/heads/master/v1/openapi.json -o types/up-api.d.ts"
+  },
+  "license": "ISC",
+  "packageManager": "pnpm@10.18.3",
+  "devDependencies": {
+    "@types/node": "^20.19.21",
+    "openapi-typescript": "^7.10.1"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.15.0"
+  }
+}
