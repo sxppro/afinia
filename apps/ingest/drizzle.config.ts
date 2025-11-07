@@ -1,7 +1,8 @@
 import { defineConfig } from 'drizzle-kit';
+import { Resource } from 'sst';
 
-if (!process.env.DATABASE_URL) {
-  throw new Error('Please set database url in .env file');
+if (!Resource.DATABASE_URL.value) {
+  throw new Error('Please provide database URL');
 }
 
 export default defineConfig({
@@ -9,6 +10,6 @@ export default defineConfig({
   schema: './src/db/schema.ts',
   out: './drizzle',
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    url: Resource.DATABASE_URL.value,
   },
 });

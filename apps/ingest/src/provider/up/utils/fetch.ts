@@ -1,10 +1,11 @@
 import type { PaginatedResponse } from 'afinia-common/types/up-api/overrides';
 import { createHmac } from 'crypto';
+import { Resource } from 'sst';
 import { RATE_LIMIT_HEADER } from './constants';
 
 export const fetchFromUp = async (url: string) =>
   await fetch(url, {
-    headers: { Authorization: `Bearer ${process.env.UP_API_KEY}` },
+    headers: { Authorization: `Bearer ${Resource.UP_API_KEY.value}` },
   });
 
 /**

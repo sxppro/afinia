@@ -5,6 +5,7 @@
     "pnpm": ">=8"
   },
   "scripts": {
+    "ingest:db:seed": "pnpm --filter afinia-ingest db:seed",
     "ingest:db:generate": "pnpm --filter afinia-ingest db:generate",
     "common:generate:types": "pnpm --filter afinia-common generate:types",
     "web:dev": "pnpm --filter afinia-web dev"

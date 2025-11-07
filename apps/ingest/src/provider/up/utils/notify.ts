@@ -1,7 +1,8 @@
+import { Resource } from 'sst';
 import { ALERT_LEVEL } from './constants';
 
 export const notify = async (alertLevel: ALERT_LEVEL, message: string) => {
-  if (!process.env.DISCORD_WEBHOOK_URL || !process.env.DISCORD_USER_ID) {
+  if (!Resource.DISCORD_WEBHOOK_URL.value || !Resource.DISCORD_USER_ID.value) {
     return;
   }
 
@@ -11,11 +12,11 @@ export const notify = async (alertLevel: ALERT_LEVEL, message: string) => {
   const payload =
     alertLevel === ALERT_LEVEL.ERROR
       ? {
-          message: `<@${process.env.DISCORD_USER_ID}> ${message}`,
+          message: `<@${Resource.DISCORD_USER_ID.value}> ${message}`,
           flags: 1 << 12, // suppress notifs so im not spammed
         }
       : { message };
-  const res = await fetch(process.env.DISCORD_WEBHOOK_URL, {
+  const res = await fetch(Resource.DISCORD_WEBHOOK_URL.value, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

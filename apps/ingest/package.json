@@ -7,9 +7,9 @@
   },
   "scripts": {
     "db": "sst shell drizzle-kit",
-    "db:seed": "tsx --env-file=.env ./src/provider/up/modules/loadData.ts",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:seed": "sst shell -- tsx --env-file=.env ./src/provider/up/modules/loadData.ts",
+    "db:generate": "sst shell drizzle-kit generate",
+    "db:migrate": "sst shell drizzle-kit migrate"
   },
   "dependencies": {
     "afinia-common": "workspace:*",
