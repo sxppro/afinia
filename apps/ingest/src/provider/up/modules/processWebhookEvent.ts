@@ -53,15 +53,22 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     };
   }
 
-  // Yes, I should probably validate the schema here ...
-  const { data } =
-    event.body as unknown as components['schemas']['WebhookEventCallback'];
-
-  if (!data) {
-    notify(ALERT_LEVEL.ERROR, 'No webhook data found');
-  }
-
   try {
+    // Yes, I should probably validate the schema here ...
+    const { data } = JSON.parse(
+      event.body
+    ) as unknown as components['schemas']['WebhookEventCallback'];
+
+    if (!data) {
+      notify(ALERT_LEVEL.ERROR, 'No webhook data found');
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          message: 'Bad Request',
+        }),
+      };
+    }
+
     const { attributes, relationships } = data;
     const { eventType } = attributes;
 
@@ -107,7 +114,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     return {
       statusCode: 500,
       body: JSON.stringify({
-        message: 'Internal Server Error',
+        message: 'Internal server error',
       }),
     };
   }

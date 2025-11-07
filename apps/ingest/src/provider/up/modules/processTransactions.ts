@@ -354,11 +354,16 @@ const deleteTransaction = async (
   processName: string
 ) => {
   const { id } = transaction;
+  const now = new Date();
   await db
     .update(transactionTable)
-    .set({ deleted_at: new Date(), updated_by: processName })
+    .set({
+      deleted_at: now,
+      updated_at: now,
+      updated_by: processName,
+    })
     .where(eq(transactionTable.provider_id, id));
-  console.log(`Deleted transaction ${id}`);
+  console.log(`Deleted transaction: ${id}`);
 };
 
 export const processTransactions = async () => {
