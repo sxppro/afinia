@@ -2,7 +2,7 @@ import { components, WebhookEventTypeEnum } from 'afinia-common/types/up-api';
 import { APIGatewayProxyHandlerV2 } from 'aws-lambda';
 import { Resource } from 'sst';
 import { ALERT_LEVEL, AUTHENTICITY_HEADER } from '../utils/constants';
-import { signRequestBody } from '../utils/fetch';
+import { signData } from '../utils/fetch';
 import { notify } from '../utils/notify';
 import { processAccounts } from './processAccounts';
 import { processTransaction } from './processTransactions';
@@ -26,30 +26,25 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     );
   }
 
-  const { UP_WEBHOOK_SECRET } = Resource;
-
-  /**
-   * Authenticate incoming webhook event
-   */
-  const signature = event.headers[AUTHENTICITY_HEADER];
-  const expectedSignature = signRequestBody(
-    UP_WEBHOOK_SECRET.value,
-    event.body
-  );
-  if (expectedSignature !== signature) {
-    console.error('Invalid webhook signature');
-    return {
-      statusCode: 403,
-    };
-  }
-
   if (!event.body) {
-    console.error('No webhook event payload found');
     return {
       statusCode: 400,
       body: JSON.stringify({
         message: 'Bad Request',
       }),
+    };
+  }
+
+  /**
+   * Authenticate incoming webhook event
+   */
+  const { UP_WEBHOOK_SECRET } = Resource;
+  const signature = event.headers[AUTHENTICITY_HEADER];
+  const expectedSignature = signData(UP_WEBHOOK_SECRET.value, event.body);
+  if (expectedSignature !== signature) {
+    console.error('Invalid webhook signature');
+    return {
+      statusCode: 403,
     };
   }
 

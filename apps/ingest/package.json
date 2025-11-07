@@ -10,8 +10,8 @@
     "db:seed": "sst shell -- tsx --env-file=.env ./src/provider/up/modules/loadData.ts",
     "db:generate": "sst shell drizzle-kit generate",
     "db:migrate": "sst shell drizzle-kit migrate",
-    "dev": "sst secret load ./.env && sst dev",
-    "load-env": "sst secret load ./.env",
+    "dev": "sst secret load ./.env --stage dev && sst dev --stage dev",
+    "load-env": "sst secret load ./.env --stage dev",
     "sso": "aws sso login --sso-session=soppro"
   },
   "dependencies": {

@@ -63,10 +63,10 @@ export const getNextPage = async <T>(
 };
 
 /**
- * Generates SHA256 HMAC of an object
+ * Generates SHA256 HMAC of some string data
  * @param token secret key
- * @param body object to be signed
+ * @param string data to sign
  * @returns SHA256 HMAC of object
  */
-export const signRequestBody = (token: string, body: any) =>
-  createHmac('sha256', token).update(JSON.stringify(body)).digest('hex');
+export const signData = (token: string, data: string) =>
+  createHmac('sha256', token).update(data).digest('hex');
