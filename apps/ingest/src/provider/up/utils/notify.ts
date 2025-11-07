@@ -31,5 +31,7 @@ export const notify = async (alertLevel: ALERT_LEVEL, message: string) => {
   // Throw if error
   if (alertLevel === ALERT_LEVEL.ERROR) {
     throw new Error(message);
+  } else {
+    console.warn(message);
   }
 };

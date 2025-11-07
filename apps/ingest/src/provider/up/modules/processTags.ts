@@ -5,6 +5,8 @@ import { components } from 'afinia-common/types/up-api';
 import { InferInsertModel, notInArray } from 'drizzle-orm';
 import { getNextPage } from '../utils/fetch';
 
+const PROCESS_NAME = 'processTags';
+
 const upsertTags = async (
   tags: components['schemas']['TagResource'][],
   page: number
@@ -70,6 +72,6 @@ export const processTags = async () => {
       await deleteTags(tagSet);
     }
   } catch (error) {
-    console.error('Error in processTags: ', error);
+    console.error(`Error in ${PROCESS_NAME}: `, error);
   }
 };

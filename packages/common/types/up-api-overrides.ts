@@ -3,7 +3,7 @@ import { components } from './up-api';
 export type TransactionResource =
   components['schemas']['TransactionResource'] & {
     attributes: components['schemas']['TransactionResource']['attributes'] & {
-      deepLinkUrl?: string | null;
+      deepLinkURL?: string | null;
     };
   };
 /**

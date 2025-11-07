@@ -4,6 +4,8 @@ import { upClient } from 'afinia-common/clients';
 import { components } from 'afinia-common/types/up-api';
 import { and, eq, InferInsertModel, isNull, ne, or, sql } from 'drizzle-orm';
 
+const PROCESS_NAME = 'processCategories';
+
 const upsertCategories = async (
   categories: components['schemas']['CategoryResource'][]
 ) => {
@@ -64,6 +66,6 @@ export const processCategories = async () => {
       await upsertCategories(data.data);
     }
   } catch (error) {
-    console.error('Error in processCategories: ', error);
+    console.error(`Error in ${PROCESS_NAME}: `, error);
   }
 };

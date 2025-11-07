@@ -10,10 +10,11 @@ import {
   transactionTagTable,
 } from '@/src/db/schema';
 import { upClient } from 'afinia-common/clients';
+import { components } from 'afinia-common/types/up-api';
 import { TransactionResource } from 'afinia-common/types/up-api/overrides';
-import { InferInsertModel } from 'drizzle-orm';
-import { ALERT_LEVEL } from '../utils/constants';
-import { getNextPage } from '../utils/fetch';
+import { eq, InferInsertModel } from 'drizzle-orm';
+import { ALERT_LEVEL, RATE_LIMIT_HEADER } from '../utils/constants';
+import { fetchFromUp, getNextPage } from '../utils/fetch';
 import { notify } from '../utils/notify';
 import { buildConflictUpdateColumns } from '../utils/upsert';
 
@@ -35,12 +36,11 @@ interface ProcessTransactionsMetrics {
   endTime?: number;
 }
 
-const PROCESS_NAME = 'processTransactions';
-
 const upsertTransactions = async (
   transactions: TransactionResource[],
   page: number,
-  metrics: ProcessTransactionsMetrics
+  metrics: ProcessTransactionsMetrics,
+  processName: string
 ) => {
   const pageStartTime = Date.now();
   /**
@@ -73,7 +73,7 @@ const upsertTransactions = async (
       amount,
       cardPurchaseMethod,
       createdAt,
-      deepLinkUrl,
+      deepLinkURL,
       description,
       foreignAmount,
       isCategorizable,
@@ -131,7 +131,7 @@ const upsertTransactions = async (
       card_purchase_method: cardPurchaseMethod?.method || null,
       card_number_suffix: cardPurchaseMethod?.cardNumberSuffix || null,
       customer_display_name: performingCustomer?.displayName || null,
-      deep_link_url: deepLinkUrl || null,
+      deep_link_url: deepLinkURL || null,
       is_categorizable: isCategorizable,
       currency_code: amount.currencyCode,
       value: amount.value,
@@ -142,7 +142,7 @@ const upsertTransactions = async (
       created_at: new Date(createdAt),
       settled_at: settledAt ? new Date(settledAt) : null,
       updated_at: new Date(),
-      updated_by: PROCESS_NAME,
+      updated_by: processName,
       /**
        * Foreign keys
        */
@@ -202,7 +202,7 @@ const upsertTransactions = async (
               'category_id',
             ]),
             updated_at: new Date(),
-            updated_by: PROCESS_NAME,
+            updated_by: processName,
           },
         })
         .returning({
@@ -335,7 +335,7 @@ const upsertTransactions = async (
     });
   } catch (error) {
     console.error(`Error inserting transactions on page ${page}:`, {
-      error: error instanceof Error ? error.message : String(error),
+      error: error instanceof Error ? error.message : error,
       transactionCount: transformedTx.length,
     });
     throw error;
@@ -349,7 +349,20 @@ const upsertTransactions = async (
   );
 };
 
+const deleteTransaction = async (
+  transaction: TransactionResource,
+  processName: string
+) => {
+  const { id } = transaction;
+  await db
+    .update(transactionTable)
+    .set({ deleted_at: new Date(), updated_by: processName })
+    .where(eq(transactionTable.provider_id, id));
+  console.log(`Deleted transaction ${id}`);
+};
+
 export const processTransactions = async () => {
+  const PROCESS_NAME = 'processTransactions';
   const metrics: ProcessTransactionsMetrics = {
     pages: {
       processed: 0,
@@ -374,7 +387,7 @@ export const processTransactions = async () => {
     /**
      * Track rate limit remaining (number of pages)
      */
-    const rateLimitRemaining = response.headers.get('x-rate-limit-remaining');
+    const rateLimitRemaining = response.headers.get(RATE_LIMIT_HEADER);
     if (rateLimitRemaining && parseInt(rateLimitRemaining, 10) === 0) {
       throw new Error('Rate limit exceeded');
     }
@@ -384,12 +397,17 @@ export const processTransactions = async () => {
      */
     if (data) {
       if (data.data) {
-        await upsertTransactions(data.data, CURRENT_PAGE, metrics);
+        await upsertTransactions(
+          data.data,
+          CURRENT_PAGE,
+          metrics,
+          PROCESS_NAME
+        );
       }
       if (data.links?.next) {
         await getNextPage<TransactionResource>(
           data.links.next,
-          (txns, page) => upsertTransactions(txns, page, metrics),
+          (txns, page) => upsertTransactions(txns, page, metrics, PROCESS_NAME),
           CURRENT_PAGE + 1
         );
       }
@@ -434,10 +452,69 @@ export const processTransactions = async () => {
   } catch (error) {
     metrics.endTime = Date.now();
     console.error(`Error in ${PROCESS_NAME}: `, {
-      error: error instanceof Error ? error.message : String(error),
+      error: error instanceof Error ? error.message : error,
       stack: error instanceof Error ? error.stack : undefined,
-      metrics,
+      metrics: {
+        missingAccounts: Array.from(metrics.errors.missingAccounts),
+        missingCategories: Array.from(metrics.errors.missingCategories),
+      },
     });
     throw error;
+  }
+};
+
+export const processTransaction = async (
+  transactionUrl: string,
+  operation: 'insert' | 'delete'
+) => {
+  const PROCESS_NAME = 'processTransaction';
+  const metrics: ProcessTransactionsMetrics = {
+    pages: {
+      processed: 0,
+      timings: [],
+    },
+    transactions: {
+      total: 0,
+      processed: 0,
+      skipped: 0,
+    },
+    errors: {
+      missingAccounts: new Set<string>(),
+      missingCategories: new Set<string>(),
+    },
+    startTime: Date.now(),
+  };
+
+  // Fetch transaction details
+  const res = await fetchFromUp(transactionUrl);
+  if (res.ok && res.body) {
+    try {
+      const data =
+        (await res.json()) as components['schemas']['GetTransactionResponse'];
+
+      if (operation === 'insert') {
+        await upsertTransactions([data.data], 1, metrics, PROCESS_NAME);
+      } else if (operation === 'delete') {
+        await deleteTransaction(data.data, PROCESS_NAME);
+      }
+
+      metrics.endTime = Date.now();
+    } catch (error) {
+      metrics.endTime = Date.now();
+      console.error(`Error in ${PROCESS_NAME}: `, {
+        error: error instanceof Error ? error.message : error,
+        stack: error instanceof Error ? error.stack : undefined,
+        metrics: {
+          missingAccounts: Array.from(metrics.errors.missingAccounts),
+          missingCategories: Array.from(metrics.errors.missingCategories),
+        },
+      });
+      throw error;
+    }
+  } else {
+    notify(
+      ALERT_LEVEL.WARN,
+      `processTransaction: Failed to fetch transaction: ${res.status} ${res.statusText}`
+    );
   }
 };

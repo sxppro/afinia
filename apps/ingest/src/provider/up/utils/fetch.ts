@@ -2,6 +2,11 @@ import type { PaginatedResponse } from 'afinia-common/types/up-api/overrides';
 import { createHmac } from 'crypto';
 import { RATE_LIMIT_HEADER } from './constants';
 
+export const fetchFromUp = async (url: string) =>
+  await fetch(url, {
+    headers: { Authorization: `Bearer ${process.env.UP_API_KEY}` },
+  });
+
 /**
  * Retrieves next page according to Up API pagination
  * and passes data to provided callback function
@@ -15,9 +20,7 @@ export const getNextPage = async <T>(
   onNextPage: (data: T[], page: number) => Promise<void>,
   page: number
 ) => {
-  const res = await fetch(link, {
-    headers: { Authorization: `Bearer ${process.env.UP_API_KEY}` },
-  });
+  const res = await fetchFromUp(link);
 
   /**
    * Track rate limit remaining (number of pages)
@@ -39,7 +42,7 @@ export const getNextPage = async <T>(
   } catch (error) {
     throw new Error(
       `Failed to parse JSON response for page ${page}: ${
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? error.message : error
       }`
     );
   }
