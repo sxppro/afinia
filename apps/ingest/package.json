@@ -9,11 +9,14 @@
     "db": "sst shell drizzle-kit",
     "db:seed": "sst shell -- tsx --env-file=.env ./src/provider/up/modules/loadData.ts",
     "db:generate": "sst shell drizzle-kit generate",
-    "db:migrate": "sst shell drizzle-kit migrate"
+    "db:migrate": "sst shell drizzle-kit migrate",
+    "load-env": "sst secret load ./.env",
+    "sso": "aws sso login --sso-session=soppro"
   },
   "dependencies": {
     "afinia-common": "workspace:*",
     "drizzle-orm": "^0.44.6",
+    "openapi-fetch": "^0.15.0",
     "postgres": "^3.4.7",
     "sst": "3.17.19"
   },

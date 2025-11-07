@@ -1,10 +1,13 @@
+import { paths } from 'afinia-common/types/up-api';
 import createClient, { Middleware } from 'openapi-fetch';
-import { paths } from '../types/up-api';
+import { Resource } from 'sst';
 
 const authMiddleware: Middleware = {
   async onRequest({ request }) {
-    if (!process.env.UP_API_KEY) {
-      throw new Error('UP_API_KEY is not defined. Please set it in .env');
+    if (!Resource.UP_API_KEY.value) {
+      throw new Error(
+        'Up API key is not defined. Please set it in .env and run load-env'
+      );
     }
 
     request.headers.set('Authorization', `Bearer ${process.env.UP_API_KEY}`);

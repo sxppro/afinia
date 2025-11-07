@@ -9,10 +9,10 @@ import {
   transactionTable,
   transactionTagTable,
 } from '@/src/db/schema';
-import { upClient } from 'afinia-common/clients';
 import { components } from 'afinia-common/types/up-api';
 import { TransactionResource } from 'afinia-common/types/up-api/overrides';
 import { eq, InferInsertModel } from 'drizzle-orm';
+import { upClient } from '../utils/clients';
 import { ALERT_LEVEL, RATE_LIMIT_HEADER } from '../utils/constants';
 import { fetchFromUp, getNextPage } from '../utils/fetch';
 import { notify } from '../utils/notify';

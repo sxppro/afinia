@@ -1,8 +1,8 @@
 import { db } from '@/src/db/client';
 import { tagTable } from '@/src/db/schema';
-import { upClient } from 'afinia-common/clients';
 import { components } from 'afinia-common/types/up-api';
 import { InferInsertModel, notInArray } from 'drizzle-orm';
+import { upClient } from '../utils/clients';
 import { getNextPage } from '../utils/fetch';
 
 const PROCESS_NAME = 'processTags';

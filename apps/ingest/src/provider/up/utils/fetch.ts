@@ -3,6 +3,11 @@ import { createHmac } from 'crypto';
 import { Resource } from 'sst';
 import { RATE_LIMIT_HEADER } from './constants';
 
+/**
+ * Fetch from URL using Up API key
+ * @param url
+ * @returns
+ */
 export const fetchFromUp = async (url: string) =>
   await fetch(url, {
     headers: { Authorization: `Bearer ${Resource.UP_API_KEY.value}` },

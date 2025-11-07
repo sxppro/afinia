@@ -3,7 +3,9 @@ import postgres from 'postgres';
 import { Resource } from 'sst';
 
 if (!Resource.DATABASE_URL.value) {
-  throw new Error('Please provide database URL');
+  throw new Error(
+    'Please provide database URL. Set it in .env and run load-env'
+  );
 }
 
 const connectionString = Resource.DATABASE_URL.value;

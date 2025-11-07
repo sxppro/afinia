@@ -1,8 +1,8 @@
 import { db } from '@/src/db/client';
 import { accountTable } from '@/src/db/schema';
-import { upClient } from 'afinia-common/clients';
 import { components } from 'afinia-common/types/up-api';
 import { InferInsertModel } from 'drizzle-orm';
+import { upClient } from '../utils/clients';
 import { getNextPage } from '../utils/fetch';
 import { buildConflictUpdateColumns } from '../utils/upsert';
 
