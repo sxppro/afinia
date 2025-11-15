@@ -46,7 +46,7 @@ export const processTags = async () => {
     const tagSet = new Set<components['schemas']['TagResource']['id']>();
     const CURRENT_PAGE = 1;
 
-    const upsertAndCollateTags = async (
+    const collateAndUpsertTags = async (
       tags: components['schemas']['TagResource'][],
       page: number
     ) => {
@@ -57,13 +57,13 @@ export const processTags = async () => {
     if (data) {
       // Process initial page
       if (data.data) {
-        await upsertAndCollateTags(data.data, CURRENT_PAGE);
+        await collateAndUpsertTags(data.data, CURRENT_PAGE);
       }
       // Process subsequent pages
       if (data.links?.next) {
         await getNextPage<components['schemas']['TagResource']>(
           data.links.next,
-          upsertAndCollateTags,
+          collateAndUpsertTags,
           CURRENT_PAGE + 1
         );
       }

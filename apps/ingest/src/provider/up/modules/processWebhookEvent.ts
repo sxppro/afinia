@@ -5,6 +5,7 @@ import { ALERT_LEVEL, AUTHENTICITY_HEADER } from '../utils/constants';
 import { signData } from '../utils/fetch';
 import { notify } from '../utils/notify';
 import { processAccounts } from './processAccounts';
+import { processTags } from './processTags';
 import { processTransaction } from './processTransactions';
 
 const PROCESS_NAME = 'processWebhookEvent';
@@ -79,6 +80,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
      * transaction
      */
     await processAccounts();
+    await processTags();
 
     if (relationships?.transaction?.links?.related) {
       /**
