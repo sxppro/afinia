@@ -10,7 +10,7 @@ const authMiddleware: Middleware = {
       );
     }
 
-    request.headers.set('Authorization', `Bearer ${process.env.UP_API_KEY}`);
+    request.headers.set('Authorization', `Bearer ${Resource.UP_API_KEY.value}`);
     return request;
   },
 };
