@@ -5,9 +5,11 @@
     "pnpm": ">=8"
   },
   "scripts": {
-    "ingest:db:seed": "pnpm --filter afinia-ingest db:seed",
-    "ingest:db:generate": "pnpm --filter afinia-ingest db:generate",
+    "db:seed": "pnpm --filter afinia-ingest db:seed",
+    "db:generate": "pnpm --filter afinia-ingest db:generate",
+    "db:migrate": "pnpm --filter afinia-ingest db:migrate",
     "common:generate:types": "pnpm --filter afinia-common generate:types",
+    "sso": "pnpm --filter afinia-ingest sso",
     "web:dev": "pnpm --filter afinia-web dev"
   },
   "workspaces": [
