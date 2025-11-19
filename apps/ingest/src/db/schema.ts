@@ -3,7 +3,9 @@ import {
   OwnershipTypeEnum,
   TransactionStatusEnum,
 } from 'afinia-common/types/up-api';
+import { and, eq, getTableColumns, isNull, sql } from 'drizzle-orm';
 import {
+  alias,
   boolean,
   foreignKey,
   index,
@@ -240,3 +242,43 @@ export const transactionTagTable = schema
     ]
   )
   .enableRLS();
+
+/**
+ * External transactions (e.g. purchases, salary)
+ *
+ * This excludes transfers between accounts
+ * (i.e. non-categorizable transactions)
+ */
+export const transactionExternalTable = schema
+  .view('transaction_external')
+  .as((queryBuilder) => {
+    const categoryParent = alias(categoryTable, 'category_parent');
+    const transactionCols = getTableColumns(transactionTable);
+
+    return queryBuilder
+      .select({
+        ...transactionCols,
+        category: sql<string>`${categoryTable.category_name}`.as('category'),
+        category_parent_id: sql<string>`${categoryParent.category_id}`.as(
+          'category_parent_id'
+        ),
+        category_parent: sql<string>`${categoryParent.category_name}`.as(
+          'category_parent'
+        ),
+      })
+      .from(transactionTable)
+      .where(
+        and(
+          eq(transactionTable.is_categorizable, true),
+          isNull(transactionTable.deleted_at)
+        )
+      )
+      .leftJoin(
+        categoryTable,
+        eq(transactionTable.category_id, categoryTable.category_id)
+      )
+      .leftJoin(
+        categoryParent,
+        eq(categoryTable.category_parent_id, categoryParent.category_id)
+      );
+  });
