@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "exports": {
-    "./schema": "./src/db/schema.ts"
+    "./schema": "./src/db/schema.ts",
+    "./auth-schema": "./src/db/auth-schema.ts"
   },
   "scripts": {
     "db:seed": "sst shell --stage dev tsx ./src/provider/up/modules/loadData.ts",

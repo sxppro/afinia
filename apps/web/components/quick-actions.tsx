@@ -1,5 +1,6 @@
 import { getStartOfDay } from '@/lib/constants';
 import { db } from '@/lib/db/client';
+import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours, formatValueInBaseUnits } from '@/lib/ui';
 import NumberFlow from '@number-flow/react';
 import { categoryTable, transactionTable } from 'afinia-ingest/schema';
@@ -61,7 +62,7 @@ const QuickActions = async () => {
   return (
     <div className="grid grid-cols-2 gap-2">
       {allSpending.map(({ id, name, value }) => (
-        <Link href={`/category/${id}`} key={id}>
+        <Link href={`${siteConfig.baseLinks.category}/${id}`} key={id}>
           <Card className={cn('border-0', colours[id]?.background)}>
             <CardContent>
               <p>{name}</p>
