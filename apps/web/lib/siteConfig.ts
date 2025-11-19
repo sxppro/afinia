@@ -1,6 +1,6 @@
 export const siteConfig = {
   name: 'Afinia',
-  url: 'https://upboard.app',
+  url: 'https://afinia.io',
   description:
     'A next-generation financial insights platform for Up, with personalised insights and visualisations.',
   baseLinks: {
