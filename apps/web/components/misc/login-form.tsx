@@ -10,13 +10,14 @@ import {
   FieldSet,
 } from '@/components/ui/field';
 import { authClient } from '@/lib/auth/client';
+import { siteConfig } from '@/lib/siteConfig';
 import { cn } from '@/lib/ui';
 
 const LoginForm = ({ className, ...props }: React.ComponentProps<'div'>) => {
   const signInWithGoogle = async () => {
     await authClient.signIn.social({
       provider: 'google',
-      callbackURL: '/app',
+      callbackURL: siteConfig.baseLinks.appHome,
     });
   };
 
