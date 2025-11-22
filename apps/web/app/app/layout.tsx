@@ -1,23 +1,24 @@
-import { auth } from '@/lib/auth/config';
+import { getServerSession } from '@/lib/auth/session';
 import { siteConfig } from '@/lib/siteConfig';
-import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import React from 'react';
+import React, { ViewTransition } from 'react';
 
 const AppLayout = async ({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) => {
-  const session = auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getServerSession();
 
   if (!session) {
     redirect(siteConfig.baseLinks.login);
   }
 
-  return <div className="p-3">{children}</div>;
+  return (
+    <ViewTransition>
+      <div className="p-3 [view-transition-name=app]">{children}</div>;
+    </ViewTransition>
+  );
 };
 
 export default AppLayout;

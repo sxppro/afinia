@@ -4,16 +4,16 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  /* #F3DC61 */
-  --color-up-good-life: oklch(0.8904 0.1438 98.77);
-  /* #EF8E4B */
-  --color-up-personal: oklch(0.7373 0.1433 53.09);
-  /* #BD79BD */
-  --color-up-home: oklch(0.6705 0.1235 326.84);
-  /* #6491C9 */
-  --color-up-transport: oklch(0.6473 0.0978 254.43);
-  /* #A0AEC0 */
-  --color-up-uncategorised: oklch(0.7457 0.0304 254.72);
+  /* #EECF1E */
+  --color-up-good-life: oklab(85.523% -0.02327 0.1699);
+  /* #EC7723 */
+  --color-up-personal: oklab(69.291% 0.10787 0.13021);
+  /* #AF5CAF */
+  --color-up-home: oklab(60.234% 0.12723 -0.0819);
+  /* #447BBD */
+  --color-up-transport: oklab(57.5845% -0.03217 -0.11355);
+  /* #91A1B6 */
+  --color-up-uncategorised: oklch(70.347% 0.03585 255.301);
 }
 
 @theme inline {
@@ -131,5 +131,11 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
   }
 }
