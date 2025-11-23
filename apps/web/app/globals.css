@@ -4,8 +4,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  /* #EECF1E */
-  --color-up-good-life: oklab(85.523% -0.02327 0.1699);
+  /* #E3C411 */
+  --color-up-good-life: oklab(82.22% -0.02153 0.16581);
   /* #EC7723 */
   --color-up-personal: oklab(69.291% 0.10787 0.13021);
   /* #AF5CAF */
