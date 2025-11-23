@@ -16,7 +16,7 @@ const AppLayout = async ({
 
   return (
     <ViewTransition>
-      <div className="p-3 [view-transition-name=app]">{children}</div>;
+      <div className="p-3">{children}</div>;
     </ViewTransition>
   );
 };

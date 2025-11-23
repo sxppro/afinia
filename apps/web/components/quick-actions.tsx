@@ -1,45 +1,67 @@
 import { getStartOfDay } from '@/lib/constants';
 import { db } from '@/lib/db/client';
+import { getCategorySpending } from '@/lib/db/spending';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours, formatValueInBaseUnits } from '@/lib/ui';
 import NumberFlow from '@number-flow/react';
-import { categoryTable, transactionTable } from 'afinia-ingest/schema';
+import { categoryTable, transactionExternalTable } from 'afinia-ingest/schema';
 import { endOfMonth, startOfMonth } from 'date-fns';
-import { and, eq, gte, isNull, lte, sum } from 'drizzle-orm';
-import { alias } from 'drizzle-orm/pg-core';
+import { isNull } from 'drizzle-orm';
+import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import getCategoryIcon from './category-icon';
+import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
+
+/**
+ * Single quick action tile
+ * @param param0 category id, name and amount spent
+ */
+const QuickAction = ({
+  id,
+  name,
+  value,
+}: {
+  id: string;
+  name: string;
+  value: number;
+}) => {
+  const Icon = getCategoryIcon(id);
+
+  return (
+    <Link href={`${siteConfig.baseLinks.spending}/${id}`} key={id}>
+      <Card className={cn('p-4 rounded-3xl', colours[id]?.background)}>
+        <CardContent className="flex flex-col justify-start items-start p-0 text-white font-medium">
+          {Icon ? (
+            <div className="p-2 mb-4 rounded-lg bg-black/20">
+              <Icon className="size-6" />
+            </div>
+          ) : null}
+          <p>{name}</p>
+          <NumberFlow
+            className="text-lg font-bold"
+            value={formatValueInBaseUnits(value)}
+            format={{
+              style: 'currency',
+              currency: 'AUD',
+              currencyDisplay: 'narrowSymbol',
+            }}
+          />
+        </CardContent>
+      </Card>
+    </Link>
+  );
+};
 
 const QuickActions = async () => {
   const range = {
     from: startOfMonth(getStartOfDay()),
     to: endOfMonth(getStartOfDay()),
   };
-  // Category parent alias
-  const categoryParent = alias(categoryTable, 'category_parent');
-  // Category spending
-  const spending = await db
-    .select({
-      id: categoryParent.category_id,
-      name: categoryParent.category_name,
-      value: sum(transactionTable.value_in_base_units).mapWith(Number),
-    })
-    .from(transactionTable)
-    .innerJoin(
-      categoryTable,
-      eq(categoryTable.category_id, transactionTable.category_id)
-    )
-    .innerJoin(
-      categoryParent,
-      eq(categoryParent.category_id, categoryTable.category_parent_id)
-    )
-    .where(
-      and(
-        gte(transactionTable.created_at, range.from),
-        lte(transactionTable.created_at, range.to)
-      )
-    )
-    .groupBy(categoryParent.category_id, categoryParent.category_name);
+  const spending = await getCategorySpending(range).groupBy(
+    transactionExternalTable.category_parent_id,
+    transactionExternalTable.category_parent
+  );
   // All parent categories
   const categories = await db
     .select()
@@ -51,7 +73,7 @@ const QuickActions = async () => {
    * by alphabetical order
    */
   const spendingMap = new Map(spending.map((item) => [item.id, item.value]));
-  const allSpending = categories
+  const spendingByCategory = categories
     .map((category) => ({
       id: category.category_id,
       name: category.category_name,
@@ -60,24 +82,22 @@ const QuickActions = async () => {
     .sort((a, b) => (a.id > b.id ? 1 : -1));
 
   return (
-    <div className="grid grid-cols-2 gap-2">
-      {allSpending.map(({ id, name, value }) => (
-        <Link href={`${siteConfig.baseLinks.category}/${id}`} key={id}>
-          <Card className={cn('border-0', colours[id]?.background)}>
-            <CardContent>
-              <p>{name}</p>
-              <NumberFlow
-                value={formatValueInBaseUnits(value)}
-                format={{
-                  style: 'currency',
-                  currency: 'AUD',
-                  currencyDisplay: 'narrowSymbol',
-                }}
-              />
-            </CardContent>
-          </Card>
+    <div className="flex flex-col gap-2">
+      <Button
+        variant="link"
+        className="justify-start has-[>svg]:px-0 gap-0"
+        asChild
+      >
+        <Link href={siteConfig.baseLinks.spending}>
+          <h2 className="text-xl font-semibold">Spending</h2>
+          <ChevronRight className="size-6" />
         </Link>
-      ))}
+      </Button>
+      <div className="grid grid-cols-2 gap-2">
+        {spendingByCategory.map((category) => (
+          <QuickAction key={category.id} {...category} />
+        ))}
+      </div>
     </div>
   );
 };
