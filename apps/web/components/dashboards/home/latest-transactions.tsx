@@ -1,11 +1,7 @@
-import { siteConfig } from '@/lib/siteConfig';
 import { Unpacked } from '@/lib/types';
 import { cn, colours } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-ingest/schema';
-import { ChevronRight } from 'lucide-react';
-import Link from 'next/link';
-import getCategoryIcon from './category-icon';
-import { Button } from './ui/button';
+import getCategoryIcon from '../../category-icon';
 
 const LatestTransactions = async ({
   transactionsFetch,
@@ -34,18 +30,7 @@ const LatestTransactions = async ({
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <Button
-        variant="link"
-        className="justify-start has-[>svg]:px-0 gap-0"
-        asChild
-      >
-        <Link href={siteConfig.baseLinks.transactions}>
-          <h2 className="text-xl font-semibold">Transactions</h2>
-          <ChevronRight className="size-6" />
-        </Link>
-      </Button>
-
+    <>
       {transactions.map(
         ({ transaction_id, description, category_id, category_parent_id }) => (
           <div className="flex items-center gap-2" key={transaction_id}>
@@ -63,7 +48,7 @@ const LatestTransactions = async ({
           </div>
         )
       )}
-    </div>
+    </>
   );
 };
 

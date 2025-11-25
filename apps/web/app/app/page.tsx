@@ -1,20 +1,21 @@
-import LatestTransactions from '@/components/latest-transactions';
+import LatestTransactions from '@/components/dashboards/home/latest-transactions';
 import QuickActions from '@/components/quick-actions';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getAccountBalance } from '@/lib/db/account';
+import { siteConfig } from '@/lib/siteConfig';
 import { formatValueInBaseUnits } from '@/lib/ui';
 import NumberFlow from '@number-flow/react';
-import { accountTable, transactionExternalTable } from 'afinia-ingest/schema';
-import { desc, sum } from 'drizzle-orm';
-import { Bell, Menu, Search } from 'lucide-react';
+import { transactionExternalTable } from 'afinia-ingest/schema';
+import { desc } from 'drizzle-orm';
+import { Bell, ChevronRight, Menu, Search } from 'lucide-react';
+import Link from 'next/link';
 import { Suspense } from 'react';
 import { db } from '../../lib/db/client';
 
 const AppHome = async () => {
-  const accounts = await db
-    .select({ value: sum(accountTable.value_in_base_units).mapWith(Number) })
-    .from(accountTable);
+  const balance = await getAccountBalance();
   const transactions = db
     .select()
     .from(transactionExternalTable)
@@ -41,7 +42,7 @@ const AppHome = async () => {
         <p className="text-muted-foreground text-lg font-medium">Balance</p>
         <NumberFlow
           className="text-4xl/tight font-semibold first-letter:text-xl"
-          value={formatValueInBaseUnits(accounts[0]?.value)}
+          value={formatValueInBaseUnits(balance[0]?.value)}
           format={{
             style: 'currency',
             currency: 'AUD',
@@ -51,19 +52,31 @@ const AppHome = async () => {
       </div>
       <Separator />
       <QuickActions />
-      <Suspense
-        fallback={
-          <div className="flex flex-col gap-2">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
-        }
-      >
-        <LatestTransactions transactionsFetch={transactions} />
-      </Suspense>
+      <div className="flex flex-col gap-2">
+        <Button
+          variant="link"
+          className="justify-start has-[>svg]:px-0 gap-0"
+          asChild
+        >
+          <Link href={siteConfig.baseLinks.transactions}>
+            <h2 className="text-xl font-semibold">Transactions</h2>
+            <ChevronRight className="size-6" />
+          </Link>
+        </Button>
+        <Suspense
+          fallback={
+            <>
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </>
+          }
+        >
+          <LatestTransactions transactionsFetch={transactions} />
+        </Suspense>
+      </div>
     </div>
   );
 };

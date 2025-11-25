@@ -8,6 +8,7 @@ export const siteConfig = {
     login: '/login',
     appHome: '/app',
     spending: '/app/spending',
+    transactions: '/app/transactions',
   },
 } as const;
 
