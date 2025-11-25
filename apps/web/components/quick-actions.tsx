@@ -9,7 +9,7 @@ import { endOfMonth, startOfMonth } from 'date-fns';
 import { isNull } from 'drizzle-orm';
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import getCategoryIcon from './category-icon';
+import CategoryIcon from './category-icon';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 
@@ -26,17 +26,13 @@ const QuickAction = ({
   name: string;
   value: number;
 }) => {
-  const Icon = getCategoryIcon(id);
-
   return (
     <Link href={`${siteConfig.baseLinks.spending}/${id}`} key={id}>
       <Card className={cn('p-4 rounded-3xl', colours[id]?.background)}>
         <CardContent className="flex flex-col justify-start items-start p-0 text-white font-medium">
-          {Icon ? (
-            <div className="p-2 mb-4 rounded-lg bg-black/20">
-              <Icon className="size-6" />
-            </div>
-          ) : null}
+          <div className="p-2 mb-4 rounded-lg bg-black/20">
+            <CategoryIcon category={id} />
+          </div>
           <p>{name}</p>
           <NumberFlow
             className="text-lg font-bold"

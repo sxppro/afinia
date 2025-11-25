@@ -1,7 +1,7 @@
+import CategoryIcon from '@/components/category-icon';
 import { Unpacked } from '@/lib/types';
 import { cn, colours } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-ingest/schema';
-import getCategoryIcon from '../../category-icon';
 
 const TransactionsList = async ({
   dataFetch,
@@ -18,12 +18,7 @@ const TransactionsList = async ({
     'category_id' | 'description'
   >) => {
     if (category_id) {
-      const Icon = getCategoryIcon(category_id);
-      return Icon ? (
-        <Icon className="size-6" />
-      ) : (
-        description?.charAt(0).toUpperCase()
-      );
+      return <CategoryIcon category={category_id} />;
     }
 
     return description?.charAt(0).toUpperCase();

@@ -1,3 +1,4 @@
+import { cn } from '@/lib/ui';
 import {
   Apple,
   Baby,
@@ -8,6 +9,7 @@ import {
   CarTaxiFront,
   ChartNoAxesCombined,
   Cigarette,
+  CircleQuestionMark,
   Coins,
   DoorClosedLocked,
   Dumbbell,
@@ -42,12 +44,9 @@ import {
   WashingMachine,
   Wifi,
 } from 'lucide-react';
+import { createElement } from 'react';
 
-const getCategoryIcon = (category: string) => {
-  if (!category) {
-    return null;
-  }
-
+export const getCategoryIcon = (category: string) => {
   switch (category) {
     case 'good-life':
       return PartyPopper;
@@ -138,8 +137,19 @@ const getCategoryIcon = (category: string) => {
     case 'utilities':
       return Flame;
     default:
-      return null;
+      return CircleQuestionMark;
   }
 };
 
-export default getCategoryIcon;
+const CategoryIcon = ({
+  category,
+  className,
+}: {
+  category: string;
+  className?: string;
+}) => {
+  const icon = getCategoryIcon(category);
+  return createElement(icon, { className: cn('size-6', className) });
+};
+
+export default CategoryIcon;
