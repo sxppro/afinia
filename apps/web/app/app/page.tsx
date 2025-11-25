@@ -1,4 +1,4 @@
-import LatestTransactions from '@/components/dashboards/home/latest-transactions';
+import TransactionsList from '@/components/dashboards/home/transactions-list';
 import QuickActions from '@/components/quick-actions';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -74,7 +74,7 @@ const AppHome = async () => {
             </>
           }
         >
-          <LatestTransactions transactionsFetch={transactions} />
+          <TransactionsList dataFetch={transactions} />
         </Suspense>
       </div>
     </div>

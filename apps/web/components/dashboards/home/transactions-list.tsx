@@ -3,12 +3,12 @@ import { cn, colours } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-ingest/schema';
 import getCategoryIcon from '../../category-icon';
 
-const LatestTransactions = async ({
-  transactionsFetch,
+const TransactionsList = async ({
+  dataFetch,
 }: {
-  transactionsFetch: Promise<(typeof transactionExternalTable.$inferSelect)[]>;
+  dataFetch: Promise<(typeof transactionExternalTable.$inferSelect)[]>;
 }) => {
-  const transactions = await transactionsFetch;
+  const transactions = await dataFetch;
 
   const showCategoryIcon = ({
     category_id,
@@ -52,4 +52,4 @@ const LatestTransactions = async ({
   );
 };
 
-export default LatestTransactions;
+export default TransactionsList;
