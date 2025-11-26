@@ -1,7 +1,7 @@
 import CategoryIcon from '@/components/category-icon';
 import { Unpacked } from '@/lib/types';
 import { cn, colours } from '@/lib/ui';
-import { transactionExternalTable } from 'afinia-ingest/schema';
+import { transactionExternalTable } from 'afinia-common/schema';
 
 const TransactionsList = async ({
   dataFetch,

@@ -1,8 +1,3 @@
-import {
-  AccountTypeEnum,
-  OwnershipTypeEnum,
-  TransactionStatusEnum,
-} from 'afinia-common/types/up-api';
 import { and, eq, getTableColumns, isNull, sql } from 'drizzle-orm';
 import {
   alias,
@@ -17,6 +12,11 @@ import {
   timestamp,
   uuid,
 } from 'drizzle-orm/pg-core';
+import {
+  AccountTypeEnum,
+  OwnershipTypeEnum,
+  TransactionStatusEnum,
+} from '../../types/up-api';
 
 /**
  * Schema

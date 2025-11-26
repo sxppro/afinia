@@ -4,7 +4,7 @@ import { getCategorySpending } from '@/lib/db/spending';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours, formatValueInBaseUnits } from '@/lib/ui';
 import NumberFlow from '@number-flow/react';
-import { categoryTable, transactionExternalTable } from 'afinia-ingest/schema';
+import { categoryTable, transactionExternalTable } from 'afinia-common/schema';
 import { endOfMonth, startOfMonth } from 'date-fns';
 import { isNull } from 'drizzle-orm';
 import { ChevronRight } from 'lucide-react';

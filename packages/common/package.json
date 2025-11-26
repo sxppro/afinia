@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "",
   "exports": {
+    "./schema": "./db/schema/index.ts",
     "./types/up-api": "./types/up-api.ts",
     "./types/up-api/overrides": "./types/up-api-overrides.ts"
   },
@@ -14,5 +15,8 @@
   "devDependencies": {
     "@types/node": "^20.19.21",
     "openapi-typescript": "^7.10.1"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.44.6"
   }
 }

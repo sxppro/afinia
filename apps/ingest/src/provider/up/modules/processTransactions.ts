@@ -8,7 +8,7 @@ import {
   transactionRoundUpTable,
   transactionTable,
   transactionTagTable,
-} from '@/src/db/schema';
+} from 'afinia-common/schema';
 import { components } from 'afinia-common/types/up-api';
 import { TransactionResource } from 'afinia-common/types/up-api/overrides';
 import { eq, InferInsertModel } from 'drizzle-orm';

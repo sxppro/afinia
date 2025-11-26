@@ -1,5 +1,5 @@
 import { db } from '@/src/db/client';
-import { categoryTable } from '@/src/db/schema';
+import { categoryTable } from 'afinia-common/schema';
 import { components } from 'afinia-common/types/up-api';
 import { and, eq, InferInsertModel, isNull, ne, or, sql } from 'drizzle-orm';
 import { upClient } from '../utils/clients';

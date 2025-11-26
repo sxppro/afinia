@@ -7,7 +7,7 @@ import { getAccountBalance } from '@/lib/db/account';
 import { siteConfig } from '@/lib/siteConfig';
 import { formatValueInBaseUnits } from '@/lib/ui';
 import NumberFlow from '@number-flow/react';
-import { transactionExternalTable } from 'afinia-ingest/schema';
+import { transactionExternalTable } from 'afinia-common/schema';
 import { desc } from 'drizzle-orm';
 import { Bell, ChevronRight, Menu, Search } from 'lucide-react';
 import Link from 'next/link';

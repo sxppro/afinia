@@ -1,5 +1,5 @@
 import { db } from '@/src/db/client';
-import { accountTable } from '@/src/db/schema';
+import { accountTable } from 'afinia-common/schema';
 import { components } from 'afinia-common/types/up-api';
 import { InferInsertModel } from 'drizzle-orm';
 import { upClient } from '../utils/clients';

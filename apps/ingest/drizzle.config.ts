@@ -9,7 +9,10 @@ if (!Resource.DATABASE_URL.value) {
 
 export default defineConfig({
   dialect: 'postgresql',
-  schema: ['./src/db/schema.ts', './src/db/auth-schema.ts'],
+  schema: [
+    '../../packages/common/db/schema/afinia.ts',
+    '../../packages/common/db/schema/auth.ts',
+  ],
   out: './drizzle',
   dbCredentials: {
     url: Resource.DATABASE_URL.value,

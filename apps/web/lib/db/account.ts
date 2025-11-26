@@ -1,4 +1,4 @@
-import { accountTable } from 'afinia-ingest/schema';
+import { accountTable } from 'afinia-common/schema';
 import { sum } from 'drizzle-orm';
 import { db } from './client';
 
