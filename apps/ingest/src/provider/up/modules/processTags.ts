@@ -28,16 +28,18 @@ const deleteTags = async (
     return;
   }
 
-  console.log('Deleting orphaned tags ...');
   const tagIds = Array.from(tagSet);
   const deleteResult = await db
     .delete(tagTable)
     .where(notInArray(tagTable.tag_id, tagIds))
     .returning({ tag_id: tagTable.tag_id });
-  console.log(
-    `Deleted ${deleteResult.length} orphaned tags: `,
-    deleteResult.map((r) => r.tag_id)
-  );
+
+  if (deleteResult.length > 0) {
+    console.log(
+      `Deleted ${deleteResult.length} orphaned tags: `,
+      deleteResult.map((r) => r.tag_id)
+    );
+  }
 };
 
 export const processTags = async () => {

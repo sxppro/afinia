@@ -23,8 +23,8 @@ export const fetchFromUp = async (url: string) =>
  */
 export const getNextPage = async <T>(
   link: string,
-  onNextPage: (data: T[], page: number) => Promise<void>,
-  page: number
+  onNextPage: (data: T[], page: number) => Promise<unknown>,
+  page: number = 1
 ) => {
   const res = await fetchFromUp(link);
 

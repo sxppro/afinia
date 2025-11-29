@@ -1,4 +1,3 @@
-import { Handler } from 'aws-lambda';
 import { processAccounts } from './processAccounts';
 import { processCategories } from './processCategories';
 import { processTags } from './processTags';
@@ -21,12 +20,3 @@ loadData()
     console.error('Error in loadData: ', error);
     process.exit(1);
   });
-
-export const handler: Handler = async () => {
-  await loadData();
-
-  return {
-    statusCode: 200,
-    body: 'loadData successful',
-  };
-};
