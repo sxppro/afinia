@@ -18,13 +18,29 @@ export default $config({
       discordUserId: new sst.Secret('DISCORD_USER_ID'),
     };
     const allSecrets = Object.values(secrets);
+
     const api = new sst.aws.ApiGatewayV1('AfiniaIngestApi');
     api.route('POST /webhook', {
       handler: 'src/provider/up/modules/processWebhookEvent.handler',
       link: [...allSecrets],
-      timeout: '5 minute',
+      timeout: '30 seconds',
       runtime: 'nodejs22.x',
     });
     api.deploy();
+
+    new sst.aws.Cron('AfiniaSyncHourly', {
+      function: {
+        handler: 'src/provider/up/modules/syncData.handler',
+        timeout: '120 seconds',
+        runtime: 'nodejs22.x',
+        link: [
+          secrets.upApiKey,
+          secrets.databaseUrl,
+          secrets.discordWebhookUrl,
+          secrets.discordUserId,
+        ],
+      },
+      schedule: 'rate(1 hour)',
+    });
   },
 });

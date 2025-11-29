@@ -27,6 +27,9 @@ export const compareProviderAndDb = async <T>({
   insertToDb: (data: T) => Promise<unknown>;
   deleteFromDb: (data: T) => Promise<unknown>;
 }) => {
+  if (providerData.length === 0 && dbData.length === 0) {
+    return { inserted: 0, deleted: 0 };
+  }
   const providerSet = new Set(providerData);
   const dbSet = new Set(dbData);
 
