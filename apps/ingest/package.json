@@ -19,8 +19,13 @@
   },
   "devDependencies": {
     "@types/aws-lambda": "8.10.155",
-    "@types/node": "^20",
+    "@types/node": "^24",
     "drizzle-kit": "^0.31.5",
     "tsx": "^4.20.6"
+  },
+  "engines": {
+    "node": ">=24",
+    "npm": ">=11",
+    "pnpm": ">=9"
   }
 }

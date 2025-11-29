@@ -7,6 +7,7 @@ import {
 } from '@/src/db/queries/transaction';
 import { TransactionResource } from 'afinia-common/types/up-api/overrides';
 import { upClient } from '../utils/clients';
+import { compareProviderAndDb } from '../utils/compare';
 import { ALERT_LEVEL } from '../utils/constants';
 import { getNextPage } from '../utils/fetch';
 import { notify } from '../utils/notify';
@@ -40,7 +41,15 @@ const untagTransaction = async (providerId: string, tagId: string) => {
   await deleteTransactionTag(transactionId, tagId);
 };
 
-const syncTransactionTags = async () => {
+const syncCategorisedTransactions = async () => {
+  const { data: categories } = await upClient.GET('/categories');
+  if (!categories || !categories.data.length) {
+    notify(ALERT_LEVEL.WARN, `Failed to fetch categories`);
+    return;
+  }
+};
+
+const syncTaggedTransactions = async () => {
   const { data: tags } = await upClient.GET('/tags');
 
   if (!tags || !tags.data.length) {
@@ -90,28 +99,18 @@ const syncTransactionTags = async () => {
         // Retrieve transactions by tag from db
         const transactionsByTag = await getTransactionsByTag(tagId);
 
-        // Compare transactions by provider id
-        const externalSet = new Set(
-          externalTransactionsByTag?.map((t) => t.id)
-        );
-        const dbSet = new Set(transactionsByTag?.map((t) => t.providerId));
-
-        // Insert tagged transactions only in Up
-        const toTag = Array.from(externalSet.difference(dbSet));
-        if (toTag.length > 0) {
-          const res = await Promise.all(
-            toTag.map((providerId) => tagTransaction(providerId, tagId))
-          );
-          console.log(`Tagged ${res.length} transactions with "${tagId}"`);
+        // Insert or delete relationship between tags and transactions
+        const { inserted, deleted } = await compareProviderAndDb({
+          providerData: externalTransactionsByTag?.map((t) => t.id),
+          dbData: transactionsByTag?.map((t) => t.providerId),
+          insertToDb: (providerId) => tagTransaction(providerId, tagId),
+          deleteFromDb: (providerId) => untagTransaction(providerId, tagId),
+        });
+        if (inserted > 0) {
+          console.log(`Tagged ${inserted} transactions with "${tagId}"`);
         }
-
-        // Remove relationship between tag and transaction only in db
-        const toUntag = Array.from(dbSet.difference(externalSet));
-        if (toUntag.length > 0) {
-          const res = await Promise.all(
-            toUntag.map((providerId) => untagTransaction(providerId, tagId))
-          );
-          console.log(`Untagged ${res.length} transactions from "${tagId}"`);
+        if (deleted > 0) {
+          console.log(`Untagged ${deleted} transactions from "${tagId}"`);
         }
         console.log(`Finished syncing transactions for tag: ${tagId}`);
       } catch (error) {
@@ -128,9 +127,11 @@ const syncTransactionTags = async () => {
   await Promise.all(compareTaggedTransactions);
 };
 
-export const sync = async () => {
+export const handler = async () => {
   // Sync tags
   await processTags();
   // Sync tagged transactions
-  await syncTransactionTags();
+  await syncTaggedTransactions();
+  // Sync categorised transactions
+  // await syncCategorisedTransactions();
 };
