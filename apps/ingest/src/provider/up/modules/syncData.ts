@@ -9,6 +9,7 @@ import {
   updateTransactionTag,
 } from '@/src/db/queries/transaction';
 import { TransactionResource } from 'afinia-common/types/up-api/overrides';
+import { fileURLToPath } from 'node:url';
 import { upClient } from '../utils/clients';
 import { compareProviderAndDb } from '../utils/compare';
 import { ALERT_LEVEL } from '../utils/constants';
@@ -227,7 +228,7 @@ export const handler = async () => {
   await syncCategorisedTransactions();
 };
 
-if (require.main === module) {
+if (fileURLToPath(import.meta.url) === process.argv[1]) {
   handler()
     .then(() => process.exit(0))
     .catch((error) => {
