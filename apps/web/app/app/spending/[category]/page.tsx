@@ -1,15 +1,19 @@
 import CategoryIcon from '@/components/category-icon';
 import SpendingByDayLineChart from '@/components/dashboards/spending/spending-by-day';
 import SpendingTotalByCategory from '@/components/dashboards/spending/spending-total-by-category';
+import TransactionsList from '@/components/dashboards/transactions-list';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getStartOfDay } from '@/lib/constants';
 import { getCategoryById } from '@/lib/db/category';
+import { db } from '@/lib/db/client';
 import { getCategorySpendingByTimestamp } from '@/lib/db/spending';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours } from '@/lib/ui';
+import { transactionExternalTable } from 'afinia-common/schema';
 import { endOfMonth, format, startOfMonth } from 'date-fns';
+import { desc, eq, or } from 'drizzle-orm';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -42,6 +46,17 @@ const CategorySpendingPage = async ({
     interval: 'day',
     range,
   });
+  const transactionsFetch = db
+    .select()
+    .from(transactionExternalTable)
+    .where(
+      or(
+        eq(transactionExternalTable.category_id, category.category_id),
+        eq(transactionExternalTable.category_parent_id, category.category_id)
+      )
+    )
+    .limit(5)
+    .orderBy(desc(transactionExternalTable.created_at));
 
   return (
     <div className="flex flex-col gap-4">
@@ -91,8 +106,8 @@ const CategorySpendingPage = async ({
             </Button>
           </div>
         </div>
-        <div className="flex items-end gap-1">
-          <Suspense fallback={<Skeleton className="h-8 w-16" />}>
+        <div className="h-10 flex items-end gap-1 pb-1">
+          <Suspense fallback={<Skeleton className="h-full w-16" />}>
             <SpendingTotalByCategory category={category.category_id} />
           </Suspense>
           <p className="text-muted-foreground font-medium pb-1">Spent</p>
@@ -102,6 +117,21 @@ const CategorySpendingPage = async ({
         </Suspense>
       </div>
       <Separator />
+      <div className="flex flex-col gap-2">
+        <Suspense
+          fallback={
+            <>
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </>
+          }
+        >
+          <TransactionsList dataFetch={transactionsFetch} />
+        </Suspense>
+      </div>
     </div>
   );
 };

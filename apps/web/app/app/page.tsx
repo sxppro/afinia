@@ -1,4 +1,4 @@
-import TransactionsList from '@/components/dashboards/home/transactions-list';
+import TransactionsList from '@/components/dashboards/transactions-list';
 import QuickActions from '@/components/quick-actions';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
