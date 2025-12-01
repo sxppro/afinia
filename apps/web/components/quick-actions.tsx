@@ -6,7 +6,7 @@ import { cn, colours, formatValueInBaseUnits } from '@/lib/ui';
 import NumberFlow from '@number-flow/react';
 import { categoryTable, transactionExternalTable } from 'afinia-common/schema';
 import { endOfMonth, startOfMonth } from 'date-fns';
-import { isNull } from 'drizzle-orm';
+import { isNull, sum } from 'drizzle-orm';
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import CategoryIcon from './category-icon';
@@ -54,7 +54,14 @@ const QuickActions = async () => {
     from: startOfMonth(getStartOfDay()),
     to: endOfMonth(getStartOfDay()),
   };
-  const spending = await getCategorySpending(range).groupBy(
+  const spending = await getCategorySpending({
+    select: {
+      id: transactionExternalTable.category_parent_id,
+      name: transactionExternalTable.category_parent,
+      value: sum(transactionExternalTable.value_in_base_units).mapWith(Number),
+    },
+    range,
+  }).groupBy(
     transactionExternalTable.category_parent_id,
     transactionExternalTable.category_parent
   );
@@ -94,6 +101,7 @@ const QuickActions = async () => {
           <QuickAction key={category.id} {...category} />
         ))}
       </div>
+      <p className="text-muted-foreground">Spending from current month.</p>
     </div>
   );
 };

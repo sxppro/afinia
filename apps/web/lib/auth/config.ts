@@ -1,4 +1,4 @@
-import * as schema from 'afinia-ingest/auth-schema';
+import { authSchema } from 'afinia-common/schema';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from '../db/client';
@@ -7,7 +7,7 @@ export const auth = betterAuth({
   baseURL: process.env.AUTH_URL,
   database: drizzleAdapter(db, {
     provider: 'pg',
-    schema,
+    schema: authSchema,
   }),
   secret: process.env.AUTH_SECRET,
   session: {
@@ -22,4 +22,5 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     },
   },
+  trustedOrigins: [process.env.AUTH_URL || '', 'http://localhost:3000'],
 });

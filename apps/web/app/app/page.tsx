@@ -41,7 +41,7 @@ const AppHome = async () => {
       <div>
         <p className="text-muted-foreground text-lg font-medium">Balance</p>
         <NumberFlow
-          className="text-4xl/tight font-semibold first-letter:text-xl"
+          className="text-4xl/tight font-semibold"
           value={formatValueInBaseUnits(balance[0]?.value)}
           format={{
             style: 'currency',
