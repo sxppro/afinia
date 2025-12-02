@@ -15,11 +15,12 @@ import { Suspense } from 'react';
 import { db } from '../../lib/db/client';
 
 const AppHome = async () => {
+  const TRANSACTIONS_PER_PAGE = 6;
   const balance = await getAccountBalance();
   const transactions = db
     .select()
     .from(transactionExternalTable)
-    .limit(5)
+    .limit(TRANSACTIONS_PER_PAGE)
     .orderBy(desc(transactionExternalTable.created_at));
 
   return (
@@ -66,11 +67,9 @@ const AppHome = async () => {
         <Suspense
           fallback={
             <>
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
+              {[...Array(TRANSACTIONS_PER_PAGE)].map((_, i) => (
+                <Skeleton className="h-12 w-full" key={i} />
+              ))}
             </>
           }
         >

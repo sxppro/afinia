@@ -24,6 +24,7 @@ const CategorySpendingPage = async ({
 }: {
   params: Promise<{ category: string }>;
 }) => {
+  const TRANSACTIONS_PER_PAGE = 6;
   const { category: categoryId } = await params;
 
   if (!categoryId) {
@@ -55,7 +56,7 @@ const CategorySpendingPage = async ({
         eq(transactionExternalTable.category_parent_id, category.category_id)
       )
     )
-    .limit(5)
+    .limit(TRANSACTIONS_PER_PAGE)
     .orderBy(desc(transactionExternalTable.created_at));
 
   return (
@@ -107,10 +108,9 @@ const CategorySpendingPage = async ({
           </div>
         </div>
         <div className="h-10 flex items-end gap-1 pb-1">
-          <Suspense fallback={<Skeleton className="h-full w-16" />}>
+          <Suspense fallback={<Skeleton className="h-full w-24" />}>
             <SpendingTotalByCategory category={category.category_id} />
           </Suspense>
-          <p className="text-muted-foreground font-medium pb-1">Spent</p>
         </div>
         <Suspense fallback={<Skeleton className="h-48 w-full" />}>
           <SpendingByDayLineChart dataFetch={categorySpendingFetch} />
@@ -118,14 +118,13 @@ const CategorySpendingPage = async ({
       </div>
       <Separator />
       <div className="flex flex-col gap-2">
+        <h2 className="text-xl font-semibold">Transactions</h2>
         <Suspense
           fallback={
             <>
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
+              {[...Array(TRANSACTIONS_PER_PAGE)].map((_, i) => (
+                <Skeleton className="h-12 w-full" key={i} />
+              ))}
             </>
           }
         >

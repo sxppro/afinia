@@ -1,19 +1,12 @@
+import CurrencyFlow from '@/components/currency-flow';
 import { getStartOfDay } from '@/lib/constants';
 import { getCategorySpending } from '@/lib/db/spending';
 import { DateRange } from '@/lib/types';
-import { cn, formatValueInBaseUnits } from '@/lib/ui';
-import NumberFlow from '@number-flow/react';
 import { transactionExternalTable } from 'afinia-common/schema';
 import { endOfMonth, startOfMonth } from 'date-fns';
 import { sum } from 'drizzle-orm';
 
-const SpendingTotalByCategory = async ({
-  category,
-  className,
-}: {
-  category: string;
-  className?: string;
-}) => {
+const SpendingTotalByCategory = async ({ category }: { category: string }) => {
   const range: DateRange = {
     from: startOfMonth(getStartOfDay()),
     to: endOfMonth(getStartOfDay()),
@@ -30,17 +23,15 @@ const SpendingTotalByCategory = async ({
     transactionExternalTable.category_parent_id,
     transactionExternalTable.category_parent
   );
+  const value = spending[0]?.value ?? 0;
 
   return (
-    <NumberFlow
-      className={cn('text-2xl font-semibold', className)}
-      value={spending[0] ? formatValueInBaseUnits(spending[0].value) : 0}
-      format={{
-        style: 'currency',
-        currency: 'AUD',
-        currencyDisplay: 'narrowSymbol',
-      }}
-    />
+    <>
+      <CurrencyFlow value={value} />
+      <p className="text-muted-foreground font-medium pb-1">
+        {value > 0 ? 'Received' : 'Spent'}
+      </p>
+    </>
   );
 };
 

@@ -2,14 +2,14 @@ import { getStartOfDay } from '@/lib/constants';
 import { db } from '@/lib/db/client';
 import { getCategorySpending } from '@/lib/db/spending';
 import { siteConfig } from '@/lib/siteConfig';
-import { cn, colours, formatValueInBaseUnits } from '@/lib/ui';
-import NumberFlow from '@number-flow/react';
+import { cn, colours } from '@/lib/ui';
 import { categoryTable, transactionExternalTable } from 'afinia-common/schema';
 import { endOfMonth, startOfMonth } from 'date-fns';
 import { isNull, sum } from 'drizzle-orm';
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import CategoryIcon from './category-icon';
+import CurrencyFlow from './currency-flow';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 
@@ -34,15 +34,7 @@ const QuickAction = ({
             <CategoryIcon category={id} />
           </div>
           <p>{name}</p>
-          <NumberFlow
-            className="text-lg font-bold"
-            value={formatValueInBaseUnits(value)}
-            format={{
-              style: 'currency',
-              currency: 'AUD',
-              currencyDisplay: 'narrowSymbol',
-            }}
-          />
+          <CurrencyFlow className="text-xl font-bold" value={value} />
         </CardContent>
       </Card>
     </Link>
