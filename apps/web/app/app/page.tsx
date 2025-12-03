@@ -1,8 +1,8 @@
-import TransactionsList from '@/components/dashboards/transactions-list';
 import QuickActions from '@/components/quick-actions';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import TransactionsList from '@/components/vis/transactions-list';
 import { getAccountBalance } from '@/lib/db/account';
 import { siteConfig } from '@/lib/siteConfig';
 import { formatValueInBaseUnits } from '@/lib/ui';

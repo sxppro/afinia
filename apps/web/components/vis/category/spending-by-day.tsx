@@ -5,7 +5,7 @@ import { formatCurrency, formatValueInBaseUnits } from '@/lib/ui';
 import { use } from 'react';
 import { AreaChart } from '../../ui/area-chart';
 
-const SpendingByDayLineChart = ({
+const SpendingByDay = ({
   dataFetch,
 }: {
   dataFetch: ReturnType<typeof getCategorySpendingByTimestamp>;
@@ -26,4 +26,4 @@ const SpendingByDayLineChart = ({
   );
 };
 
-export default SpendingByDayLineChart;
+export default SpendingByDay;

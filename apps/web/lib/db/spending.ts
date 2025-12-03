@@ -1,24 +1,12 @@
 import { transactionExternalTable } from 'afinia-common/schema';
 import { format } from 'date-fns';
-import {
-  and,
-  eq,
-  gte,
-  isNotNull,
-  lte,
-  or,
-  SelectedFields,
-  sql,
-  sum,
-} from 'drizzle-orm';
-import { IntervalConfig, PgColumn, PgTable } from 'drizzle-orm/pg-core';
+import { and, eq, gte, isNotNull, lte, or, sql, sum } from 'drizzle-orm';
+import { IntervalConfig, SelectedFields } from 'drizzle-orm/pg-core';
 import { TZ } from '../constants';
 import { DateRange, Prettify } from '../types';
 import { db } from './client';
 
-export const getCategorySpending = <
-  T extends SelectedFields<PgColumn, PgTable>
->({
+export const getCategorySpending = <T extends SelectedFields>({
   select,
   range,
   category,
@@ -65,8 +53,9 @@ export const getCategorySpendingByTimestamp = ({
   return db
     .select({
       timestamp: sql<string>`to_char(time_series.interval_start AT TIME ZONE ${TZ}, 'DD Mon')`,
-      value: sql<number>`
+      value: sql<number | null>`
       CASE 
+        WHEN time_series.interval_start > NOW() THEN NULL
         WHEN coalesce(${sum(
           transactionExternalTable.value_in_base_units
         )}, 0) < 0

@@ -6,7 +6,7 @@ import { transactionExternalTable } from 'afinia-common/schema';
 import { endOfMonth, startOfMonth } from 'date-fns';
 import { sum } from 'drizzle-orm';
 
-const SpendingTotalByCategory = async ({ category }: { category: string }) => {
+const SpendingTotal = async ({ category }: { category: string }) => {
   const range: DateRange = {
     from: startOfMonth(getStartOfDay()),
     to: endOfMonth(getStartOfDay()),
@@ -35,4 +35,4 @@ const SpendingTotalByCategory = async ({ category }: { category: string }) => {
   );
 };
 
-export default SpendingTotalByCategory;
+export default SpendingTotal;

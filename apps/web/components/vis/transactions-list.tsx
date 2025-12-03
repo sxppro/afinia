@@ -1,6 +1,6 @@
 import CategoryIcon from '@/components/category-icon';
 import { Unpacked } from '@/lib/types';
-import { cn, colours } from '@/lib/ui';
+import { cn, colours, formatCurrency, formatValueInBaseUnits } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
 
 const TransactionsList = async ({
@@ -27,7 +27,13 @@ const TransactionsList = async ({
   return (
     <>
       {transactions.map(
-        ({ transaction_id, description, category_id, category_parent_id }) => (
+        ({
+          transaction_id,
+          description,
+          category_id,
+          category_parent_id,
+          value_in_base_units,
+        }) => (
           <div className="flex items-center gap-2" key={transaction_id}>
             <span
               className={cn(
@@ -40,6 +46,12 @@ const TransactionsList = async ({
               {showCategoryIcon({ category_id, description })}
             </span>
             <p>{description}</p>
+            <p className="font-medium ml-auto">
+              {formatCurrency(formatValueInBaseUnits(value_in_base_units), {
+                absolute: true,
+                decimals: 2,
+              })}
+            </p>
           </div>
         )
       )}

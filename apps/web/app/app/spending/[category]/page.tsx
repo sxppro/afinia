@@ -1,10 +1,11 @@
 import CategoryIcon from '@/components/category-icon';
-import SpendingByDayLineChart from '@/components/dashboards/spending/spending-by-day';
-import SpendingTotalByCategory from '@/components/dashboards/spending/spending-total-by-category';
-import TransactionsList from '@/components/dashboards/transactions-list';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import SpendingAverage from '@/components/vis/category/spending-average';
+import SpendingByDay from '@/components/vis/category/spending-by-day';
+import SpendingTotal from '@/components/vis/category/spending-total';
+import TransactionsList from '@/components/vis/transactions-list';
 import { getStartOfDay } from '@/lib/constants';
 import { getCategoryById } from '@/lib/db/category';
 import { db } from '@/lib/db/client';
@@ -91,7 +92,7 @@ const CategorySpendingPage = async ({
         </span>
         <div className="flex-1">
           <p className="text-muted-foreground font-medium">Average per month</p>
-          <p className="text-3xl/tight font-semibold">$0.00</p>
+          <SpendingAverage category={category.category_id} />
         </div>
       </div>
       <Separator />
@@ -109,11 +110,11 @@ const CategorySpendingPage = async ({
         </div>
         <div className="h-10 flex items-end gap-1 pb-1">
           <Suspense fallback={<Skeleton className="h-full w-24" />}>
-            <SpendingTotalByCategory category={category.category_id} />
+            <SpendingTotal category={category.category_id} />
           </Suspense>
         </div>
         <Suspense fallback={<Skeleton className="h-48 w-full" />}>
-          <SpendingByDayLineChart dataFetch={categorySpendingFetch} />
+          <SpendingByDay dataFetch={categorySpendingFetch} />
         </Suspense>
       </div>
       <Separator />

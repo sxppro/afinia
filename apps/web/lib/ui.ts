@@ -53,22 +53,26 @@ export const formatValueInBaseUnits = (value: number) => {
 /**
  * Currency formatter for numbers
  * @param number number to format
- * @param decimals include decimals
  * @returns number formatted in AUD
  */
 export const formatCurrency = (
   number: number,
-  decimals: number = 0,
-  compact: boolean = false,
-  signDisplay: 'auto' | 'never' = 'auto'
-) =>
-  Intl.NumberFormat('default', {
+  options?: {
+    decimals?: number;
+    compact?: boolean;
+    absolute?: boolean;
+  }
+) => {
+  const { decimals = 0, compact = false, absolute = false } = options ?? {};
+
+  return Intl.NumberFormat('default', {
     style: 'currency',
     currency: 'AUD',
     currencyDisplay: 'narrowSymbol',
     maximumFractionDigits: decimals,
-    signDisplay,
+    signDisplay: absolute ? (number > 0 ? 'exceptZero' : 'never') : 'auto',
     ...(compact && { notation: 'compact', compactDisplay: 'short' }),
   })
-    .format(number ?? 0)
+    .format(number)
     .toString();
+};
