@@ -1,5 +1,5 @@
 import { transactionExternalTable } from 'afinia-common/schema';
-import { format } from 'date-fns';
+import { format, Interval } from 'date-fns';
 import { and, eq, gte, isNotNull, lte, or, sql, sum } from 'drizzle-orm';
 import { IntervalConfig, SelectedFields } from 'drizzle-orm/pg-core';
 import { TZ } from '../constants';
@@ -45,11 +45,11 @@ export const getCategorySpendingByTimestamp = ({
 }: {
   category?: string;
   interval: NonNullable<IntervalConfig['fields']>;
-  range: DateRange;
+  range: Interval;
 }) => {
-  const { from, to } = range;
-  const formattedFrom = format(from, 'yyyy-MM-dd');
-  const formattedTo = format(to, 'yyyy-MM-dd');
+  const { start, end } = range;
+  const formattedStart = format(start, 'yyyy-MM-dd');
+  const formattedEnd = format(end, 'yyyy-MM-dd');
   return db
     .select({
       timestamp: sql<string>`to_char(time_series.interval_start AT TIME ZONE ${TZ}, 'DD Mon')`,
@@ -64,13 +64,15 @@ export const getCategorySpendingByTimestamp = ({
         )}, 0))
         ELSE 0
       END
-      `.mapWith(Number),
+      `
+        .mapWith(Number)
+        .as('value'),
     })
     .from(
       sql`generate_series('${sql.raw(
-        `${formattedFrom} ${TZ}`
+        `${formattedStart} ${TZ}`
       )}'::timestamptz, '${sql.raw(
-        `${formattedTo} ${TZ}`
+        `${formattedEnd} ${TZ}`
       )}'::timestamptz, '1 ${sql.raw(
         interval
       )}'::interval, ${TZ}) AS time_series(interval_start)`

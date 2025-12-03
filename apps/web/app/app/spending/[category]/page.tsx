@@ -13,7 +13,7 @@ import { getCategorySpendingByTimestamp } from '@/lib/db/spending';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
-import { endOfMonth, format, startOfMonth } from 'date-fns';
+import { endOfMonth, format, Interval, startOfMonth } from 'date-fns';
 import { desc, eq, or } from 'drizzle-orm';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
@@ -39,9 +39,9 @@ const CategorySpendingPage = async ({
   }
 
   const { category, category_parent } = categoryDetails[0];
-  const range = {
-    from: startOfMonth(getStartOfDay()),
-    to: endOfMonth(getStartOfDay()),
+  const range: Interval = {
+    start: startOfMonth(getStartOfDay()),
+    end: endOfMonth(getStartOfDay()),
   };
   const categorySpendingFetch = getCategorySpendingByTimestamp({
     category: category.category_id,
@@ -92,13 +92,15 @@ const CategorySpendingPage = async ({
         </span>
         <div className="flex-1">
           <p className="text-muted-foreground font-medium">Average per month</p>
-          <SpendingAverage category={category.category_id} />
+          <Suspense fallback={<Skeleton className="h-9 w-32" />}>
+            <SpendingAverage category={category.category_id} />
+          </Suspense>
         </div>
       </div>
       <Separator />
       <div>
         <div className="flex items-center justify-between">
-          <p className="font-medium">{format(range.from, 'MMMM, yyyy')}</p>
+          <p className="font-medium">{format(range.start, 'MMMM, yyyy')}</p>
           <div>
             <Button variant="ghost" className="has-[>svg]:px-1">
               <ArrowLeft className="size-5" />
