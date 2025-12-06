@@ -32,7 +32,7 @@ const SpendingAverage = async ({ category }: { category: string }) => {
   };
   const months = differenceInMonths(interval.end, interval.start);
   if (months >= MIN_MONTHS) {
-    const avgInterval: Interval = {
+    const avgInterval = {
       start: startOfMonth(subMonths(getStartOfDay(), MIN_MONTHS)),
       end: endOfMonth(subMonths(getStartOfDay(), 1)),
     };

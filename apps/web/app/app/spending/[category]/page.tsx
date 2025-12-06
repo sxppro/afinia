@@ -3,18 +3,22 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import SpendingAverage from '@/components/vis/category/spending-average';
+import SpendingByCategory from '@/components/vis/category/spending-by-category';
 import SpendingByDay from '@/components/vis/category/spending-by-day';
 import SpendingTotal from '@/components/vis/category/spending-total';
 import TransactionsList from '@/components/vis/transactions-list';
 import { getStartOfDay } from '@/lib/constants';
 import { getCategoryById } from '@/lib/db/category';
 import { db } from '@/lib/db/client';
-import { getCategorySpendingByTimestamp } from '@/lib/db/spending';
+import {
+  getCategorySpending,
+  getCategorySpendingByTimestamp,
+} from '@/lib/db/spending';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
-import { endOfMonth, format, Interval, startOfMonth } from 'date-fns';
-import { desc, eq, or } from 'drizzle-orm';
+import { endOfMonth, format, startOfMonth } from 'date-fns';
+import { desc, eq, lt, or, sql, sum } from 'drizzle-orm';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -39,7 +43,7 @@ const CategorySpendingPage = async ({
   }
 
   const { category, category_parent } = categoryDetails[0];
-  const range: Interval = {
+  const range = {
     start: startOfMonth(getStartOfDay()),
     end: endOfMonth(getStartOfDay()),
   };
@@ -48,6 +52,30 @@ const CategorySpendingPage = async ({
     interval: 'day',
     range,
   });
+  // Only fetch sub-category data for parent categories
+  const subCategorySpendingFetch = category_parent
+    ? Promise.resolve([])
+    : getCategorySpending({
+        select: {
+          href: sql<string>`CONCAT('${sql.raw(
+            siteConfig.baseLinks.spending
+          )}/', ${transactionExternalTable.category_id})`,
+          name: transactionExternalTable.category,
+          value: sql<number>`abs(${sum(
+            transactionExternalTable.value_in_base_units
+          )})`
+            .mapWith(Number)
+            .as('value'),
+        },
+        range,
+        category: category.category_id,
+      })
+        .groupBy(
+          transactionExternalTable.category_id,
+          transactionExternalTable.category
+        )
+        .having(lt(sum(transactionExternalTable.value_in_base_units), 0))
+        .orderBy(sql`value`);
   const transactionsFetch = db
     .select()
     .from(transactionExternalTable)
@@ -119,6 +147,17 @@ const CategorySpendingPage = async ({
           <SpendingByDay dataFetch={categorySpendingFetch} />
         </Suspense>
       </div>
+      {category_parent ? null : (
+        <div className="flex flex-col gap-2">
+          <h2 className="text-xl font-semibold">Categories</h2>
+          <Suspense fallback={<Skeleton className="h-24 w-full" />}>
+            <SpendingByCategory
+              category={category.category_id}
+              dataFetch={subCategorySpendingFetch}
+            />
+          </Suspense>
+        </div>
+      )}
       <Separator />
       <div className="flex flex-col gap-2">
         <h2 className="text-xl font-semibold">Transactions</h2>

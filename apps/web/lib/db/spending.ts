@@ -3,7 +3,7 @@ import { format, Interval } from 'date-fns';
 import { and, eq, gte, isNotNull, lte, or, sql, sum } from 'drizzle-orm';
 import { IntervalConfig, SelectedFields } from 'drizzle-orm/pg-core';
 import { TZ } from '../constants';
-import { DateRange, Prettify } from '../types';
+import { Prettify } from '../types';
 import { db } from './client';
 
 export const getCategorySpending = <T extends SelectedFields>({
@@ -12,7 +12,7 @@ export const getCategorySpending = <T extends SelectedFields>({
   category,
 }: {
   select: T;
-  range: Prettify<Partial<DateRange>>;
+  range: Prettify<Partial<Interval<Date, Date>>>;
   category?: string;
 }) =>
   db
@@ -21,11 +21,11 @@ export const getCategorySpending = <T extends SelectedFields>({
     .where(
       and(
         and(
-          range?.from
-            ? gte(transactionExternalTable.created_at, range.from)
+          range?.start
+            ? gte(transactionExternalTable.created_at, range.start)
             : undefined,
-          range?.to
-            ? lte(transactionExternalTable.created_at, range.to)
+          range?.end
+            ? lte(transactionExternalTable.created_at, range.end)
             : undefined,
           isNotNull(transactionExternalTable.category_id)
         ),
@@ -45,7 +45,7 @@ export const getCategorySpendingByTimestamp = ({
 }: {
   category?: string;
   interval: NonNullable<IntervalConfig['fields']>;
-  range: Interval;
+  range: Interval<Date, Date>;
 }) => {
   const { start, end } = range;
   const formattedStart = format(start, 'yyyy-MM-dd');

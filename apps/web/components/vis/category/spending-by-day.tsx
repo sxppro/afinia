@@ -25,11 +25,9 @@ const Tooltip = ({ active, payload }: TooltipProps) => {
       <div className={cn('w-1 rounded-xl', getColorClassName('blue', 'bg'))} />
       <div className="flex flex-col gap-1">
         <p className="font-medium text-gray-900 dark:text-gray-50">
-          {payload[0].value
-            ? formatCurrency(formatValueInBaseUnits(payload[0].value), {
-                decimals: 2,
-              })
-            : ''}
+          {formatCurrency(formatValueInBaseUnits(payload[0].value), {
+            decimals: 2,
+          })}
         </p>
         <p className="whitespace-nowrap text-gray-700 dark:text-gray-300">
           {payload[0].index}

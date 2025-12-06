@@ -43,8 +43,8 @@ const QuickAction = ({
 
 const QuickActions = async () => {
   const range = {
-    from: startOfMonth(getStartOfDay()),
-    to: endOfMonth(getStartOfDay()),
+    start: startOfMonth(getStartOfDay()),
+    end: endOfMonth(getStartOfDay()),
   };
   const spending = await getCategorySpending({
     select: {
