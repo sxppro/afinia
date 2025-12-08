@@ -30,6 +30,7 @@ const SpendingByCategory = ({
       valueFormatter={(value) =>
         formatCurrency(formatValueInBaseUnits(value), { decimals: 2 })
       }
+      showAnimation
     />
   );
 };
