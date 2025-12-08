@@ -1,3 +1,4 @@
+import CurrencyFlow from '@/components/currency-flow';
 import QuickActions from '@/components/quick-actions';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -5,8 +6,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import TransactionsList from '@/components/vis/transactions-list';
 import { getAccountBalance } from '@/lib/db/account';
 import { siteConfig } from '@/lib/siteConfig';
-import { formatValueInBaseUnits } from '@/lib/ui';
-import NumberFlow from '@number-flow/react';
 import { transactionExternalTable } from 'afinia-common/schema';
 import { desc } from 'drizzle-orm';
 import { Bell, ChevronRight, Menu, Search } from 'lucide-react';
@@ -41,14 +40,10 @@ const AppHome = async () => {
 
       <div>
         <p className="text-muted-foreground text-lg font-medium">Balance</p>
-        <NumberFlow
+        <CurrencyFlow
           className="text-4xl/tight font-semibold"
-          value={formatValueInBaseUnits(balance[0]?.value)}
-          format={{
-            style: 'currency',
-            currency: 'AUD',
-            currencyDisplay: 'narrowSymbol',
-          }}
+          value={balance[0]?.value}
+          signDisplay="auto"
         />
       </div>
       <Separator />

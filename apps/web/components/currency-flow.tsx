@@ -4,9 +4,11 @@ import NumberFlow from '@number-flow/react';
 const CurrencyFlow = ({
   className,
   value,
+  signDisplay,
 }: {
   className?: string;
   value: number;
+  signDisplay?: keyof Intl.NumberFormatOptionsSignDisplayRegistry;
 }) => {
   return (
     <NumberFlow
@@ -16,7 +18,11 @@ const CurrencyFlow = ({
         style: 'currency',
         currency: 'AUD',
         currencyDisplay: 'narrowSymbol',
-        signDisplay: value > 0 ? 'exceptZero' : 'never',
+        signDisplay: signDisplay
+          ? signDisplay
+          : value > 0
+          ? 'exceptZero'
+          : 'never',
       }}
     />
   );
