@@ -61,9 +61,17 @@ export const formatCurrency = (
     decimals?: number;
     compact?: boolean;
     absolute?: boolean;
+    baseUnits?: boolean;
   }
 ) => {
-  const { decimals = 0, compact = false, absolute = false } = options ?? {};
+  const {
+    decimals = 0,
+    compact = false,
+    absolute = false,
+    baseUnits = false,
+  } = options ?? {};
+
+  const value = baseUnits ? formatValueInBaseUnits(number) : number;
 
   return Intl.NumberFormat('default', {
     style: 'currency',
@@ -73,6 +81,6 @@ export const formatCurrency = (
     signDisplay: absolute ? (number > 0 ? 'exceptZero' : 'never') : 'auto',
     ...(compact && { notation: 'compact', compactDisplay: 'short' }),
   })
-    .format(number)
+    .format(value)
     .toString();
 };

@@ -1,7 +1,7 @@
 'use client';
 
 import { BarList, BarListProps } from '@/components/ui/bar-list';
-import { colours, formatCurrency, formatValueInBaseUnits } from '@/lib/ui';
+import { colours, formatCurrency } from '@/lib/ui';
 import { use } from 'react';
 
 const SpendingByCategory = ({
@@ -28,7 +28,7 @@ const SpendingByCategory = ({
         category && colours[category] ? colours[category].background : undefined
       }
       valueFormatter={(value) =>
-        formatCurrency(formatValueInBaseUnits(value), { decimals: 2 })
+        formatCurrency(value, { baseUnits: true, decimals: 2 })
       }
       showAnimation
     />

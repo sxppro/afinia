@@ -1,6 +1,6 @@
 import CategoryIcon from '@/components/category-icon';
 import { Unpacked } from '@/lib/types';
-import { cn, colours, formatCurrency, formatValueInBaseUnits } from '@/lib/ui';
+import { cn, colours, formatCurrency } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
 
 const TransactionsList = async ({
@@ -47,8 +47,9 @@ const TransactionsList = async ({
             </span>
             <p>{description}</p>
             <p className="font-medium ml-auto">
-              {formatCurrency(formatValueInBaseUnits(value_in_base_units), {
+              {formatCurrency(value_in_base_units, {
                 absolute: true,
+                baseUnits: true,
                 decimals: 2,
               })}
             </p>

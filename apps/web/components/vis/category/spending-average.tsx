@@ -2,7 +2,7 @@ import { getStartOfDay } from '@/lib/constants';
 import { getAccount } from '@/lib/db/account';
 import { db } from '@/lib/db/client';
 import { getCategorySpendingByTimestamp } from '@/lib/db/spending';
-import { formatCurrency, formatValueInBaseUnits } from '@/lib/ui';
+import { formatCurrency } from '@/lib/ui';
 import { accountTable } from 'afinia-common/schema';
 import { AccountTypeEnum } from 'afinia-common/types/up-api';
 import {
@@ -47,7 +47,8 @@ const SpendingAverage = async ({ category }: { category: string }) => {
 
     return (
       <p className="text-3xl/tight font-semibold">
-        {formatCurrency(formatValueInBaseUnits(avgMonthlySpending[0].value), {
+        {formatCurrency(avgMonthlySpending[0].value, {
+          baseUnits: true,
           decimals: 2,
         })}
       </p>
