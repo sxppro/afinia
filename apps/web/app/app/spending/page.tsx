@@ -1,10 +1,13 @@
+import CategoryIcon from '@/components/category-icon';
 import CurrencyFlow from '@/components/currency-flow';
 import { Button } from '@/components/ui/button';
 import { CategoryBar } from '@/components/ui/category-bar';
+import { Separator } from '@/components/ui/separator';
+import SpendingByCategory from '@/components/vis/category/spending-by-category';
 import { getStartOfDay } from '@/lib/constants';
 import { getCategorySpending } from '@/lib/db/spending';
 import { siteConfig } from '@/lib/siteConfig';
-import { colours } from '@/lib/ui';
+import { cn, colours, formatCurrency, formatValueInBaseUnits } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
 import { endOfMonth, startOfMonth } from 'date-fns';
 import { lt, sql, sum } from 'drizzle-orm';
@@ -20,7 +23,9 @@ const SpendingPage = async () => {
     select: {
       id: sql<string>`coalesce(${transactionExternalTable.category_parent_id}, 'uncategorised')`,
       name: sql<string>`coalesce(${transactionExternalTable.category_parent}, 'Uncategorised')`,
-      value: sum(transactionExternalTable.value_in_base_units).mapWith(Number),
+      value: sum(transactionExternalTable.value_in_base_units)
+        .mapWith(Number)
+        .as('value'),
     },
     range,
   })
@@ -28,7 +33,30 @@ const SpendingPage = async () => {
       transactionExternalTable.category_parent_id,
       transactionExternalTable.category_parent
     )
-    .having(lt(sum(transactionExternalTable.value_in_base_units), 0));
+    .having(lt(sum(transactionExternalTable.value_in_base_units), 0))
+    .orderBy(sql`value`);
+  const subCategorySpending = (category: string) =>
+    getCategorySpending({
+      select: {
+        href: sql<string>`CONCAT('${sql.raw(
+          siteConfig.baseLinks.spending
+        )}/', ${transactionExternalTable.category_id})`,
+        name: transactionExternalTable.category,
+        value: sql<number>`abs(${sum(
+          transactionExternalTable.value_in_base_units
+        )})`
+          .mapWith(Number)
+          .as('value'),
+      },
+      range,
+      category,
+    })
+      .groupBy(
+        transactionExternalTable.category_id,
+        transactionExternalTable.category
+      )
+      .having(lt(sum(transactionExternalTable.value_in_base_units), 0))
+      .orderBy(sql`value`);
 
   return (
     <div className="flex flex-col gap-4">
@@ -72,6 +100,36 @@ const SpendingPage = async () => {
           showLabels={false}
         />
       </div>
+
+      {spending.map(({ id, name, value }) => (
+        <div className="flex flex-col gap-2" key={id}>
+          <div className="flex items-center gap-2">
+            <div
+              className={cn(
+                'p-2 rounded-lg',
+                colours[id]?.background ?? 'bg-gray-300'
+              )}
+            >
+              <CategoryIcon category={id} className="stroke-white size-4" />
+            </div>
+            <Link href={`${siteConfig.baseLinks.spending}/${id}`}>
+              <p className="text-lg underline underline-offset-4 font-medium">
+                {name}
+              </p>
+            </Link>
+            <p className="text-lg font-bold ml-auto">
+              {formatCurrency(formatValueInBaseUnits(value), {
+                absolute: true,
+              })}
+            </p>
+          </div>
+          <SpendingByCategory
+            category={id}
+            dataFetch={subCategorySpending(id)}
+          />
+          <Separator className="mt-2" />
+        </div>
+      ))}
     </div>
   );
 };

@@ -20,15 +20,13 @@ export const getCategorySpending = <T extends SelectedFields>({
     .from(transactionExternalTable)
     .where(
       and(
-        and(
-          range?.start
-            ? gte(transactionExternalTable.created_at, range.start)
-            : undefined,
-          range?.end
-            ? lte(transactionExternalTable.created_at, range.end)
-            : undefined,
-          isNotNull(transactionExternalTable.category_id)
-        ),
+        range?.start
+          ? gte(transactionExternalTable.created_at, range.start)
+          : undefined,
+        range?.end
+          ? lte(transactionExternalTable.created_at, range.end)
+          : undefined,
+        isNotNull(transactionExternalTable.category_id),
         category
           ? or(
               eq(transactionExternalTable.category_id, category),

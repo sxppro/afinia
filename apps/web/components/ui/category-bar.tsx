@@ -151,21 +151,29 @@ const CategoryBar = React.forwardRef<HTMLDivElement, CategoryBarProps>(
         {showLabels ? <BarLabels values={values} /> : null}
         <div className="relative flex h-full w-full items-center">
           <div className="flex h-full flex-1 items-center gap-0.5 overflow-hidden rounded-full">
-            {values.map((value, index) => {
-              const barColor = colors[index] ?? 'bg-gray-300';
-              const percentage = (value / maxValue) * 100;
-              return (
-                <div
-                  key={`item-${index}`}
-                  className={cx(
-                    'h-full',
-                    barColor,
-                    percentage === 0 && 'hidden'
-                  )}
-                  style={{ width: `${percentage}%` }}
-                />
-              );
-            })}
+            {values.length === 0 ? (
+              <div
+                key={`item-fallback`}
+                className="h-full rounded-full border border-dashed border-gray-300"
+                style={{ width: '100%' }}
+              />
+            ) : (
+              values.map((value, index) => {
+                const barColor = colors[index] ?? 'bg-gray-300';
+                const percentage = (value / maxValue) * 100;
+                return (
+                  <div
+                    key={`item-${index}`}
+                    className={cx(
+                      'h-full',
+                      barColor,
+                      percentage === 0 && 'hidden'
+                    )}
+                    style={{ width: `${percentage}%` }}
+                  />
+                );
+              })
+            )}
           </div>
 
           {marker !== undefined ? (
