@@ -16,7 +16,7 @@ const AppLayout = async ({
 
   return (
     <ViewTransition>
-      <div className="p-3">{children}</div>;
+      <div className="min-h-screen overscroll-none p-3">{children}</div>
     </ViewTransition>
   );
 };

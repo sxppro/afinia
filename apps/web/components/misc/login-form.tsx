@@ -12,13 +12,20 @@ import {
 import { authClient } from '@/lib/auth/client';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn } from '@/lib/ui';
+import { APIError } from 'better-auth';
 
 const LoginForm = ({ className, ...props }: React.ComponentProps<'div'>) => {
   const signInWithGoogle = async () => {
-    await authClient.signIn.social({
-      provider: 'google',
-      callbackURL: siteConfig.baseLinks.appHome,
-    });
+    try {
+      await authClient.signIn.social({
+        provider: 'google',
+        callbackURL: siteConfig.baseLinks.appHome,
+      });
+    } catch (error) {
+      if (error instanceof APIError) {
+        console.error(error.message, error.status);
+      }
+    }
   };
 
   return (
