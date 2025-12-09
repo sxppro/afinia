@@ -3,22 +3,42 @@ import CurrencyFlow from '@/components/currency-flow';
 import { Button } from '@/components/ui/button';
 import { CategoryBar } from '@/components/ui/category-bar';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import SpendingByCategory from '@/components/vis/category/spending-by-category';
+import SpendingByMonth from '@/components/vis/category/spending-by-month';
 import { getStartOfDay } from '@/lib/constants';
-import { getCategorySpending } from '@/lib/db/spending';
+import {
+  getCategorySpending,
+  getCategorySpendingByTimestamp,
+} from '@/lib/db/spending';
 import { siteConfig } from '@/lib/siteConfig';
-import { cn, colours, formatCurrency, formatValueInBaseUnits } from '@/lib/ui';
+import { cn, colours, formatCurrency } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
-import { endOfMonth, startOfMonth } from 'date-fns';
+import { endOfMonth, startOfMonth, subMonths } from 'date-fns';
 import { lt, sql, sum } from 'drizzle-orm';
-import { ArrowLeft, Ellipsis } from 'lucide-react';
+import { ArrowLeft, ChartColumn, Ellipsis, List } from 'lucide-react';
 import Link from 'next/link';
+import { Suspense } from 'react';
 
-const SpendingPage = async () => {
+const SpendingPage = async ({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) => {
+  const params = await searchParams;
+  const isChartView = 'view' in params && params.view === 'chart';
+  // This month
   const range = {
     start: startOfMonth(getStartOfDay()),
     end: endOfMonth(getStartOfDay()),
   };
+  // Last 12 months
+  const chartRange = {
+    start: startOfMonth(subMonths(getStartOfDay(), 11)),
+    end: endOfMonth(getStartOfDay()),
+  };
+
+  // Data fetching
   const spending = await getCategorySpending({
     select: {
       id: sql<string>`coalesce(${transactionExternalTable.category_parent_id}, 'uncategorised')`,
@@ -35,7 +55,7 @@ const SpendingPage = async () => {
     )
     .having(lt(sum(transactionExternalTable.value_in_base_units), 0))
     .orderBy(sql`value`);
-  const subCategorySpending = (category: string) =>
+  const subCategorySpendingQuery = (category: string) =>
     getCategorySpending({
       select: {
         href: sql<string>`CONCAT('${sql.raw(
@@ -57,6 +77,12 @@ const SpendingPage = async () => {
       )
       .having(lt(sum(transactionExternalTable.value_in_base_units), 0))
       .orderBy(sql`value`);
+  const monthlySpendingQuery = (category: string) =>
+    getCategorySpendingByTimestamp({
+      category,
+      interval: 'month',
+      range: chartRange,
+    });
 
   return (
     <div className="flex flex-col gap-4">
@@ -83,11 +109,27 @@ const SpendingPage = async () => {
 
       <div>
         <p className="text-muted-foreground text-lg font-medium">This month</p>
-        {/* <CurrencyFlow /> */}
-        <CurrencyFlow
-          className="text-4xl/tight font-semibold"
-          value={spending.reduce((acc, curr) => acc + curr.value, 0)}
-        />
+        <div className="flex items-stretch justify-between">
+          <CurrencyFlow
+            className="text-4xl/tight font-semibold"
+            value={spending.reduce((acc, curr) => acc + curr.value, 0)}
+          />
+          <Button variant="outline" className="size-12 rounded-full" asChild>
+            <Link
+              href={
+                isChartView
+                  ? siteConfig.baseLinks.spending
+                  : `${siteConfig.baseLinks.spending}?view=chart`
+              }
+            >
+              {isChartView ? (
+                <List className="size-6" />
+              ) : (
+                <ChartColumn className="size-6" />
+              )}
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div>
@@ -117,16 +159,28 @@ const SpendingPage = async () => {
                 {name}
               </p>
             </Link>
-            <p className="text-lg font-bold ml-auto">
-              {formatCurrency(formatValueInBaseUnits(value), {
+            <p className="text-xl font-bold ml-auto">
+              {formatCurrency(value, {
                 absolute: true,
+                baseUnits: true,
               })}
             </p>
           </div>
-          <SpendingByCategory
-            category={id}
-            dataFetch={subCategorySpending(id)}
-          />
+          {isChartView ? (
+            <Suspense>
+              <SpendingByMonth
+                category={id}
+                dataFetch={monthlySpendingQuery(id)}
+              />
+            </Suspense>
+          ) : (
+            <Suspense fallback={<Skeleton className="h-24 w-full" />}>
+              <SpendingByCategory
+                category={id}
+                dataFetch={subCategorySpendingQuery(id)}
+              />
+            </Suspense>
+          )}
           <Separator className="mt-2" />
         </div>
       ))}

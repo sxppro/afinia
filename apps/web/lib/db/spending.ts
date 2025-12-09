@@ -48,9 +48,12 @@ export const getCategorySpendingByTimestamp = ({
   const { start, end } = range;
   const formattedStart = format(start, 'yyyy-MM-dd');
   const formattedEnd = format(end, 'yyyy-MM-dd');
+  const timestampFormat = interval === 'month' ? 'Mon YYYY' : 'DD Mon';
   return db
     .select({
-      timestamp: sql<string>`to_char(time_series.interval_start AT TIME ZONE ${TZ}, 'DD Mon')`,
+      timestamp: sql<string>`to_char(time_series.interval_start AT TIME ZONE ${TZ}, '${sql.raw(
+        timestampFormat
+      )}')`,
       value: sql<number | null>`
       CASE 
         WHEN time_series.interval_start > NOW() THEN NULL
