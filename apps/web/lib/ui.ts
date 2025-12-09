@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { now } from './constants';
 
 export const colours: {
   [key: string]: Record<'background' | 'stroke' | 'fill' | 'text', string>;
@@ -84,3 +85,30 @@ export const formatCurrency = (
     .format(value)
     .toString();
 };
+
+/**
+ * Simple greeting based on time of day
+ * @returns
+ */
+export const getGreeting = () => {
+  const time = now();
+  const hour = time.getHours();
+
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
+};
+
+/**
+ * Extracts first 2 initials
+ * @param string
+ * @returns undefined if no string
+ */
+export const getInitials = (string: string | null | undefined) =>
+  string
+    ? string
+        .split(' ')
+        .map((substr) => substr.at(0))
+        .slice(0, 2)
+        .join('')
+    : undefined;
