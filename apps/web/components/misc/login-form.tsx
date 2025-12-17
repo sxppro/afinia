@@ -20,6 +20,7 @@ const LoginForm = ({ className, ...props }: React.ComponentProps<'div'>) => {
       await authClient.signIn.social({
         provider: 'google',
         callbackURL: siteConfig.baseLinks.appHome,
+        errorCallbackURL: siteConfig.baseLinks.loginError,
       });
     } catch (error) {
       if (error instanceof APIError) {

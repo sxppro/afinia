@@ -6,6 +6,7 @@ export const siteConfig = {
   baseLinks: {
     home: '/',
     login: '/login',
+    loginError: '/login/error',
     appHome: '/app',
     spending: '/app/spending',
     transactions: '/app/transactions',

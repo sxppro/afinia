@@ -1,6 +1,7 @@
 import { authSchema } from 'afinia-common/schema';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { createAuthMiddleware } from 'better-auth/api';
 import { db } from '../db/client';
 import { siteConfig } from '../siteConfig';
 
@@ -11,6 +12,14 @@ export const auth = betterAuth({
     provider: 'pg',
     schema: authSchema,
   }),
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path === '/error') {
+        throw ctx.redirect(siteConfig.baseLinks.loginError);
+      }
+      return ctx;
+    }),
+  },
   databaseHooks: {
     user: {
       create: {
