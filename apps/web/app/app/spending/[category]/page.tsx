@@ -1,4 +1,5 @@
 import CategoryIcon from '@/components/category-icon';
+import SearchInput from '@/components/misc/search-input';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,6 +15,7 @@ import {
   getCategorySpending,
   getCategorySpendingByTimestamp,
 } from '@/lib/db/spending';
+import { getTransactionsBySearchQuery } from '@/lib/db/transaction';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
@@ -26,11 +28,14 @@ import { Suspense } from 'react';
 
 const CategorySpendingPage = async ({
   params,
+  searchParams,
 }: {
   params: Promise<{ category: string }>;
+  searchParams: Promise<{ query?: string }>;
 }) => {
   const TRANSACTIONS_PER_PAGE = 6;
   const { category: categoryId } = await params;
+  const { query } = await searchParams;
 
   if (!categoryId) {
     return redirect(siteConfig.baseLinks.appHome);
@@ -76,17 +81,22 @@ const CategorySpendingPage = async ({
         )
         .having(lt(sum(transactionExternalTable.value_in_base_units), 0))
         .orderBy(sql`value`);
-  const transactionsFetch = db
-    .select()
-    .from(transactionExternalTable)
-    .where(
-      or(
-        eq(transactionExternalTable.category_id, category.category_id),
-        eq(transactionExternalTable.category_parent_id, category.category_id)
-      )
-    )
-    .limit(TRANSACTIONS_PER_PAGE)
-    .orderBy(desc(transactionExternalTable.created_at));
+  const transactionsFetch = query
+    ? getTransactionsBySearchQuery(query).limit(TRANSACTIONS_PER_PAGE)
+    : db
+        .select()
+        .from(transactionExternalTable)
+        .where(
+          or(
+            eq(transactionExternalTable.category_id, category.category_id),
+            eq(
+              transactionExternalTable.category_parent_id,
+              category.category_id
+            )
+          )
+        )
+        .limit(TRANSACTIONS_PER_PAGE)
+        .orderBy(desc(transactionExternalTable.created_at));
 
   return (
     <div className="flex flex-col gap-4">
@@ -160,6 +170,7 @@ const CategorySpendingPage = async ({
       )}
       <Separator />
       <div className="flex flex-col gap-2">
+        <SearchInput placeholder="Search transactions ..." />
         <h2 className="text-xl font-semibold">Transactions</h2>
         <Suspense
           fallback={
