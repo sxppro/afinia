@@ -2,6 +2,7 @@ import { and, eq, getTableColumns, isNull, sql } from 'drizzle-orm';
 import {
   alias,
   boolean,
+  customType,
   foreignKey,
   index,
   integer,
@@ -35,6 +36,15 @@ export const accountOwnershipTypeEnum = pgEnum(
   'account_ownership_type',
   OwnershipTypeEnum
 );
+
+/**
+ * Column types
+ */
+export const tsvector = customType<{ data: string }>({
+  dataType() {
+    return 'tsvector';
+  },
+});
 
 /**
  * Tables
@@ -76,6 +86,7 @@ export const categoryTable = schema
         foreignColumns: [table.category_id],
         name: 'category_parent_category_fk',
       }),
+      index('category_parent_id_index').on(table.category_parent_id),
     ]
   )
   .enableRLS();
@@ -93,14 +104,23 @@ export const transactionTable = schema
       transaction_id: integer().primaryKey().generatedAlwaysAsIdentity(),
       // Transaction ID from provider
       provider_id: uuid().unique().notNull(),
-      type: text(),
-      status: transactionStatusEnum().notNull(),
-      // Optional attachment ID from provider
-      attachment_id: uuid(),
+      /**
+       * Text
+       */
       raw_text: text(),
       description: text(),
       message: text(),
       note: text(),
+      text_search: tsvector().generatedAlwaysAs(
+        sql`to_tsvector('english', coalesce(description, '') || ' ' || coalesce(raw_text, '') || ' ' || coalesce(message, '') || ' ' || coalesce(note, ''))`
+      ),
+      /**
+       * Metadata
+       */
+      type: text(),
+      status: transactionStatusEnum().notNull(),
+      // Optional attachment ID from provider
+      attachment_id: uuid(),
       card_purchase_method: text(),
       card_number_suffix: text(),
       customer_display_name: text(),
@@ -149,6 +169,7 @@ export const transactionTable = schema
       index('transaction_account_id_index').on(table.account_id),
       index('transaction_category_id_index').on(table.category_id),
       index('transaction_created_at_index').on(table.created_at),
+      index('transaction_text_search_index').using('gin', table.text_search),
     ]
   )
   .enableRLS();
