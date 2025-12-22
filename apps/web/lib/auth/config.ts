@@ -7,7 +7,7 @@ import { siteConfig } from '../siteConfig';
 
 export const auth = betterAuth({
   appName: siteConfig.name,
-  baseURL: process.env.AUTH_URL,
+  baseURL: process.env.BASE_URL || `https://${process.env.VERCEL_URL}`,
   database: drizzleAdapter(db, {
     provider: 'pg',
     schema: authSchema,
@@ -44,5 +44,8 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     },
   },
-  trustedOrigins: [process.env.AUTH_URL || '', 'http://localhost:3000'],
+  trustedOrigins: [
+    process.env.BASE_URL || `https://${process.env.VERCEL_URL}`,
+    'http://localhost:3000',
+  ],
 });
