@@ -12,8 +12,8 @@ if (
 webpush.setVapidDetails(
   process.env.BASE_URL
     ? `${process.env.BASE_URL}/contact`
-    : process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}/contact`
+    : process.env.VERCEL_BRANCH_URL
+    ? `https://${process.env.VERCEL_BRANCH_URL}/contact`
     : 'https://localhost:3000/contact',
   process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
   process.env.VAPID_PRIVATE_KEY
