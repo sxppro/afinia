@@ -103,8 +103,9 @@ export const sendNotification = async (message: string) => {
             },
             JSON.stringify({
               title: 'Afinia',
-              body: message || 'Hehe',
+              body: message || 'Hello from Afinia 👋',
               icon: '/icon-256x256@1x.png',
+              url: '/app',
             })
           );
         } catch (error: any) {
