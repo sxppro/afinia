@@ -2,7 +2,7 @@
 
 import { notificationTable } from 'afinia-common/schema';
 import { and, eq } from 'drizzle-orm';
-import webpush from 'web-push';
+import webpush, { WebPushError } from 'web-push';
 import { getServerSession } from '../auth/session';
 import { db } from '../db/client';
 
@@ -29,15 +29,25 @@ export const subscribeUser = async (sub: PushSubscriptionJSON) => {
 
     const { endpoint, keys } = sub;
     if (session?.user.id && endpoint && keys?.p256dh && keys?.auth) {
-      await db.insert(notificationTable).values({
-        user_id: session.user.id,
-        endpoint,
-        p256dh: keys.p256dh,
-        auth: keys.auth,
-        notify_new_merchant: true,
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
+      await db
+        .insert(notificationTable)
+        .values({
+          user_id: session.user.id,
+          endpoint,
+          p256dh: keys.p256dh,
+          auth: keys.auth,
+          notify_new_merchant: true,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: notificationTable.endpoint,
+          set: {
+            p256dh: keys.p256dh,
+            auth: keys.auth,
+            updated_at: new Date(),
+          },
+        });
       return { success: true };
     }
     return { success: false };
@@ -82,20 +92,35 @@ export const sendNotification = async (message: string) => {
         .from(notificationTable)
         .where(eq(notificationTable.user_id, session.user.id));
       for (const sub of subscriptions) {
-        await webpush.sendNotification(
-          {
-            endpoint: sub.endpoint,
-            keys: {
-              p256dh: sub.p256dh,
-              auth: sub.auth,
+        try {
+          await webpush.sendNotification(
+            {
+              endpoint: sub.endpoint,
+              keys: {
+                p256dh: sub.p256dh,
+                auth: sub.auth,
+              },
             },
-          },
-          JSON.stringify({
-            title: 'Afinia',
-            body: message || 'Hehe',
-            icon: '/icon-256x256@1x.png',
-          })
-        );
+            JSON.stringify({
+              title: 'Afinia',
+              body: message || 'Hehe',
+              icon: '/icon-256x256@1x.png',
+            })
+          );
+        } catch (error: any) {
+          if (error instanceof WebPushError) {
+            if (error.statusCode === 410) {
+              // Subscription is no longer valid
+              const { success } = await unsubscribeUser(sub.endpoint);
+              console.info(
+                `Attempting to unsubscribe invalid subscription: ${
+                  success ? 'success' : 'failed'
+                }`
+              );
+            }
+          }
+          console.error('Error sending notification: ', error);
+        }
       }
       return { success: true };
     }
