@@ -1,6 +1,10 @@
 'use server';
 
+import { notificationTable } from 'afinia-common/schema';
+import { and, eq } from 'drizzle-orm';
 import webpush from 'web-push';
+import { getServerSession } from '../auth/session';
+import { db } from '../db/client';
 
 if (
   !process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
@@ -19,39 +23,85 @@ webpush.setVapidDetails(
   process.env.VAPID_PRIVATE_KEY
 );
 
-let subscription: PushSubscriptionJSON | null = null;
-
 export const subscribeUser = async (sub: PushSubscriptionJSON) => {
-  subscription = sub;
-  console.log('User subscribed to push notifications: ', subscription);
-  return { success: true };
+  try {
+    const session = await getServerSession();
+
+    const { endpoint, keys } = sub;
+    if (session?.user.id && endpoint && keys?.p256dh && keys?.auth) {
+      await db.insert(notificationTable).values({
+        user_id: session.user.id,
+        endpoint,
+        p256dh: keys.p256dh,
+        auth: keys.auth,
+        notify_new_merchant: true,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+      return { success: true };
+    }
+    return { success: false };
+  } catch (error) {
+    console.error('Error subscribing user to push notifications: ', error);
+    return { success: false };
+  }
 };
 
-export const unsubscribeUser = async () => {
-  subscription = null;
-  console.log('User unsubscribed from push notifications');
-  return { success: true };
+export const unsubscribeUser = async (endpoint: string) => {
+  try {
+    const session = await getServerSession();
+
+    if (session?.user.id) {
+      const deleted = await db
+        .delete(notificationTable)
+        .where(
+          and(
+            eq(notificationTable.endpoint, endpoint),
+            eq(notificationTable.user_id, session.user.id)
+          )
+        )
+        .returning();
+      if (deleted.length > 0) {
+        return { success: true };
+      }
+    }
+    return { success: false };
+  } catch (error) {
+    console.error('Error unsubscribing user from push notifications: ', error);
+    return { success: false };
+  }
 };
 
 export const sendNotification = async (message: string) => {
-  if (!subscription) {
-    throw new Error('No web push subscription found.');
-  }
-  console.log(subscription);
-
   try {
-    if (subscription?.endpoint) {
-      await webpush.sendNotification(
-        subscription as webpush.PushSubscription,
-        JSON.stringify({
-          title: 'Afinia',
-          body: message || 'Hehe',
-          icon: '/icon-256x256@1x.png',
-        })
-      );
+    const session = await getServerSession();
+
+    if (session?.user.id) {
+      const subscriptions = await db
+        .select()
+        .from(notificationTable)
+        .where(eq(notificationTable.user_id, session.user.id));
+      for (const sub of subscriptions) {
+        await webpush.sendNotification(
+          {
+            endpoint: sub.endpoint,
+            keys: {
+              p256dh: sub.p256dh,
+              auth: sub.auth,
+            },
+          },
+          JSON.stringify({
+            title: 'Afinia',
+            body: message || 'Hehe',
+            icon: '/icon-256x256@1x.png',
+          })
+        );
+      }
+      return { success: true };
     }
+    return { success: false };
   } catch (error) {
     console.error('Failed to send web push notification: ', error);
-    return { success: false, error: 'Failed to send notification' };
+    return { success: false };
   }
 };

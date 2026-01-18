@@ -56,17 +56,26 @@ const UserSettings = (props: DialogProps) => {
         process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
       ),
     });
-    setSubscription(sub);
     const serialisedSub = sub.toJSON();
     const { success } = await subscribeUser(serialisedSub);
-    console.log('Subscribe result: ', success);
+    if (!success) {
+      console.error('Failed to subscribe to push notifications.');
+      return;
+    }
+    setSubscription(sub);
   };
 
   const unsubscribeFromPush = async () => {
-    await subscription?.unsubscribe();
+    const res = await subscription?.unsubscribe();
+    const serialisedSub = subscription?.toJSON();
+    if (serialisedSub?.endpoint) {
+      const { success } = await unsubscribeUser(serialisedSub?.endpoint);
+      if (!res || !success) {
+        console.error('Failed to unsubscribe from push notifications.');
+        return;
+      }
+    }
     setSubscription(null);
-    const { success } = await unsubscribeUser();
-    console.log('Unsubscribe result: ', success);
   };
 
   const sendTestNotification = async () => {
