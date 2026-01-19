@@ -7,6 +7,7 @@ import { notify } from '../utils/notify';
 import { processAccounts } from './processAccounts';
 import { processTags } from './processTags';
 import { processTransaction } from './processTransactions';
+import { sendPushNotifications } from './sendPushNotifications';
 
 const PROCESS_NAME = 'processWebhookEvent';
 
@@ -95,6 +96,11 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
           relationships?.transaction?.links?.related,
           'insert'
         );
+
+        /**
+         * Push notifications
+         */
+        await sendPushNotifications(data.id);
       } else if (eventType === WebhookEventTypeEnum.TRANSACTION_DELETED) {
         await processTransaction(
           relationships?.transaction?.links?.related,

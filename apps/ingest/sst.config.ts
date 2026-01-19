@@ -11,11 +11,14 @@ export default $config({
   },
   async run() {
     const secrets = {
+      baseUrl: new sst.Secret('BASE_URL'),
       upApiKey: new sst.Secret('UP_API_KEY'),
       upWebhookSecret: new sst.Secret('UP_WEBHOOK_SECRET'),
       databaseUrl: new sst.Secret('DATABASE_URL'),
       discordWebhookUrl: new sst.Secret('DISCORD_WEBHOOK_URL'),
       discordUserId: new sst.Secret('DISCORD_USER_ID'),
+      vapidPrivateKey: new sst.Secret('VAPID_PRIVATE_KEY'),
+      vapidPublicKey: new sst.Secret('VAPID_PUBLIC_KEY'),
     };
     const allSecrets = Object.values(secrets);
 
