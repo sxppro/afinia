@@ -24,6 +24,31 @@ webpush.setVapidDetails(
   Resource.VAPID_PRIVATE_KEY.value
 );
 
+export const sendTestPushNotification = async () => {
+  const subscriptions = await db.select().from(notificationTable);
+  for (const sub of subscriptions) {
+    try {
+      await webpush.sendNotification(
+        {
+          endpoint: sub.endpoint,
+          keys: {
+            p256dh: sub.p256dh,
+            auth: sub.auth,
+          },
+        },
+        JSON.stringify({
+          title: 'Afinia',
+          body: 'Hello from Afinia 👋',
+          icon: '/icon-256x256@1x.png',
+          url: '/app',
+        })
+      );
+    } catch (error) {
+      console.error('Error sending test push notification: ', error);
+    }
+  }
+};
+
 export const sendPushNotifications = async (transactionId: string) => {
   // Fetch transaction data
   const transaction = await db
