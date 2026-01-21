@@ -17,8 +17,8 @@ webpush.setVapidDetails(
   process.env.BASE_URL
     ? `${process.env.BASE_URL}/contact`
     : process.env.VERCEL_BRANCH_URL
-    ? `https://${process.env.VERCEL_BRANCH_URL}/contact`
-    : 'https://localhost:3000/contact',
+      ? `https://${process.env.VERCEL_BRANCH_URL}/contact`
+      : 'https://localhost:3000/contact',
   process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
   process.env.VAPID_PRIVATE_KEY
 );
@@ -82,7 +82,7 @@ export const unsubscribeUser = async (endpoint: string) => {
   }
 };
 
-export const sendNotification = async (message: string) => {
+export const sendNotification = async (message?: string) => {
   try {
     const session = await getServerSession();
 

@@ -29,7 +29,6 @@ const UserSettings = (props: DialogProps) => {
   const [subscription, setSubscription] = useState<PushSubscription | null>(
     null
   );
-  const [message, setMessage] = useState('');
 
   const registerServiceWorker = async () => {
     const registration = await navigator.serviceWorker.register('/sw.js', {
@@ -80,8 +79,7 @@ const UserSettings = (props: DialogProps) => {
 
   const sendTestNotification = async () => {
     if (subscription) {
-      await sendNotification(message);
-      setMessage('');
+      await sendNotification();
     }
   };
 
