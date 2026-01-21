@@ -108,7 +108,7 @@ export const sendNotification = async (message?: string) => {
               url: '/app',
             })
           );
-        } catch (error: any) {
+        } catch (error: unknown) {
           if (error instanceof WebPushError) {
             if (error.statusCode === 410) {
               // Subscription is no longer valid

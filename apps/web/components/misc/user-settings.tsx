@@ -65,10 +65,10 @@ const UserSettings = (props: DialogProps) => {
   };
 
   const unsubscribeFromPush = async () => {
-    const res = await subscription?.unsubscribe();
     const serialisedSub = subscription?.toJSON();
     if (serialisedSub?.endpoint) {
       const { success } = await unsubscribeUser(serialisedSub?.endpoint);
+      const res = await subscription?.unsubscribe();
       if (!res || !success) {
         console.error('Failed to unsubscribe from push notifications.');
         return;
