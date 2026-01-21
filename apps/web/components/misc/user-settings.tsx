@@ -6,6 +6,7 @@ import {
 import { urlBase64ToUint8Array } from '@/lib/ui';
 import { DialogProps } from '@radix-ui/react-dialog';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import {
   Dialog,
@@ -58,7 +59,7 @@ const UserSettings = (props: DialogProps) => {
     const serialisedSub = sub.toJSON();
     const { success } = await subscribeUser(serialisedSub);
     if (!success) {
-      console.error('Failed to subscribe to push notifications.');
+      toast.error('Failed to enable push notifications');
       return;
     }
     setSubscription(sub);
@@ -70,7 +71,7 @@ const UserSettings = (props: DialogProps) => {
       const { success } = await unsubscribeUser(serialisedSub?.endpoint);
       const res = await subscription?.unsubscribe();
       if (!res || !success) {
-        console.error('Failed to unsubscribe from push notifications.');
+        toast.error('Failed to disable push notifications');
         return;
       }
     }
