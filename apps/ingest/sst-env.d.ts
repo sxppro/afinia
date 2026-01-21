@@ -9,6 +9,10 @@ declare module "sst" {
       "type": "sst.aws.ApiGatewayV1"
       "url": string
     }
+    "BASE_URL": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "DATABASE_URL": {
       "type": "sst.sst.Secret"
       "value": string
@@ -26,6 +30,14 @@ declare module "sst" {
       "value": string
     }
     "UP_WEBHOOK_SECRET": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "VAPID_PRIVATE_KEY": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "VAPID_PUBLIC_KEY": {
       "type": "sst.sst.Secret"
       "value": string
     }

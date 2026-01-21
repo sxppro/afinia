@@ -7,6 +7,10 @@ import { notify } from '../utils/notify';
 import { processAccounts } from './processAccounts';
 import { processTags } from './processTags';
 import { processTransaction } from './processTransactions';
+import {
+  sendPushNotifications,
+  sendTestPushNotification,
+} from './sendPushNotifications';
 
 const PROCESS_NAME = 'processWebhookEvent';
 
@@ -69,6 +73,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     const { eventType } = attributes;
 
     if (eventType === WebhookEventTypeEnum.PING) {
+      await sendTestPushNotification();
       return {
         statusCode: 200,
         body: JSON.stringify({ message: 'Pong 👋' }),
@@ -95,6 +100,11 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
           relationships?.transaction?.links?.related,
           'insert'
         );
+
+        /**
+         * Push notifications
+         */
+        await sendPushNotifications(data.id);
       } else if (eventType === WebhookEventTypeEnum.TRANSACTION_DELETED) {
         await processTransaction(
           relationships?.transaction?.links?.related,

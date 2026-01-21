@@ -18,6 +18,7 @@ import {
   OwnershipTypeEnum,
   TransactionStatusEnum,
 } from '../../types/up-api';
+import { user } from './auth';
 
 /**
  * Schema
@@ -87,6 +88,32 @@ export const categoryTable = schema
         name: 'category_parent_category_fk',
       }),
       index('category_parent_id_index').on(table.category_parent_id),
+    ]
+  )
+  .enableRLS();
+
+export const notificationTable = schema
+  .table(
+    'notification',
+    {
+      id: uuid().primaryKey().defaultRandom(),
+      user_id: text().notNull(),
+      endpoint: text().notNull().unique(), // Unique per device/browser
+      p256dh: text().notNull(),
+      auth: text().notNull(),
+      // Preferences
+      notify_new_merchant: boolean().notNull(),
+      // Metadata
+      created_at: timestamp({ withTimezone: true }).notNull(),
+      updated_at: timestamp({ withTimezone: true }).notNull(),
+      expires_at: timestamp({ withTimezone: true }),
+    },
+    (table) => [
+      foreignKey({
+        columns: [table.user_id],
+        foreignColumns: [user.id],
+        name: 'notification_user_fk',
+      }),
     ]
   )
   .enableRLS();

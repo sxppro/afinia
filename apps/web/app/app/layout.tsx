@@ -1,3 +1,4 @@
+import { Toaster } from '@/components/ui/sonner';
 import { getServerSession } from '@/lib/auth/session';
 import { siteConfig } from '@/lib/siteConfig';
 import { redirect } from 'next/navigation';
@@ -17,6 +18,7 @@ const AppLayout = async ({
   return (
     <ViewTransition>
       <div className="min-h-screen overscroll-none p-3">{children}</div>
+      <Toaster />
     </ViewTransition>
   );
 };

@@ -15,7 +15,6 @@ const SearchInput = ({ placeholder }: { placeholder?: string }) => {
     () =>
       debounce((term: string) => {
         const params = new URLSearchParams(searchParams);
-        console.log(term, params.toString());
         if (term) {
           params.set('query', term);
         } else {
