@@ -131,3 +131,31 @@ export const sendNotification = async (message?: string) => {
     return { success: false };
   }
 };
+
+/**
+ * Checks if subscription exists server-side
+ * @param endpoint
+ * @returns
+ */
+export const checkSubscription = async (endpoint: string) => {
+  try {
+    const session = await getServerSession();
+
+    if (session?.user.id) {
+      const result = await db
+        .select()
+        .from(notificationTable)
+        .where(
+          and(
+            eq(notificationTable.endpoint, endpoint),
+            eq(notificationTable.user_id, session.user.id)
+          )
+        );
+      return result.length === 1;
+    }
+    return false;
+  } catch (error) {
+    console.error('Error checking push notification subscription: ', error);
+    return false;
+  }
+};

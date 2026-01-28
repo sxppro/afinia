@@ -1,4 +1,5 @@
 import {
+  checkSubscription,
   sendNotification,
   subscribeUser,
   unsubscribeUser,
@@ -37,6 +38,20 @@ const UserSettings = (props: DialogProps) => {
       updateViaCache: 'none',
     });
     const sub = await registration.pushManager.getSubscription();
+
+    if (sub) {
+      const serialisedSub = sub.toJSON();
+      const exists = serialisedSub.endpoint
+        ? await checkSubscription(serialisedSub.endpoint)
+        : false;
+      // Clean up invalid subscription
+      if (!exists) {
+        await sub.unsubscribe();
+        setSubscription(null);
+        return;
+      }
+    }
+
     setSubscription(sub);
   };
 

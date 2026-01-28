@@ -6,7 +6,7 @@ import {
 } from 'afinia-common/schema';
 import { count, eq } from 'drizzle-orm';
 import { Resource } from 'sst';
-import webpush from 'web-push';
+import webpush, { WebPushError } from 'web-push';
 
 if (
   !Resource.VAPID_PRIVATE_KEY.value ||
@@ -93,7 +93,21 @@ export const sendPushNotifications = async (transactionId: string) => {
               url: '/app',
             })
           );
-        } catch (error) {
+        } catch (error: unknown) {
+          if (error instanceof WebPushError) {
+            if (error.statusCode === 410) {
+              try {
+                await db
+                  .delete(notificationTable)
+                  .where(eq(notificationTable.endpoint, sub.endpoint));
+              } catch (deleteError: unknown) {
+                console.error(
+                  'Error deleting expired push subscription: ',
+                  deleteError
+                );
+              }
+            }
+          }
           console.error('Error sending push notification: ', error);
         }
       }
