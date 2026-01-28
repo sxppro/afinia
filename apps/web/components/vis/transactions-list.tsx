@@ -2,6 +2,7 @@ import CategoryIcon from '@/components/category-icon';
 import { Unpacked } from '@/lib/types';
 import { cn, colours, formatCurrency } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
+import { format, isThisYear } from 'date-fns';
 
 const TransactionsList = async ({
   dataFetch,
@@ -24,14 +25,25 @@ const TransactionsList = async ({
     return description?.charAt(0).toUpperCase();
   };
 
+  if (transactions.length === 0) {
+    return (
+      <p className="w-full p-4 rounded border border-dashed text-center text-sm text-muted-foreground">
+        No data
+      </p>
+    );
+  }
+
   return (
     <>
       {transactions.map(
         ({
           transaction_id,
           description,
+          card_number_suffix,
           category_id,
           category_parent_id,
+          created_at,
+          type,
           value_in_base_units,
         }) => (
           <div className="flex items-center gap-2" key={transaction_id}>
@@ -45,14 +57,32 @@ const TransactionsList = async ({
             >
               {showCategoryIcon({ category_id, description })}
             </span>
-            <p>{description}</p>
-            <p className="font-medium ml-auto">
-              {formatCurrency(value_in_base_units, {
-                absolute: true,
-                baseUnits: true,
-                decimals: 2,
-              })}
-            </p>
+            <div className="flex flex-col flex-1">
+              <div className="flex gap-2">
+                <p className="font-medium">{description}</p>
+                <p className="font-medium ml-auto">
+                  {formatCurrency(value_in_base_units, {
+                    absolute: true,
+                    baseUnits: true,
+                    decimals: 2,
+                  })}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <p className="font-medium text-muted-foreground">
+                  {isThisYear(created_at)
+                    ? format(created_at, 'dd MMM')
+                    : format(created_at, 'dd MMM, yyyy')}
+                </p>
+                <p className="font-medium text-muted-foreground ml-auto">
+                  {type
+                    ? type
+                    : card_number_suffix
+                      ? `Card ···· ${card_number_suffix}`
+                      : ''}
+                </p>
+              </div>
+            </div>
           </div>
         )
       )}
