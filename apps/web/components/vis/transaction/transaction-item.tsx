@@ -55,8 +55,8 @@ const TransactionItem = ({
         <div className="flex gap-2">
           <p className="font-medium text-muted-foreground">
             {isThisYear(created_at)
-              ? format(created_at, 'dd MMM')
-              : format(created_at, 'dd MMM, yyyy')}
+              ? format(created_at, 'd MMM')
+              : format(created_at, 'd MMM, yyyy')}
           </p>
           <p className="font-medium text-muted-foreground ml-auto">
             {type
