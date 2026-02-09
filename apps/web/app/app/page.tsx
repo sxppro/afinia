@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import TransactionsList from '@/components/vis/transactions-list';
+import TransactionList from '@/components/vis/transaction/transaction-list';
 import { getServerSession } from '@/lib/auth/session';
 import { getAccountBalance } from '@/lib/db/account';
 import { db } from '@/lib/db/client';
@@ -83,7 +83,7 @@ const AppHome = async () => {
             </>
           }
         >
-          <TransactionsList dataFetch={transactions} />
+          <TransactionList dataFetch={transactions} />
         </Suspense>
       </div>
     </div>

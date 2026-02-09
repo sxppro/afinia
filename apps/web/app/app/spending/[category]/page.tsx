@@ -7,7 +7,7 @@ import SpendingAverage from '@/components/vis/category/spending-average';
 import SpendingByCategory from '@/components/vis/category/spending-by-category';
 import SpendingByDay from '@/components/vis/category/spending-by-day';
 import SpendingTotal from '@/components/vis/category/spending-total';
-import TransactionsList from '@/components/vis/transactions-list';
+import TransactionList from '@/components/vis/transaction/transaction-list';
 import { getStartOfDay } from '@/lib/constants';
 import { getCategoryById } from '@/lib/db/category';
 import { db } from '@/lib/db/client';
@@ -63,11 +63,11 @@ const CategorySpendingPage = async ({
     : getCategorySpending({
         select: {
           href: sql<string>`CONCAT('${sql.raw(
-            siteConfig.baseLinks.spending
+            siteConfig.baseLinks.spending,
           )}/', ${transactionExternalTable.category_id})`,
           name: transactionExternalTable.category,
           value: sql<number>`abs(${sum(
-            transactionExternalTable.value_in_base_units
+            transactionExternalTable.value_in_base_units,
           )})`
             .mapWith(Number)
             .as('value'),
@@ -77,7 +77,7 @@ const CategorySpendingPage = async ({
       })
         .groupBy(
           transactionExternalTable.category_id,
-          transactionExternalTable.category
+          transactionExternalTable.category,
         )
         .having(lt(sum(transactionExternalTable.value_in_base_units), 0))
         .orderBy(sql`value`);
@@ -91,9 +91,9 @@ const CategorySpendingPage = async ({
             eq(transactionExternalTable.category_id, category.category_id),
             eq(
               transactionExternalTable.category_parent_id,
-              category.category_id
-            )
-          )
+              category.category_id,
+            ),
+          ),
         )
         .limit(TRANSACTIONS_PER_PAGE)
         .orderBy(desc(transactionExternalTable.created_at));
@@ -123,7 +123,7 @@ const CategorySpendingPage = async ({
             category_parent?.category_id
               ? colours[category_parent.category_id].background
               : colours[category.category_id].background ||
-                  'bg-up-uncategorised'
+                  'bg-up-uncategorised',
           )}
         >
           <CategoryIcon category={category.category_id} className="size-8" />
@@ -181,7 +181,7 @@ const CategorySpendingPage = async ({
             </>
           }
         >
-          <TransactionsList dataFetch={transactionsFetch} />
+          <TransactionList dataFetch={transactionsFetch} />
         </Suspense>
       </div>
     </div>
