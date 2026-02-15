@@ -35,7 +35,11 @@ const updateTransaction = async (
 };
 
 const syncCategorisedTransactions = async () => {
-  const { data } = await upClient.GET('/categories');
+  const { data, error } = await upClient.GET('/categories');
+  if (error) {
+    notify(ALERT_LEVEL.WARN, `[Up] Failed to fetch categories: ${error}`);
+    return;
+  }
   if (!data || !data.data.length) {
     return;
   }
@@ -69,13 +73,20 @@ const syncCategorisedTransactions = async () => {
         }
 
         // Retrieve transactions by category from provider
-        const { data } = await upClient.GET('/transactions', {
+        const { data, error } = await upClient.GET('/transactions', {
           params: {
             query: {
               'filter[category]': categoryId,
             },
           },
         });
+        if (error) {
+          notify(
+            ALERT_LEVEL.WARN,
+            `[Up] Failed to fetch transactions for category ${categoryId}: ${error}`
+          );
+          return;
+        }
         if (data?.data) {
           externalTransactionIds.push(...data.data.map((t) => t.id));
         }
@@ -91,9 +102,8 @@ const syncCategorisedTransactions = async () => {
           );
         }
 
-        const transactionsByCategory = await getTransactionsByCategory(
-          categoryId
-        );
+        const transactionsByCategory =
+          await getTransactionsByCategory(categoryId);
         const { inserted, deleted } = await compareProviderAndDb({
           providerData: externalTransactionIds,
           dbData: transactionsByCategory?.map((t) => t.providerId),
@@ -134,8 +144,12 @@ const syncCategorisedTransactions = async () => {
 };
 
 const syncTaggedTransactions = async () => {
-  const { data: tags } = await upClient.GET('/tags');
+  const { data: tags, error } = await upClient.GET('/tags');
 
+  if (error) {
+    notify(ALERT_LEVEL.WARN, `[Up] Failed to fetch tags: ${error}`);
+    return;
+  }
   if (!tags || !tags.data.length) {
     return;
   }
@@ -161,13 +175,20 @@ const syncTaggedTransactions = async () => {
         }
 
         // Retrieve transactions by tag from provider
-        const { data } = await upClient.GET('/transactions', {
+        const { data, error } = await upClient.GET('/transactions', {
           params: {
             query: {
               'filter[tag]': tagId,
             },
           },
         });
+        if (error) {
+          notify(
+            ALERT_LEVEL.WARN,
+            `[Up] Failed to fetch transactions for tag ${tagId}: ${error}`
+          );
+          return;
+        }
         if (data?.data) {
           externalTransactionIds.push(...data.data.map((t) => t.id));
         }
