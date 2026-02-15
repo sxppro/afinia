@@ -386,7 +386,7 @@ export const processTransactions = async () => {
   };
 
   try {
-    const { data, response } = await upClient.GET('/transactions');
+    const { data, response, error } = await upClient.GET('/transactions');
     const CURRENT_PAGE = 1;
 
     /**
@@ -395,6 +395,11 @@ export const processTransactions = async () => {
     const rateLimitRemaining = response.headers.get(RATE_LIMIT_HEADER);
     if (rateLimitRemaining && parseInt(rateLimitRemaining, 10) === 0) {
       throw new Error('Rate limit exceeded');
+    }
+
+    if (error) {
+      notify(ALERT_LEVEL.WARN, `[Up] Failed to fetch transactions: ${error}`);
+      return;
     }
 
     /**
