@@ -36,7 +36,7 @@ const TransactionItem = ({
           'flex aspect-square items-center justify-center size-12 rounded-full text-white text-xl font-semibold',
           category_parent_id
             ? colours[category_parent_id].background
-            : 'bg-up-uncategorised',
+            : 'bg-up-uncategorised'
         )}
       >
         {showCategoryIcon({ category_id, description })}
@@ -55,10 +55,10 @@ const TransactionItem = ({
         <div className="flex gap-2">
           <p className="font-medium text-muted-foreground">
             {isThisYear(created_at)
-              ? format(created_at, 'd MMM')
-              : format(created_at, 'd MMM, yyyy')}
+              ? format(created_at, 'd MMM, h:mm aaa')
+              : format(created_at, 'd MMM yyyy, h:mm aaa')}
           </p>
-          <p className="font-medium text-muted-foreground ml-auto">
+          <p className="font-medium text-muted-foreground ml-auto truncate">
             {type
               ? type
               : card_number_suffix

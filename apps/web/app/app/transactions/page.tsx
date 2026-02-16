@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import TransactionList from '@/components/vis/transaction/transaction-list';
+import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import { getTransactions } from '@/lib/db/transaction';
 import { siteConfig } from '@/lib/siteConfig';
 import { ArrowLeft, Ellipsis } from 'lucide-react';
@@ -8,8 +9,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 
 const TransactionsPage = () => {
-  const TRANSACTIONS_PER_PAGE = 25;
-  const transactions = getTransactions(TRANSACTIONS_PER_PAGE);
+  const transactions = getTransactions(DEFAULT_PAGE_SIZE);
 
   return (
     <div className="flex flex-col gap-4">
@@ -34,17 +34,19 @@ const TransactionsPage = () => {
         </div>
       </div>
 
-      <Suspense
-        fallback={
-          <>
-            {[...Array(TRANSACTIONS_PER_PAGE)].map((_, i) => (
-              <Skeleton className="h-12 w-full" key={i} />
-            ))}
-          </>
-        }
-      >
-        <TransactionList dataFetch={transactions} />
-      </Suspense>
+      <div className="flex flex-col gap-2">
+        <Suspense
+          fallback={
+            <>
+              {[...Array(DEFAULT_PAGE_SIZE)].map((_, i) => (
+                <Skeleton className="h-12 w-full" key={i} />
+              ))}
+            </>
+          }
+        >
+          <TransactionList dataFetch={transactions} isInfinite />
+        </Suspense>
+      </div>
     </div>
   );
 };

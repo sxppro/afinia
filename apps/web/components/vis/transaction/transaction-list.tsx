@@ -1,10 +1,13 @@
 import { transactionExternalTable } from 'afinia-common/schema';
 import TransactionItem from './transaction-item';
+import TransactionListInfinite from './transaction-list-infinite';
 
 const TransactionList = async ({
   dataFetch,
+  isInfinite,
 }: {
   dataFetch: Promise<(typeof transactionExternalTable.$inferSelect)[]>;
+  isInfinite?: boolean;
 }) => {
   const transactions = await dataFetch;
 
@@ -14,6 +17,10 @@ const TransactionList = async ({
         No data
       </p>
     );
+  }
+
+  if (isInfinite) {
+    return <TransactionListInfinite initialTransactions={transactions} />;
   }
 
   return (
