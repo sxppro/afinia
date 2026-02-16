@@ -1,4 +1,4 @@
-import { and, eq, getTableColumns, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, getTableColumns, isNull, sql } from 'drizzle-orm';
 import {
   alias,
   boolean,
@@ -87,7 +87,7 @@ export const categoryTable = schema
         foreignColumns: [table.category_id],
         name: 'category_parent_category_fk',
       }),
-      index('category_parent_id_index').on(table.category_parent_id),
+      index('category_parent_id_idx').on(table.category_parent_id),
     ]
   )
   .enableRLS();
@@ -193,10 +193,24 @@ export const transactionTable = schema
         columns: [table.category_id],
         foreignColumns: [categoryTable.category_id],
       }),
-      index('transaction_account_id_index').on(table.account_id),
-      index('transaction_category_id_index').on(table.category_id),
-      index('transaction_created_at_index').on(table.created_at),
-      index('transaction_text_search_index').using('gin', table.text_search),
+      index('transaction_account_id_idx').on(table.account_id),
+      index('transaction_category_id_idx').on(table.category_id),
+      index('transaction_created_at_idx').on(table.created_at),
+      index('transaction_created_at_id_idx').on(
+        desc(table.created_at),
+        desc(table.transaction_id)
+      ),
+      index('transaction_category_created_at_id_idx').on(
+        table.category_id,
+        desc(table.created_at),
+        desc(table.transaction_id)
+      ),
+      index('transaction_account_created_at_id_idx').on(
+        table.account_id,
+        desc(table.created_at),
+        desc(table.transaction_id)
+      ),
+      index('transaction_text_search_idx').using('gin', table.text_search),
     ]
   )
   .enableRLS();
