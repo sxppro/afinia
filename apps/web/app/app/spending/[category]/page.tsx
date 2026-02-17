@@ -1,5 +1,4 @@
 import CategoryIcon from '@/components/category-icon';
-import SearchInput from '@/components/misc/search-input';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,7 +14,6 @@ import {
   getCategorySpending,
   getCategorySpendingByTimestamp,
 } from '@/lib/db/spending';
-import { getTransactionsBySearchQuery } from '@/lib/db/transaction';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
@@ -28,14 +26,11 @@ import { Suspense } from 'react';
 
 const CategorySpendingPage = async ({
   params,
-  searchParams,
 }: {
   params: Promise<{ category: string }>;
-  searchParams: Promise<{ query?: string }>;
 }) => {
   const TRANSACTIONS_PER_PAGE = 6;
   const { category: categoryId } = await params;
-  const { query } = await searchParams;
 
   if (!categoryId) {
     return redirect(siteConfig.baseLinks.appHome);
@@ -63,11 +58,11 @@ const CategorySpendingPage = async ({
     : getCategorySpending({
         select: {
           href: sql<string>`CONCAT('${sql.raw(
-            siteConfig.baseLinks.spending,
+            siteConfig.baseLinks.spending
           )}/', ${transactionExternalTable.category_id})`,
           name: transactionExternalTable.category,
           value: sql<number>`abs(${sum(
-            transactionExternalTable.value_in_base_units,
+            transactionExternalTable.value_in_base_units
           )})`
             .mapWith(Number)
             .as('value'),
@@ -77,26 +72,21 @@ const CategorySpendingPage = async ({
       })
         .groupBy(
           transactionExternalTable.category_id,
-          transactionExternalTable.category,
+          transactionExternalTable.category
         )
         .having(lt(sum(transactionExternalTable.value_in_base_units), 0))
         .orderBy(sql`value`);
-  const transactionsFetch = query
-    ? getTransactionsBySearchQuery(query).limit(TRANSACTIONS_PER_PAGE)
-    : db
-        .select()
-        .from(transactionExternalTable)
-        .where(
-          or(
-            eq(transactionExternalTable.category_id, category.category_id),
-            eq(
-              transactionExternalTable.category_parent_id,
-              category.category_id,
-            ),
-          ),
-        )
-        .limit(TRANSACTIONS_PER_PAGE)
-        .orderBy(desc(transactionExternalTable.created_at));
+  const transactionsFetch = db
+    .select()
+    .from(transactionExternalTable)
+    .where(
+      or(
+        eq(transactionExternalTable.category_id, category.category_id),
+        eq(transactionExternalTable.category_parent_id, category.category_id)
+      )
+    )
+    .limit(TRANSACTIONS_PER_PAGE)
+    .orderBy(desc(transactionExternalTable.created_at));
 
   return (
     <div className="flex flex-col gap-4">
@@ -123,7 +113,7 @@ const CategorySpendingPage = async ({
             category_parent?.category_id
               ? colours[category_parent.category_id].background
               : colours[category.category_id].background ||
-                  'bg-up-uncategorised',
+                  'bg-up-uncategorised'
           )}
         >
           <CategoryIcon category={category.category_id} className="size-8" />
@@ -170,7 +160,6 @@ const CategorySpendingPage = async ({
       )}
       <Separator />
       <div className="flex flex-col gap-2">
-        <SearchInput placeholder="Search transactions ..." />
         <h2 className="text-xl font-semibold">Transactions</h2>
         <Suspense
           fallback={
