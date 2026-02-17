@@ -20,7 +20,15 @@ const TransactionList = async ({
   }
 
   if (isInfinite) {
-    return <TransactionListInfinite initialTransactions={transactions} />;
+    return (
+      <TransactionListInfinite
+        initialTransactions={transactions}
+        initialCursor={{
+          created_at: transactions.at(-1)!.created_at,
+          transaction_id: transactions.at(-1)!.transaction_id,
+        }}
+      />
+    );
   }
 
   return (

@@ -2,7 +2,10 @@
 
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getTransactionsPaginated } from '@/lib/actions/transaction';
+import {
+  getTransactionsPaginated,
+  TransactionCursor,
+} from '@/lib/actions/transaction';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import { transactionExternalTable } from 'afinia-common/schema';
 import {
@@ -17,39 +20,40 @@ import TransactionItem from './transaction-item';
 
 type TransactionListInfiniteProps = {
   initialTransactions: (typeof transactionExternalTable.$inferSelect)[];
+  initialCursor: TransactionCursor | null;
 };
 
 const TransactionListInfinite = ({
   initialTransactions,
+  initialCursor,
 }: TransactionListInfiniteProps) => {
   const [transactions, setTransactions] = useState(initialTransactions);
+  const [cursor, setCursor] = useState<TransactionCursor | null>(initialCursor);
   const [isLoading, startTransition] = useTransition();
-  const { ref, inView } = useInView({ rootMargin: '64px' });
+  const { ref, inView } = useInView({ rootMargin: '96px' });
 
   const loadMore = useCallback(async () => {
-    if (!transactions || !transactions.at(-1) || isLoading) return;
+    if (!cursor || isLoading) return;
 
     startTransition(async () => {
-      const { transactions: newTransactions } = await getTransactionsPaginated({
-        cursor: {
-          created_at: transactions.at(-1)!.created_at,
-          transaction_id: transactions.at(-1)!.transaction_id,
-        },
-      });
+      const { transactions: newTransactions, next: nextCursor } =
+        await getTransactionsPaginated({
+          cursor,
+        });
       // startTransition limitation after an async fn
       // @see https://react.dev/reference/react/useTransition#react-doesnt-treat-my-state-update-after-await-as-a-transition
       startTransition(() => {
         setTransactions((prev) => [...prev, ...newTransactions]);
+        setCursor(nextCursor);
       });
     });
-  }, [transactions, isLoading]);
+  }, [cursor, isLoading]);
 
   useEffect(() => {
     if (inView) {
       loadMore();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inView]);
+  }, [inView, loadMore]);
 
   return (
     <>
@@ -67,7 +71,7 @@ const TransactionListInfinite = ({
           ))}
         </>
       )}
-      <div ref={ref} className="h-4" aria-hidden="true" />
+      {cursor && <div ref={ref} className="h-4" aria-hidden="true" />}
     </>
   );
 };
