@@ -14,5 +14,6 @@ export const getTransactionsBySearchQuery = (query: string) =>
     .select()
     .from(transactionExternalTable)
     .where(
-      sql`${transactionExternalTable.text_search} @@ websearch_to_tsquery('english', ${query})`,
-    );
+      sql`${transactionExternalTable.text_search} @@ websearch_to_tsquery('english', ${query})`
+    )
+    .orderBy(desc(transactionExternalTable.created_at));

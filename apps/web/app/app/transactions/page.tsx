@@ -1,3 +1,4 @@
+import SearchInput from '@/components/misc/search-input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import TransactionList from '@/components/vis/transaction/transaction-list';
@@ -8,7 +9,11 @@ import { ArrowLeft, Ellipsis } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
-const TransactionsPage = () => {
+const TransactionsPage = ({
+  searchParams,
+}: {
+  searchParams: Promise<{ query?: string }>;
+}) => {
   const transactions = getTransactions(DEFAULT_PAGE_SIZE);
 
   return (
@@ -35,6 +40,7 @@ const TransactionsPage = () => {
       </div>
 
       <div className="flex flex-col gap-2">
+        <SearchInput placeholder="Search transactions ..." />
         <Suspense
           fallback={
             <>
@@ -44,7 +50,11 @@ const TransactionsPage = () => {
             </>
           }
         >
-          <TransactionList dataFetch={transactions} isInfinite />
+          <TransactionList
+            dataFetch={transactions}
+            searchParams={searchParams}
+            isInfinite
+          />
         </Suspense>
       </div>
     </div>
