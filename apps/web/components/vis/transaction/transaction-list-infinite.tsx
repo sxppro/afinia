@@ -1,10 +1,17 @@
 'use client';
 
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getTransactionsPaginated } from '@/lib/actions/transaction';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import { transactionExternalTable } from 'afinia-common/schema';
-import { useCallback, useEffect, useState, useTransition } from 'react';
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useState,
+  useTransition,
+} from 'react';
 import { useInView } from 'react-intersection-observer';
 import TransactionItem from './transaction-item';
 
@@ -29,7 +36,11 @@ const TransactionListInfinite = ({
           transaction_id: transactions.at(-1)!.transaction_id,
         },
       });
-      setTransactions((prev) => [...prev, ...newTransactions]);
+      // startTransition limitation after an async fn
+      // @see https://react.dev/reference/react/useTransition#react-doesnt-treat-my-state-update-after-await-as-a-transition
+      startTransition(() => {
+        setTransactions((prev) => [...prev, ...newTransactions]);
+      });
     });
   }, [transactions, isLoading]);
 
@@ -42,11 +53,12 @@ const TransactionListInfinite = ({
 
   return (
     <>
-      {transactions.map((transaction) => (
-        <TransactionItem
-          key={transaction.transaction_id}
-          transaction={transaction}
-        />
+      {transactions.map((transaction, i) => (
+        <Fragment key={transaction.transaction_id}>
+          <TransactionItem transaction={transaction} />
+          {/* Hide last separator */}
+          {i < transactions.length - 1 && <Separator />}
+        </Fragment>
       ))}
       {isLoading && (
         <>
