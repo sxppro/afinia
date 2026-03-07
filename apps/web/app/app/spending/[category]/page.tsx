@@ -7,7 +7,7 @@ import SpendingByCategory from '@/components/vis/category/spending-by-category';
 import SpendingByDay from '@/components/vis/category/spending-by-day';
 import SpendingTotal from '@/components/vis/category/spending-total';
 import TransactionList from '@/components/vis/transaction/transaction-list';
-import { DEFAULT_PAGE_SIZE, getStartOfDay } from '@/lib/constants';
+import { SMALL_PAGE_SIZE, getStartOfDay } from '@/lib/constants';
 import { getCategoryById } from '@/lib/db/category';
 import {
   getCategorySpending,
@@ -29,7 +29,6 @@ const CategorySpendingPage = async ({
 }: {
   params: Promise<{ category: string }>;
 }) => {
-  const TRANSACTIONS_PER_PAGE = 6;
   const { category: categoryId } = await params;
 
   if (!categoryId) {
@@ -78,7 +77,7 @@ const CategorySpendingPage = async ({
         .orderBy(sql`value`);
   const transactionsFetch = getTransactions({
     categoryId: category.category_id,
-    limit: DEFAULT_PAGE_SIZE,
+    limit: SMALL_PAGE_SIZE,
   });
 
   return (
@@ -157,7 +156,7 @@ const CategorySpendingPage = async ({
         <Suspense
           fallback={
             <>
-              {[...Array(TRANSACTIONS_PER_PAGE)].map((_, i) => (
+              {[...Array(SMALL_PAGE_SIZE)].map((_, i) => (
                 <Skeleton className="h-12 w-full" key={i} />
               ))}
             </>

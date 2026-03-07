@@ -1,5 +1,6 @@
 import { Separator } from '@/components/ui/separator';
-import { getTransactionsBySearchQuery } from '@/lib/db/transaction';
+import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
+import { getTransactions } from '@/lib/db/transaction';
 import { transactionExternalTable } from 'afinia-common/schema';
 import { Fragment } from 'react';
 import TransactionItem from './transaction-item';
@@ -16,7 +17,7 @@ const TransactionList = async ({
 }) => {
   const { query } = await searchParams;
   const transactions = query
-    ? await getTransactionsBySearchQuery(query)
+    ? await getTransactions({ searchTerm: query, limit: DEFAULT_PAGE_SIZE })
     : await dataFetch;
 
   if (transactions.length === 0) {

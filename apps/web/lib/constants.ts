@@ -8,3 +8,5 @@ export const getStartOfDay = () => startOfDay(TZDateMini.tz(TZ));
 export const now = () => TZDateMini.tz(TZ);
 
 export const DEFAULT_PAGE_SIZE = 25;
+
+export const SMALL_PAGE_SIZE = 10;
