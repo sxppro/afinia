@@ -1,24 +1,17 @@
 import { Separator } from '@/components/ui/separator';
-import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
-import { getTransactions } from '@/lib/db/transaction';
-import { transactionExternalTable } from 'afinia-common/schema';
+import { getTransactionsPaginated } from '@/lib/actions/transaction';
 import { Fragment } from 'react';
 import TransactionItem from './transaction-item';
 import TransactionListInfinite from './transaction-list-infinite';
 
 const TransactionList = async ({
-  dataFetch,
   isInfinite,
-  searchParams = Promise.resolve({}),
+  options,
 }: {
-  dataFetch: Promise<(typeof transactionExternalTable.$inferSelect)[]>;
-  searchParams?: Promise<{ query?: string }>;
   isInfinite?: boolean;
+  options: Parameters<typeof getTransactionsPaginated>[0];
 }) => {
-  const { query } = await searchParams;
-  const transactions = query
-    ? await getTransactions({ searchTerm: query, limit: DEFAULT_PAGE_SIZE })
-    : await dataFetch;
+  const { transactions } = await getTransactionsPaginated(options);
 
   if (transactions.length === 0) {
     return (
@@ -29,7 +22,7 @@ const TransactionList = async ({
   }
 
   // Disable load on scroll for search results
-  if (isInfinite && !query) {
+  if (isInfinite && !options?.filters?.search_term) {
     return (
       <TransactionListInfinite
         initialTransactions={transactions}

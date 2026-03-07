@@ -3,18 +3,17 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import TransactionList from '@/components/vis/transaction/transaction-list';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
-import { getTransactions } from '@/lib/db/transaction';
 import { siteConfig } from '@/lib/siteConfig';
 import { ArrowLeft, Ellipsis } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
-const TransactionsPage = ({
+const TransactionsPage = async ({
   searchParams,
 }: {
   searchParams: Promise<{ query?: string }>;
 }) => {
-  const transactions = getTransactions({ limit: DEFAULT_PAGE_SIZE });
+  const { query } = await searchParams;
 
   return (
     <div className="flex flex-col gap-4">
@@ -51,8 +50,10 @@ const TransactionsPage = ({
           }
         >
           <TransactionList
-            dataFetch={transactions}
-            searchParams={searchParams}
+            options={{
+              filters: { search_term: query },
+              limit: query ? undefined : DEFAULT_PAGE_SIZE,
+            }}
             isInfinite
           />
         </Suspense>

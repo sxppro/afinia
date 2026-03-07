@@ -13,7 +13,6 @@ import {
   getCategorySpending,
   getCategorySpendingByTimestamp,
 } from '@/lib/db/spending';
-import { getTransactions } from '@/lib/db/transaction';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
@@ -75,10 +74,6 @@ const CategorySpendingPage = async ({
         )
         .having(lt(sum(transactionExternalTable.value_in_base_units), 0))
         .orderBy(sql`value`);
-  const transactionsFetch = getTransactions({
-    categoryId: category.category_id,
-    limit: SMALL_PAGE_SIZE,
-  });
 
   return (
     <div className="flex flex-col gap-4">
@@ -162,7 +157,12 @@ const CategorySpendingPage = async ({
             </>
           }
         >
-          <TransactionList dataFetch={transactionsFetch} />
+          <TransactionList
+            options={{
+              filters: { category_id: category.category_id },
+              limit: SMALL_PAGE_SIZE,
+            }}
+          />
         </Suspense>
       </div>
     </div>
