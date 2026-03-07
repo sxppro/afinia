@@ -7,18 +7,18 @@ import SpendingByCategory from '@/components/vis/category/spending-by-category';
 import SpendingByDay from '@/components/vis/category/spending-by-day';
 import SpendingTotal from '@/components/vis/category/spending-total';
 import TransactionList from '@/components/vis/transaction/transaction-list';
-import { getStartOfDay } from '@/lib/constants';
+import { DEFAULT_PAGE_SIZE, getStartOfDay } from '@/lib/constants';
 import { getCategoryById } from '@/lib/db/category';
-import { db } from '@/lib/db/client';
 import {
   getCategorySpending,
   getCategorySpendingByTimestamp,
 } from '@/lib/db/spending';
+import { getTransactions } from '@/lib/db/transaction';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
 import { endOfMonth, format, startOfMonth } from 'date-fns';
-import { desc, eq, lt, or, sql, sum } from 'drizzle-orm';
+import { lt, sql, sum } from 'drizzle-orm';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -76,17 +76,10 @@ const CategorySpendingPage = async ({
         )
         .having(lt(sum(transactionExternalTable.value_in_base_units), 0))
         .orderBy(sql`value`);
-  const transactionsFetch = db
-    .select()
-    .from(transactionExternalTable)
-    .where(
-      or(
-        eq(transactionExternalTable.category_id, category.category_id),
-        eq(transactionExternalTable.category_parent_id, category.category_id)
-      )
-    )
-    .limit(TRANSACTIONS_PER_PAGE)
-    .orderBy(desc(transactionExternalTable.created_at));
+  const transactionsFetch = getTransactions({
+    categoryId: category.category_id,
+    limit: DEFAULT_PAGE_SIZE,
+  });
 
   return (
     <div className="flex flex-col gap-4">

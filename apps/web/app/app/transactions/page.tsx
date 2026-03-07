@@ -14,7 +14,7 @@ const TransactionsPage = ({
 }: {
   searchParams: Promise<{ query?: string }>;
 }) => {
-  const transactions = getTransactions(DEFAULT_PAGE_SIZE);
+  const transactions = getTransactions({ limit: DEFAULT_PAGE_SIZE });
 
   return (
     <div className="flex flex-col gap-4">
