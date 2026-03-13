@@ -33,7 +33,11 @@ const TransactionItem = ({
 
   return (
     <div className="flex items-center gap-2" key={transaction_id}>
-      <Link href={`${siteConfig.baseLinks.spending}/${category_id}`}>
+      <Link
+        href={
+          category_id ? `${siteConfig.baseLinks.spending}/${category_id}` : '#'
+        }
+      >
         <span
           className={cn(
             'flex aspect-square items-center justify-center size-12 rounded-full text-white text-xl font-semibold',
