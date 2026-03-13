@@ -1,7 +1,9 @@
 import CategoryIcon from '@/components/category-icon';
+import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours, formatCurrency } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
 import { format, isThisYear } from 'date-fns';
+import Link from 'next/link';
 
 const TransactionItem = ({
   transaction,
@@ -31,16 +33,18 @@ const TransactionItem = ({
 
   return (
     <div className="flex items-center gap-2" key={transaction_id}>
-      <span
-        className={cn(
-          'flex aspect-square items-center justify-center size-12 rounded-full text-white text-xl font-semibold',
-          category_parent_id
-            ? colours[category_parent_id].background
-            : 'bg-up-uncategorised'
-        )}
-      >
-        {showCategoryIcon({ category_id, description })}
-      </span>
+      <Link href={`${siteConfig.baseLinks.spending}/${category_id}`}>
+        <span
+          className={cn(
+            'flex aspect-square items-center justify-center size-12 rounded-full text-white text-xl font-semibold',
+            category_parent_id
+              ? colours[category_parent_id].background
+              : 'bg-up-uncategorised'
+          )}
+        >
+          {showCategoryIcon({ category_id, description })}
+        </span>
+      </Link>
       <div className="flex flex-col flex-1 min-w-0">
         <div className="flex gap-4">
           <p className="font-medium truncate">{description}</p>
