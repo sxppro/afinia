@@ -11,9 +11,9 @@ import { Suspense } from 'react';
 const TransactionsPage = async ({
   searchParams,
 }: {
-  searchParams: Promise<{ query?: string }>;
+  searchParams: Promise<{ category?: string; query?: string }>;
 }) => {
-  const { query } = await searchParams;
+  const { category, query } = await searchParams;
 
   return (
     <div className="flex flex-col gap-4">
@@ -51,8 +51,10 @@ const TransactionsPage = async ({
         >
           <TransactionList
             options={{
-              filters: { search_term: query },
-              limit: query ? undefined : DEFAULT_PAGE_SIZE,
+              limit: DEFAULT_PAGE_SIZE,
+              ...((category || query) && {
+                filters: { category_id: category, search_term: query },
+              }),
             }}
             isInfinite
           />

@@ -11,7 +11,7 @@ const TransactionList = async ({
   isInfinite?: boolean;
   options: Parameters<typeof getTransactionsPaginated>[0];
 }) => {
-  const { transactions } = await getTransactionsPaginated(options);
+  const { transactions, hasMore } = await getTransactionsPaginated(options);
 
   if (transactions.length === 0) {
     return (
@@ -21,15 +21,17 @@ const TransactionList = async ({
     );
   }
 
-  // Disable load on scroll for search results
-  if (isInfinite && !options?.filters?.search_term) {
+  if (isInfinite) {
     return (
       <TransactionListInfinite
+        key={JSON.stringify(options)}
         initialTransactions={transactions}
         initialCursor={{
           created_at: transactions.at(-1)!.created_at,
           transaction_id: transactions.at(-1)!.transaction_id,
         }}
+        initialHasMore={hasMore}
+        options={options}
       />
     );
   }

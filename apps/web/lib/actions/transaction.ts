@@ -1,7 +1,7 @@
 'use server';
 
 import { transactionExternalTable } from 'afinia-common/schema';
-import { and, desc, eq, SQL, sql } from 'drizzle-orm';
+import { and, desc, eq, or, SQL, sql } from 'drizzle-orm';
 import { db } from '../db/client';
 import { Prettify } from '../types';
 
@@ -23,41 +23,58 @@ export type TransactionFilters = Prettify<
 
 /**
  * Paginated transaction retrieval.
- * @param options Ideally don't use cursor and filters together as it will require a more complex index to be performant.
+ * @param options Cannot use cursor and filters together as it will require many indexes to be performant.
  * - Cursor is designed for keyset pagination with infinite scroll (only `created_at` and `transaction_id`)
- * - Filters are designed for static pages where pagination is not required
+ * - Filters are designed for filtering transactions
  * @returns
  */
-export const getTransactionsPaginated = async (options?: {
-  cursor?: TransactionCursor;
-  filters?: TransactionFilters;
-  limit?: number;
-}) => {
-  const { cursor, filters, limit } = options || {};
-  const conditions: SQL[] = [];
+export const getTransactionsPaginated = async (
+  options:
+    | {
+        cursor?: TransactionCursor | null;
+        limit?: number;
+      }
+    | { filters?: TransactionFilters; limit?: number; offset?: number }
+) => {
+  let offset = 0;
+  const { limit } = options;
+  const conditions: (SQL | undefined)[] = [];
 
-  if (cursor) {
-    conditions.push(
-      sql`(${transactionExternalTable.created_at}, ${transactionExternalTable.transaction_id}) < (${cursor.created_at.toISOString()}::timestamptz, ${cursor.transaction_id})`
-    );
-  }
+  // Cursor mode
+  if ('cursor' in options) {
+    const { cursor } = options;
+    if (cursor) {
+      conditions.push(
+        sql`(${transactionExternalTable.created_at}, ${transactionExternalTable.transaction_id}) < (${cursor.created_at.toISOString()}::timestamptz, ${cursor.transaction_id})`
+      );
+    }
+    // Filter mode
+  } else if ('filters' in options) {
+    const { filters } = options;
+    if (filters?.account_id) {
+      conditions.push(
+        eq(transactionExternalTable.account_id, filters.account_id)
+      );
+    }
 
-  if (filters?.account_id) {
-    conditions.push(
-      eq(transactionExternalTable.account_id, filters.account_id)
-    );
-  }
+    if (filters?.category_id) {
+      conditions.push(
+        or(
+          eq(transactionExternalTable.category_id, filters.category_id),
+          eq(transactionExternalTable.category_parent_id, filters.category_id)
+        )
+      );
+    }
 
-  if (filters?.category_id) {
-    conditions.push(
-      eq(transactionExternalTable.category_id, filters.category_id)
-    );
-  }
+    if (filters?.search_term) {
+      conditions.push(
+        sql`${transactionExternalTable.text_search} @@ websearch_to_tsquery('english', ${filters.search_term})`
+      );
+    }
 
-  if (filters?.search_term) {
-    conditions.push(
-      sql`${transactionExternalTable.text_search} @@ websearch_to_tsquery('english', ${filters.search_term})`
-    );
+    if (options.offset) {
+      offset = options.offset;
+    }
   }
 
   try {
@@ -69,21 +86,25 @@ export const getTransactionsPaginated = async (options?: {
       .orderBy(
         desc(transactionExternalTable.created_at),
         desc(transactionExternalTable.transaction_id)
-      );
-    const transactions = await (limit ? query.limit(limit) : query);
+      )
+      .offset(offset);
+      
+    const transactions = await (limit ? query.limit(limit + 1) : query);
+    const hasMore = limit ? transactions.length > limit : false;
+    const page = hasMore ? transactions.slice(0, limit) : transactions;
+    // Next cursor - only provided in cursor mode
+    const lastTransaction = page.at(-1);
+    const next =
+      'cursor' in options && lastTransaction
+        ? {
+            created_at: lastTransaction.created_at,
+            transaction_id: lastTransaction.transaction_id,
+          }
+        : null;
 
-    // Next cursor
-    const lastTransaction = transactions.at(-1);
-    const next = lastTransaction
-      ? {
-          created_at: lastTransaction.created_at,
-          transaction_id: lastTransaction.transaction_id,
-        }
-      : null;
-
-    return { transactions, next };
+    return { transactions: page, hasMore, next };
   } catch (error) {
     console.error('Error fetching paginated transactions: ', error);
-    return { transactions: [], next: null };
+    return { transactions: [], hasMore: false, next: null };
   }
 };
