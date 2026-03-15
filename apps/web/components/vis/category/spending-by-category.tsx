@@ -16,7 +16,7 @@ const SpendingByCategory = ({
   if (data.length === 0) {
     return (
       <p className="w-full p-4 rounded border border-dashed text-center text-sm text-muted-foreground">
-        No data
+        No spending data
       </p>
     );
   }

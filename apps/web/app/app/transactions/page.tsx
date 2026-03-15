@@ -1,3 +1,4 @@
+
 import SearchInput from '@/components/misc/search-input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,7 +14,10 @@ const TransactionsPage = async ({
 }: {
   searchParams: Promise<{ category?: string; query?: string }>;
 }) => {
-  const { category, query } = await searchParams;
+  const { category: inputCategory, query: inputQuery } = await searchParams;
+  const category = inputCategory?.trim();
+  const query = inputQuery?.trim();
+  const hasFilters = category || query;
 
   return (
     <div className="flex flex-col gap-4">
@@ -52,8 +56,11 @@ const TransactionsPage = async ({
           <TransactionList
             options={{
               limit: DEFAULT_PAGE_SIZE,
-              ...((category || query) && {
-                filters: { category_id: category, search_term: query },
+              ...(hasFilters && {
+                filters: {
+                  ...(category && { category_id: category }),
+                  ...(query && { search_term: query }),
+                },
               }),
             }}
             isInfinite

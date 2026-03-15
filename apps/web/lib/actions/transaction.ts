@@ -51,24 +51,26 @@ export const getTransactionsPaginated = async (
     // Filter mode
   } else if ('filters' in options) {
     const { filters } = options;
-    if (filters?.account_id) {
-      conditions.push(
-        eq(transactionExternalTable.account_id, filters.account_id)
-      );
+    const accountId = filters?.account_id;
+    const categoryId = filters?.category_id?.trim();
+    const searchTerm = filters?.search_term?.trim();
+
+    if (accountId !== undefined) {
+      conditions.push(eq(transactionExternalTable.account_id, accountId));
     }
 
-    if (filters?.category_id) {
+    if (categoryId) {
       conditions.push(
         or(
-          eq(transactionExternalTable.category_id, filters.category_id),
-          eq(transactionExternalTable.category_parent_id, filters.category_id)
+          eq(transactionExternalTable.category_id, categoryId),
+          eq(transactionExternalTable.category_parent_id, categoryId)
         )
       );
     }
 
-    if (filters?.search_term) {
+    if (searchTerm) {
       conditions.push(
-        sql`${transactionExternalTable.text_search} @@ websearch_to_tsquery('english', ${filters.search_term})`
+        sql`${transactionExternalTable.text_search} @@ websearch_to_tsquery('english', ${searchTerm})`
       );
     }
 
