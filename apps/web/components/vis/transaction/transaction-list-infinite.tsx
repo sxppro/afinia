@@ -44,7 +44,7 @@ const TransactionListInfinite = ({
   // Refs
   const inFlightLoadRef = useRef(false);
   const cursorRef = useRef(initialCursor);
-  const offsetRef = useRef(filterMode ? options.offset || 0 : 0);
+  const offsetRef = useRef(filterMode ? options.offset ?? 0 : 0);
   const hasMoreRef = useRef(hasMore);
 
   // Hooks
