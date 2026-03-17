@@ -1,4 +1,3 @@
-
 import SearchInput from '@/components/misc/search-input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';

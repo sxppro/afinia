@@ -11,7 +11,6 @@ const TransactionItem = ({
   transaction: typeof transactionExternalTable.$inferSelect;
 }) => {
   const {
-    transaction_id,
     description,
     card_number_suffix,
     category_id,
@@ -32,7 +31,7 @@ const TransactionItem = ({
   };
 
   return (
-    <div className="flex items-center gap-2" key={transaction_id}>
+    <div className="flex items-center gap-2">
       <Link
         href={
           category_id ? `${siteConfig.baseLinks.spending}/${category_id}` : '#'

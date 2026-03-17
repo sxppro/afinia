@@ -36,15 +36,13 @@ const TransactionListInfinite = ({
   const pageSize = options.limit ?? DEFAULT_PAGE_SIZE;
   // State
   const [transactions, setTransactions] = useState(initialTransactions);
-  const [cursor, setCursor] = useState<TransactionCursor | null>(initialCursor);
-  const [offset, setOffset] = useState(filterMode ? options.offset || 0 : 0);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [isFetching, setIsFetching] = useState(false);
 
   // Refs
   const inFlightLoadRef = useRef(false);
-  const cursorRef = useRef(cursor);
-  const offsetRef = useRef(offset);
+  const cursorRef = useRef(initialCursor);
+  const offsetRef = useRef(filterMode ? options.offset || 0 : 0);
   const hasMoreRef = useRef(hasMore);
 
   // Hooks
@@ -84,11 +82,7 @@ const TransactionListInfinite = ({
       // @see https://react.dev/reference/react/useTransition#react-doesnt-treat-my-state-update-after-await-as-a-transition
       startTransition(() => {
         setTransactions((prev) => [...prev, ...newTransactions]);
-        setCursor(nextCursor);
         setHasMore(nextHasMore);
-        if (filterMode) {
-          setOffset(nextOffset);
-        }
       });
 
     } catch (error) {
@@ -105,15 +99,6 @@ const TransactionListInfinite = ({
       loadMore();
     }
   }, [inView, loadMore]);
-  useEffect(() => {
-    cursorRef.current = cursor;
-  }, [cursor]);
-  useEffect(() => {
-    offsetRef.current = offset;
-  }, [offset]);
-  useEffect(() => {
-    hasMoreRef.current = hasMore;
-  }, [hasMore]);
 
   return (
     <>
