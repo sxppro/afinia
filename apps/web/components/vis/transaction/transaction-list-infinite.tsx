@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -38,6 +39,7 @@ const TransactionListInfinite = ({
   const [transactions, setTransactions] = useState(initialTransactions);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [isFetching, setIsFetching] = useState(false);
+  const [error, setError] = useState(false);
 
   // Refs
   const inFlightLoadRef = useRef(false);
@@ -54,6 +56,7 @@ const TransactionListInfinite = ({
 
     inFlightLoadRef.current = true;
     setIsFetching(true);
+    setError(false);
     const nextOffset = offsetRef.current + pageSize;
 
     try {
@@ -65,13 +68,13 @@ const TransactionListInfinite = ({
         // Fetch by filters or cursor
         filterMode
           ? {
-              ...options,
-              offset: nextOffset,
-            }
+            ...options,
+            offset: nextOffset,
+          }
           : {
-              cursor: cursorRef.current,
-              limit: pageSize,
-            }
+            cursor: cursorRef.current,
+            limit: pageSize,
+          }
       );
       if (filterMode) {
         offsetRef.current = nextOffset;
@@ -84,9 +87,9 @@ const TransactionListInfinite = ({
         setTransactions((prev) => [...prev, ...newTransactions]);
         setHasMore(nextHasMore);
       });
-
     } catch (error) {
       console.error('Error fetching paginated transactions: ', error);
+      setError(true);
     } finally {
       inFlightLoadRef.current = false;
       setIsFetching(false);
@@ -109,14 +112,27 @@ const TransactionListInfinite = ({
           {i < transactions.length - 1 && <Separator />}
         </Fragment>
       ))}
-      {(isFetching || isLoading) && (
+      {isFetching || isLoading ? (
+        // Skeleton
         <>
           {[...Array(pageSize)].map((_, i) => (
             <Skeleton className="h-12 w-full" key={i} />
           ))}
         </>
-      )}
-      {hasMore && <div ref={ref} className="h-4" aria-hidden="true" />}
+      ) : hasMore && error ? (
+        // Retry if error
+        <div className="flex flex-col gap-2 items-center justify-center p-4 rounded border border-dashed">
+          <p className="text-sm text-muted-foreground">
+            Failed to load more transactions
+          </p>
+          <Button variant="outline" size="sm" onClick={loadMore}>
+            Retry
+          </Button>
+        </div>
+      ) : hasMore ? (
+        // Load more
+        <div ref={ref} className="h-4" aria-hidden="true" />
+      ) : null}
     </>
   );
 };
