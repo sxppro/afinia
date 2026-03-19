@@ -2,7 +2,9 @@ import SearchInput from '@/components/misc/search-input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import TransactionList from '@/components/vis/transaction/transaction-list';
+import TransactionListFilters from '@/components/vis/transaction/transaction-list-filters';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
+import { getParentCategories } from '@/lib/db/category';
 import { siteConfig } from '@/lib/siteConfig';
 import { ArrowLeft, Ellipsis } from 'lucide-react';
 import Link from 'next/link';
@@ -14,6 +16,7 @@ const TransactionsPage = async ({
   searchParams: Promise<{ category?: string; query?: string }>;
 }) => {
   const { category: inputCategory, query: inputQuery } = await searchParams;
+  const categoriesFetch = getParentCategories();
   const category = inputCategory?.trim();
   const query = inputQuery?.trim();
   const hasFilters = category || query;
@@ -43,6 +46,9 @@ const TransactionsPage = async ({
 
       <div className="flex flex-col gap-2">
         <SearchInput placeholder="Search transactions ..." />
+        <Suspense fallback={<Skeleton className="h-10 w-full" />}>
+          <TransactionListFilters categoriesFetch={categoriesFetch} />
+        </Suspense>
         <Suspense
           fallback={
             <>
