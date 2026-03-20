@@ -1,5 +1,4 @@
 import CategoryIcon from '@/components/category-icon';
-import SearchInput from '@/components/misc/search-input';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -7,20 +6,18 @@ import SpendingAverage from '@/components/vis/category/spending-average';
 import SpendingByCategory from '@/components/vis/category/spending-by-category';
 import SpendingByDay from '@/components/vis/category/spending-by-day';
 import SpendingTotal from '@/components/vis/category/spending-total';
-import TransactionsList from '@/components/vis/transactions-list';
-import { getStartOfDay } from '@/lib/constants';
+import TransactionList from '@/components/vis/transaction/transaction-list';
+import { SMALL_PAGE_SIZE, getStartOfDay } from '@/lib/constants';
 import { getCategoryById } from '@/lib/db/category';
-import { db } from '@/lib/db/client';
 import {
   getCategorySpending,
   getCategorySpendingByTimestamp,
 } from '@/lib/db/spending';
-import { getTransactionsBySearchQuery } from '@/lib/db/transaction';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
 import { endOfMonth, format, startOfMonth } from 'date-fns';
-import { desc, eq, lt, or, sql, sum } from 'drizzle-orm';
+import { lt, sql, sum } from 'drizzle-orm';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -28,14 +25,10 @@ import { Suspense } from 'react';
 
 const CategorySpendingPage = async ({
   params,
-  searchParams,
 }: {
   params: Promise<{ category: string }>;
-  searchParams: Promise<{ query?: string }>;
 }) => {
-  const TRANSACTIONS_PER_PAGE = 6;
   const { category: categoryId } = await params;
-  const { query } = await searchParams;
 
   if (!categoryId) {
     return redirect(siteConfig.baseLinks.appHome);
@@ -81,22 +74,6 @@ const CategorySpendingPage = async ({
         )
         .having(lt(sum(transactionExternalTable.value_in_base_units), 0))
         .orderBy(sql`value`);
-  const transactionsFetch = query
-    ? getTransactionsBySearchQuery(query).limit(TRANSACTIONS_PER_PAGE)
-    : db
-        .select()
-        .from(transactionExternalTable)
-        .where(
-          or(
-            eq(transactionExternalTable.category_id, category.category_id),
-            eq(
-              transactionExternalTable.category_parent_id,
-              category.category_id
-            )
-          )
-        )
-        .limit(TRANSACTIONS_PER_PAGE)
-        .orderBy(desc(transactionExternalTable.created_at));
 
   return (
     <div className="flex flex-col gap-4">
@@ -170,18 +147,22 @@ const CategorySpendingPage = async ({
       )}
       <Separator />
       <div className="flex flex-col gap-2">
-        <SearchInput placeholder="Search transactions ..." />
         <h2 className="text-xl font-semibold">Transactions</h2>
         <Suspense
           fallback={
             <>
-              {[...Array(TRANSACTIONS_PER_PAGE)].map((_, i) => (
+              {[...Array(SMALL_PAGE_SIZE)].map((_, i) => (
                 <Skeleton className="h-12 w-full" key={i} />
               ))}
             </>
           }
         >
-          <TransactionsList dataFetch={transactionsFetch} />
+          <TransactionList
+            options={{
+              filters: { category_id: category.category_id },
+              limit: SMALL_PAGE_SIZE,
+            }}
+          />
         </Suspense>
       </div>
     </div>

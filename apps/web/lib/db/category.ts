@@ -1,5 +1,5 @@
 import { categoryTable } from 'afinia-common/schema';
-import { eq } from 'drizzle-orm';
+import { eq, isNull } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { db } from './client';
 
@@ -15,3 +15,9 @@ export const getCategoryById = (id: string) => {
       eq(categoryTable.category_parent_id, categoryParent.category_id)
     );
 };
+
+export const getParentCategories = async () =>
+  await db
+    .select()
+    .from(categoryTable)
+    .where(isNull(categoryTable.category_parent_id));

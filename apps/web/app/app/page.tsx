@@ -5,27 +5,21 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import TransactionsList from '@/components/vis/transactions-list';
+import TransactionList from '@/components/vis/transaction/transaction-list';
 import { getServerSession } from '@/lib/auth/session';
+import { SMALL_PAGE_SIZE } from '@/lib/constants';
 import { getAccountBalance } from '@/lib/db/account';
-import { db } from '@/lib/db/client';
 import { siteConfig } from '@/lib/siteConfig';
 import { getGreeting, getInitials } from '@/lib/ui';
-import { transactionExternalTable } from 'afinia-common/schema';
-import { desc } from 'drizzle-orm';
 import { ChevronRight, Search } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
 const AppHome = async () => {
-  const TRANSACTIONS_PER_PAGE = 6;
-  const session = await getServerSession();
-  const balance = await getAccountBalance();
-  const transactions = db
-    .select()
-    .from(transactionExternalTable)
-    .limit(TRANSACTIONS_PER_PAGE)
-    .orderBy(desc(transactionExternalTable.created_at));
+  const [session, balance] = await Promise.all([
+    getServerSession(),
+    getAccountBalance(),
+  ]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -77,13 +71,13 @@ const AppHome = async () => {
         <Suspense
           fallback={
             <>
-              {[...Array(TRANSACTIONS_PER_PAGE)].map((_, i) => (
+              {[...Array(SMALL_PAGE_SIZE)].map((_, i) => (
                 <Skeleton className="h-12 w-full" key={i} />
               ))}
             </>
           }
         >
-          <TransactionsList dataFetch={transactions} />
+          <TransactionList options={{ limit: SMALL_PAGE_SIZE }} />
         </Suspense>
       </div>
     </div>

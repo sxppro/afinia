@@ -9,7 +9,7 @@ export const getAccountBalance = () =>
     .select({ value: sum(accountTable.value_in_base_units).mapWith(Number) })
     .from(accountTable);
 
-export const getAccount = <T extends SelectedFields>(
+export const getAccounts = <T extends SelectedFields>(
   select: T,
   {
     id,

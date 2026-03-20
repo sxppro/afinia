@@ -1,11 +1,11 @@
-import { getStartOfDay } from '@/lib/constants';
-import { db } from '@/lib/db/client';
+import { getStartOfDay, now } from '@/lib/constants';
+import { getParentCategories } from '@/lib/db/category';
 import { getCategorySpending } from '@/lib/db/spending';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours } from '@/lib/ui';
-import { categoryTable, transactionExternalTable } from 'afinia-common/schema';
-import { endOfMonth, startOfMonth } from 'date-fns';
-import { isNull, sum } from 'drizzle-orm';
+import { transactionExternalTable } from 'afinia-common/schema';
+import { endOfMonth, format, startOfMonth } from 'date-fns';
+import { sum } from 'drizzle-orm';
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import CategoryIcon from './category-icon';
@@ -57,11 +57,7 @@ const QuickActions = async () => {
     transactionExternalTable.category_parent_id,
     transactionExternalTable.category_parent
   );
-  // All parent categories
-  const categories = await db
-    .select()
-    .from(categoryTable)
-    .where(isNull(categoryTable.category_parent_id));
+  const categories = await getParentCategories();
   /**
    * Merge results to include all categories,
    * including those with no spending & sort
@@ -89,11 +85,13 @@ const QuickActions = async () => {
         </Link>
       </Button>
       <div className="grid grid-cols-2 gap-2">
+        <p className="col-span-2 text-muted-foreground">
+          {format(now(), 'MMMM yyyy')}
+        </p>
         {spendingByCategory.map((category) => (
           <QuickAction key={category.id} {...category} />
         ))}
       </div>
-      <p className="text-muted-foreground">Spending from current month.</p>
     </div>
   );
 };

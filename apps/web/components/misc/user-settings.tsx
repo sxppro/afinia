@@ -5,7 +5,6 @@ import {
   unsubscribeUser,
 } from '@/lib/actions/notification';
 import { urlBase64ToUint8Array } from '@/lib/ui';
-import { DialogProps } from '@radix-ui/react-dialog';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
@@ -26,7 +25,7 @@ import {
 } from '../ui/field';
 import { Switch } from '../ui/switch';
 
-const UserSettings = (props: DialogProps) => {
+const UserSettings = (props: React.ComponentProps<typeof Dialog>) => {
   const [isPushSupported, setIsPushSupported] = useState(false);
   const [subscription, setSubscription] = useState<PushSubscription | null>(
     null
