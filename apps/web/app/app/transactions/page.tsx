@@ -22,7 +22,7 @@ const TransactionsPage = async ({
   const hasFilters = category || query;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-2">
       <div className="flex justify-between">
         <div className="flex items-center gap-4">
           <Button
@@ -46,7 +46,7 @@ const TransactionsPage = async ({
 
       <div className="flex flex-col gap-2">
         <SearchInput placeholder="Search transactions ..." />
-        <Suspense fallback={<Skeleton className="h-10 w-full" />}>
+        <Suspense fallback={<Skeleton className="h-9 w-full" />}>
           <TransactionListFilters categoriesFetch={categoriesFetch} />
         </Suspense>
         <Suspense
