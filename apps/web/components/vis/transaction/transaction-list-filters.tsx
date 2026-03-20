@@ -30,7 +30,7 @@ const TransactionListFilters = ({
   return (
     <div className="flex gap-1">
       <Select value={category ?? 'all'} onValueChange={setCategory}>
-        <SelectTrigger className="w-full max-w-48">
+        <SelectTrigger className="w-full max-w-48 text-base">
           <SelectValue placeholder="Category">
             {category === 'all'
               ? 'All Categories'
@@ -41,10 +41,13 @@ const TransactionListFilters = ({
         <SelectContent>
           <SelectGroup>
             <SelectLabel>Category</SelectLabel>
-            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem className="text-base" value="all">
+              All Categories
+            </SelectItem>
             {categories.map((category) => (
               <SelectItem
                 key={category.category_id}
+                className="text-base"
                 value={category.category_id}
               >
                 {category.category_name}
