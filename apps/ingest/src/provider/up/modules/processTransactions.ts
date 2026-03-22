@@ -18,7 +18,7 @@ import { fetchFromUp, getNextPage } from '../utils/fetch';
 import { notify } from '../utils/notify';
 import { buildConflictUpdateColumns } from '../utils/upsert';
 
-interface ProcessTransactionsMetrics {
+export interface ProcessTransactionsMetrics {
   pages: {
     processed: number;
     timings: number[];
@@ -36,7 +36,7 @@ interface ProcessTransactionsMetrics {
   endTime?: number;
 }
 
-const upsertTransactions = async (
+export const upsertTransactions = async (
   transactions: TransactionResource[],
   page: number,
   metrics: ProcessTransactionsMetrics,
