@@ -92,6 +92,9 @@ const getMonthToSync = async (currentMonth: Date): Promise<Date | null> => {
     return startOfMonth(subMonths(currentMonth, 1));
   } else if (isBefore(subMonths(storedCursor, 1), lowerBound)) {
     // Wrap around to previous month if subtracting a month would be before earliest account creation
+    console.log(
+      `${PROCESS_NAME}: Account creation month reached. Wrapping around to previous month`
+    );
     return startOfMonth(subMonths(currentMonth, 1));
   } else {
     // Subtract a month from cursor
@@ -123,7 +126,7 @@ const syncTransactionsForMonth = async (
 
   if (error) {
     notify(
-      ALERT_LEVEL.WARN,
+      ALERT_LEVEL.ERROR,
       `[Up] Failed to fetch transactions for ${start} - ${end}: ${error}`
     );
     return;
