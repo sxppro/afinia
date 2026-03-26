@@ -26,8 +26,11 @@ export default $config({
     api.route('POST /webhook', {
       handler: 'src/provider/up/modules/processWebhookEvent.handler',
       link: [...allSecrets],
-      timeout: '30 seconds',
+      logging: {
+        retention: '3 months',
+      },
       runtime: 'nodejs22.x',
+      timeout: '30 seconds',
     });
     api.deploy();
 
@@ -42,6 +45,9 @@ export default $config({
           secrets.discordWebhookUrl,
           secrets.discordUserId,
         ],
+        logging: {
+          retention: '1 month',
+        },
       },
       schedule: 'rate(1 hour)',
     });
@@ -57,6 +63,9 @@ export default $config({
           secrets.discordWebhookUrl,
           secrets.discordUserId,
         ],
+        logging: {
+          retention: '1 month',
+        },
       },
       schedule: 'rate(6 hours)',
     });
