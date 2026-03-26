@@ -1,9 +1,5 @@
 import { db } from '@/src/db/client';
-import {
-  notificationTable,
-  transactionExternalTable,
-  transactionTable,
-} from 'afinia-common/schema';
+import { notificationTable, transactionTable } from 'afinia-common/schema';
 import { count, eq } from 'drizzle-orm';
 import { Resource } from 'sst';
 import webpush, { WebPushError } from 'web-push';
@@ -53,12 +49,17 @@ export const sendPushNotifications = async (transactionId: string) => {
   // Fetch transaction data
   const transaction = await db
     .select()
-    .from(transactionExternalTable)
-    .where(eq(transactionExternalTable.provider_id, transactionId));
+    .from(transactionTable)
+    .where(eq(transactionTable.provider_id, transactionId));
   if (transaction.length === 0) {
     console.error(
       `Error in sendPushNotifications: transaction ${transactionId} not found`
     );
+    return;
+  }
+
+  // Skip for internal transfers
+  if (!transaction[0]?.is_categorizable) {
     return;
   }
 

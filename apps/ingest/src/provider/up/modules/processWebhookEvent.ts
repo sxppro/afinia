@@ -15,7 +15,7 @@ import {
 const PROCESS_NAME = 'processWebhookEvent';
 
 export const processWebhookEvent = async (
-  event: components['schemas']['WebhookEventCallback'],
+  event: components['schemas']['WebhookEventCallback']
 ) => {
   const { data } = event;
 
@@ -27,7 +27,7 @@ export const processWebhookEvent = async (
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   if (!Resource.UP_API_KEY.value || !Resource.UP_WEBHOOK_SECRET.value) {
     throw new Error(
-      'Up API key or webhook secret not provided. Please set them in .env and run load-env',
+      'Up API key or webhook secret not provided. Please set them in .env and run load-env'
     );
   }
 
@@ -56,7 +56,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   try {
     // Yes, I should probably validate the schema here ...
     const { data } = JSON.parse(
-      event.body,
+      event.body
     ) as unknown as components['schemas']['WebhookEventCallback'];
 
     if (!data) {
@@ -98,17 +98,19 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       ) {
         await processTransaction(
           relationships?.transaction?.links?.related,
-          'insert',
+          'insert'
         );
 
         /**
-         * Push notifications
+         * Push notifications only on created
          */
-        await sendPushNotifications(relationships.transaction?.data?.id);
+        if (eventType === WebhookEventTypeEnum.TRANSACTION_CREATED) {
+          await sendPushNotifications(relationships.transaction?.data?.id);
+        }
       } else if (eventType === WebhookEventTypeEnum.TRANSACTION_DELETED) {
         await processTransaction(
           relationships?.transaction?.links?.related,
-          'delete',
+          'delete'
         );
       }
     }
