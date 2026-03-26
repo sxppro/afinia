@@ -34,7 +34,7 @@ export default $config({
     new sst.aws.Cron('AfiniaSyncHourly', {
       function: {
         handler: 'src/provider/up/modules/syncData.handler',
-        timeout: '120 seconds',
+        timeout: '600 seconds',
         runtime: 'nodejs22.x',
         link: [
           secrets.upApiKey,
