@@ -4,18 +4,20 @@
   "private": true,
   "scripts": {
     "db:seed": "sst shell --stage dev tsx ./src/provider/up/modules/loadData.ts",
-    "db:generate": "sst shell --stage dev drizzle-kit generate",
-    "db:migrate": "sst shell --stage dev drizzle-kit migrate",
+    "db:generate": "sst shell --stage prod drizzle-kit generate",
+    "db:migrate": "sst shell --stage prod drizzle-kit migrate",
+    "deploy:prod": "sst deploy --stage prod",
     "dev": "sst secret load ./.env --stage dev && sst dev --stage dev",
-    "load-env": "sst secret load ./.env --stage dev",
+    "load-env": "sst secret load ./.env --stage prod",
     "sso": "aws sso login --sso-session=soppro"
   },
   "dependencies": {
     "afinia-common": "workspace:*",
+    "date-fns": "catalog:",
     "drizzle-orm": "^0.44.6",
     "openapi-fetch": "^0.15.0",
     "postgres": "^3.4.7",
-    "sst": "3.17.19",
+    "sst": "3.19.3",
     "web-push": "^3.6.7"
   },
   "devDependencies": {

@@ -118,6 +118,17 @@ export const notificationTable = schema
   )
   .enableRLS();
 
+/**
+ * Storing persistent state for jobs
+ */
+export const jobStateTable = schema
+  .table('job_state', {
+    key: text().primaryKey(),
+    value: text().notNull(),
+    updated_at: timestamp({ withTimezone: true }).notNull(),
+  })
+  .enableRLS();
+
 export const tagTable = schema
   .table('tag', {
     tag_id: text().primaryKey(),

@@ -18,7 +18,7 @@ import { fetchFromUp, getNextPage } from '../utils/fetch';
 import { notify } from '../utils/notify';
 import { buildConflictUpdateColumns } from '../utils/upsert';
 
-interface ProcessTransactionsMetrics {
+export interface ProcessTransactionsMetrics {
   pages: {
     processed: number;
     timings: number[];
@@ -36,7 +36,7 @@ interface ProcessTransactionsMetrics {
   endTime?: number;
 }
 
-const upsertTransactions = async (
+export const upsertTransactions = async (
   transactions: TransactionResource[],
   page: number,
   metrics: ProcessTransactionsMetrics,
@@ -173,7 +173,7 @@ const upsertTransactions = async (
 
   try {
     await db.transaction(async (tx) => {
-      const insertedTx = await db
+      const insertedTx = await tx
         .insert(transactionTable)
         .values(transformedTx)
         .onConflictDoUpdate({
@@ -280,13 +280,13 @@ const upsertTransactions = async (
       }
 
       if (txTag.length > 0) {
-        await db
+        await tx
           .insert(transactionTagTable)
           .values(txTag)
           .onConflictDoNothing();
       }
       if (txHoldInfo.length > 0) {
-        await db
+        await tx
           .insert(transactionHoldInfoTable)
           .values(txHoldInfo)
           .onConflictDoUpdate({
@@ -302,7 +302,7 @@ const upsertTransactions = async (
           });
       }
       if (txRoundUp.length > 0) {
-        await db
+        await tx
           .insert(transactionRoundUpTable)
           .values(txRoundUp)
           .onConflictDoUpdate({
@@ -318,7 +318,7 @@ const upsertTransactions = async (
           });
       }
       if (txCashback.length > 0) {
-        await db
+        await tx
           .insert(transactionCashbackTable)
           .values(txCashback)
           .onConflictDoUpdate({

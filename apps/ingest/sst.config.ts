@@ -45,5 +45,20 @@ export default $config({
       },
       schedule: 'rate(1 hour)',
     });
+
+    new sst.aws.Cron('AfiniaSyncSixHourly', {
+      function: {
+        handler: 'src/provider/up/modules/syncTransactions.handler',
+        timeout: '600 seconds',
+        runtime: 'nodejs22.x',
+        link: [
+          secrets.upApiKey,
+          secrets.databaseUrl,
+          secrets.discordWebhookUrl,
+          secrets.discordUserId,
+        ],
+      },
+      schedule: 'rate(6 hours)',
+    });
   },
 });
