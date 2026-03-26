@@ -9,12 +9,11 @@ import {
   transactionTable,
   transactionTagTable,
 } from 'afinia-common/schema';
-import { components } from 'afinia-common/types/up-api';
 import { TransactionResource } from 'afinia-common/types/up-api/overrides';
 import { eq, InferInsertModel } from 'drizzle-orm';
 import { upClient } from '../utils/clients';
 import { ALERT_LEVEL, RATE_LIMIT_HEADER } from '../utils/constants';
-import { fetchFromUp, getNextPage } from '../utils/fetch';
+import { getNextPage } from '../utils/fetch';
 import { notify } from '../utils/notify';
 import { buildConflictUpdateColumns } from '../utils/upsert';
 
@@ -350,10 +349,9 @@ export const upsertTransactions = async (
 };
 
 const deleteTransaction = async (
-  transaction: TransactionResource,
+  transactionId: string,
   processName: string
 ) => {
-  const { id } = transaction;
   const now = new Date();
   await db
     .update(transactionTable)
@@ -362,8 +360,8 @@ const deleteTransaction = async (
       updated_at: now,
       updated_by: processName,
     })
-    .where(eq(transactionTable.provider_id, id));
-  console.log(`Deleted transaction: ${id}`);
+    .where(eq(transactionTable.provider_id, transactionId));
+  console.log(`Deleted transaction: ${transactionId}`);
 };
 
 export const processTransactions = async () => {
@@ -473,9 +471,14 @@ export const processTransactions = async () => {
   }
 };
 
+/**
+ * Process a transaction
+ * @param operation - Insert or delete a transaction
+ * @param transactionId - The provider ID of the transaction
+ */
 export const processTransaction = async (
-  transactionUrl: string,
-  operation: 'insert' | 'delete'
+  operation: 'insert' | 'delete',
+  transactionId: string
 ) => {
   const PROCESS_NAME = 'processTransaction';
   const metrics: ProcessTransactionsMetrics = {
@@ -495,36 +498,38 @@ export const processTransaction = async (
     startTime: Date.now(),
   };
 
-  // Fetch transaction details
-  const res = await fetchFromUp(transactionUrl);
-  if (res.ok && res.body) {
-    try {
-      const data =
-        (await res.json()) as components['schemas']['GetTransactionResponse'];
-
-      if (operation === 'insert') {
-        await upsertTransactions([data.data], 1, metrics, PROCESS_NAME);
-      } else if (operation === 'delete') {
-        await deleteTransaction(data.data, PROCESS_NAME);
-      }
-
-      metrics.endTime = Date.now();
-    } catch (error) {
-      metrics.endTime = Date.now();
-      console.error(`Error in ${PROCESS_NAME}: `, {
-        error: error instanceof Error ? error.message : error,
-        stack: error instanceof Error ? error.stack : undefined,
-        metrics: {
-          missingAccounts: Array.from(metrics.errors.missingAccounts),
-          missingCategories: Array.from(metrics.errors.missingCategories),
+  try {
+    if (operation === 'delete') {
+      await deleteTransaction(transactionId, PROCESS_NAME);
+    } else {
+      // Insert - fetch transaction details
+      const { data, error } = await upClient.GET('/transactions/{id}', {
+        params: {
+          path: {
+            id: transactionId,
+          },
         },
       });
-      throw error;
+      if (error) {
+        notify(
+          ALERT_LEVEL.ERROR,
+          `[Up] Failed to fetch transaction (${transactionId}): ${error}`
+        );
+      }
+      await upsertTransactions([data.data], 1, metrics, PROCESS_NAME);
     }
-  } else {
-    notify(
-      ALERT_LEVEL.WARN,
-      `processTransaction: Failed to fetch transaction: ${res.status} ${res.statusText}`
-    );
+    metrics.endTime = Date.now();
+    return;
+  } catch (error) {
+    metrics.endTime = Date.now();
+    console.error(`Error in ${PROCESS_NAME}: `, {
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined,
+      metrics: {
+        missingAccounts: Array.from(metrics.errors.missingAccounts),
+        missingCategories: Array.from(metrics.errors.missingCategories),
+      },
+    });
+    throw error;
   }
 };

@@ -80,6 +80,15 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       };
     }
 
+    // Check that we have a transaction ID
+    if (!relationships?.transaction?.data?.id) {
+      notify(ALERT_LEVEL.WARN, 'Webhook event missing transaction ID');
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ message: 'Bad Request' }),
+      };
+    }
+
     /**
      * Sync accounts before processing
      * transaction
@@ -87,32 +96,24 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     await processAccounts();
     await processTags();
 
-    if (relationships?.transaction?.links?.related) {
-      /**
-       * Process transaction events
-       * @see https://developer.up.com.au/#callback_post_webhookURL
-       */
-      if (
-        eventType === WebhookEventTypeEnum.TRANSACTION_CREATED ||
-        eventType === WebhookEventTypeEnum.TRANSACTION_SETTLED
-      ) {
-        await processTransaction(
-          relationships?.transaction?.links?.related,
-          'insert'
-        );
+    /**
+     * Process transaction events
+     * @see https://developer.up.com.au/#callback_post_webhookURL
+     */
+    if (
+      eventType === WebhookEventTypeEnum.TRANSACTION_CREATED ||
+      eventType === WebhookEventTypeEnum.TRANSACTION_SETTLED
+    ) {
+      await processTransaction('insert', relationships.transaction.data.id);
 
-        /**
-         * Push notifications only on created
-         */
-        if (eventType === WebhookEventTypeEnum.TRANSACTION_CREATED) {
-          await sendPushNotifications(relationships.transaction?.data?.id);
-        }
-      } else if (eventType === WebhookEventTypeEnum.TRANSACTION_DELETED) {
-        await processTransaction(
-          relationships?.transaction?.links?.related,
-          'delete'
-        );
+      /**
+       * Push notifications only on created
+       */
+      if (eventType === WebhookEventTypeEnum.TRANSACTION_CREATED) {
+        await sendPushNotifications(relationships.transaction.data.id);
       }
+    } else if (eventType === WebhookEventTypeEnum.TRANSACTION_DELETED) {
+      await processTransaction('delete', relationships.transaction.data.id);
     }
 
     return {
