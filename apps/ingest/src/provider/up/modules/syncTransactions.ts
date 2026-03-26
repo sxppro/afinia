@@ -120,12 +120,12 @@ const syncTransactionsForMonth = async (
 
   const rateLimitRemaining = response.headers.get(RATE_LIMIT_HEADER);
   if (rateLimitRemaining && parseInt(rateLimitRemaining, 10) === 0) {
-    notify(ALERT_LEVEL.ERROR, 'Rate limit exceeded');
+    await notify(ALERT_LEVEL.ERROR, 'Rate limit exceeded');
     return;
   }
 
   if (error) {
-    notify(
+    await notify(
       ALERT_LEVEL.ERROR,
       `[Up] Failed to fetch transactions for ${start} - ${end}: ${error}`
     );

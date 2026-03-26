@@ -271,7 +271,7 @@ export const upsertTransactions = async (
           }
         } else {
           tx.rollback();
-          notify(
+          await notify(
             ALERT_LEVEL.ERROR,
             `Inserted transaction not found during upsert: ${provider_id}`
           );
@@ -396,7 +396,10 @@ export const processTransactions = async () => {
     }
 
     if (error) {
-      notify(ALERT_LEVEL.WARN, `[Up] Failed to fetch transactions: ${error}`);
+      await notify(
+        ALERT_LEVEL.WARN,
+        `[Up] Failed to fetch transactions: ${error}`
+      );
       return;
     }
 
@@ -511,10 +514,11 @@ export const processTransaction = async (
         },
       });
       if (error) {
-        notify(
+        await notify(
           ALERT_LEVEL.ERROR,
           `[Up] Failed to fetch transaction (${transactionId}): ${error}`
         );
+        return;
       }
       await upsertTransactions([data.data], 1, metrics, PROCESS_NAME);
     }

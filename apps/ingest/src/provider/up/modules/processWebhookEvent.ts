@@ -20,7 +20,7 @@ export const processWebhookEvent = async (
   const { data } = event;
 
   if (!data) {
-    notify(ALERT_LEVEL.ERROR, 'No webhook data found');
+    await notify(ALERT_LEVEL.ERROR, 'No webhook data found');
   }
 };
 
@@ -60,7 +60,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     ) as unknown as components['schemas']['WebhookEventCallback'];
 
     if (!data) {
-      notify(ALERT_LEVEL.ERROR, 'No webhook data found');
+      await notify(ALERT_LEVEL.ERROR, 'No webhook data found');
       return {
         statusCode: 400,
         body: JSON.stringify({
@@ -82,7 +82,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
 
     // Check that we have a transaction ID
     if (!relationships?.transaction?.data?.id) {
-      notify(ALERT_LEVEL.WARN, 'Webhook event missing transaction ID');
+      await notify(ALERT_LEVEL.WARN, 'Webhook event missing transaction ID');
       return {
         statusCode: 400,
         body: JSON.stringify({ message: 'Bad Request' }),
@@ -120,7 +120,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       statusCode: 200,
     };
   } catch (error) {
-    notify(ALERT_LEVEL.WARN, `Error in ${PROCESS_NAME}: ${error}`);
+    await notify(ALERT_LEVEL.WARN, `Error in ${PROCESS_NAME}: ${error}`);
     return {
       statusCode: 500,
       body: JSON.stringify({
