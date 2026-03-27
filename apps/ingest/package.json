@@ -6,7 +6,7 @@
     "db:seed": "sst shell --stage dev tsx ./src/provider/up/modules/loadData.ts",
     "db:generate": "sst shell --stage prod drizzle-kit generate",
     "db:migrate": "sst shell --stage prod drizzle-kit migrate",
-    "deploy:prod": "sst deploy --stage prod",
+    "deploy:prod": "sst deploy --stage prod --verbose",
     "dev": "sst secret load ./.env --stage dev && sst dev --stage dev",
     "load-env": "sst secret load ./.env --stage prod",
     "sso": "aws sso login --sso-session=soppro"

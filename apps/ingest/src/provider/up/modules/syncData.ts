@@ -23,7 +23,7 @@ const updateTransaction = async (
 ) => {
   const transaction = await getTransactionByProviderId(providerId);
   if (!transaction || !transaction[0]) {
-    notify(
+    await notify(
       ALERT_LEVEL.ERROR,
       `Unable to find transaction with provider id: ${providerId}`
     );
@@ -37,7 +37,7 @@ const updateTransaction = async (
 const syncCategorisedTransactions = async () => {
   const { data, error } = await upClient.GET('/categories');
   if (error) {
-    notify(ALERT_LEVEL.WARN, `[Up] Failed to fetch categories: ${error}`);
+    await notify(ALERT_LEVEL.WARN, `[Up] Failed to fetch categories: ${error}`);
     return;
   }
   if (!data || !data.data.length) {
@@ -55,7 +55,7 @@ const syncCategorisedTransactions = async () => {
         console.log(`Syncing transactions for category: ${categoryId}`);
         const externalTransactionIds: string[] = [];
         if (type !== 'categories') {
-          notify(
+          await notify(
             ALERT_LEVEL.ERROR,
             `Unexpected type "${type}" for category: ${categoryId}`
           );
@@ -65,7 +65,7 @@ const syncCategorisedTransactions = async () => {
         // Check category exists in db
         const category = await getCategoryById(categoryId);
         if (!category || category.length !== 1) {
-          notify(
+          await notify(
             ALERT_LEVEL.ERROR,
             `Category does not exist in database: ${categoryId}`
           );
@@ -81,7 +81,7 @@ const syncCategorisedTransactions = async () => {
           },
         });
         if (error) {
-          notify(
+          await notify(
             ALERT_LEVEL.WARN,
             `[Up] Failed to fetch transactions for category ${categoryId}: ${error}`
           );
@@ -130,7 +130,7 @@ const syncCategorisedTransactions = async () => {
           `Finished syncing transactions for category: ${categoryId}`
         );
       } catch (error) {
-        notify(
+        await notify(
           ALERT_LEVEL.ERROR,
           `Failed to sync transactions for category ${categoryId}: ${
             error instanceof Error ? error.message : error
@@ -147,7 +147,7 @@ const syncTaggedTransactions = async () => {
   const { data: tags, error } = await upClient.GET('/tags');
 
   if (error) {
-    notify(ALERT_LEVEL.WARN, `[Up] Failed to fetch tags: ${error}`);
+    await notify(ALERT_LEVEL.WARN, `[Up] Failed to fetch tags: ${error}`);
     return;
   }
   if (!tags || !tags.data.length) {
@@ -160,7 +160,7 @@ const syncTaggedTransactions = async () => {
         console.log(`Syncing transactions for tag: ${tagId}`);
         const externalTransactionIds: string[] = [];
         if (type !== 'tags') {
-          notify(
+          await notify(
             ALERT_LEVEL.ERROR,
             `Unexpected type "${type}" for tag: ${tagId}`
           );
@@ -170,7 +170,10 @@ const syncTaggedTransactions = async () => {
         // Check tag exists in db
         const tag = await getTag(tagId);
         if (!tag || tag.length !== 1) {
-          notify(ALERT_LEVEL.ERROR, `Tag does not exist in database: ${tagId}`);
+          await notify(
+            ALERT_LEVEL.ERROR,
+            `Tag does not exist in database: ${tagId}`
+          );
           return;
         }
 
@@ -183,7 +186,7 @@ const syncTaggedTransactions = async () => {
           },
         });
         if (error) {
-          notify(
+          await notify(
             ALERT_LEVEL.WARN,
             `[Up] Failed to fetch transactions for tag ${tagId}: ${error}`
           );
@@ -227,7 +230,7 @@ const syncTaggedTransactions = async () => {
         }
         console.log(`Finished syncing transactions for tag: ${tagId}`);
       } catch (error) {
-        notify(
+        await notify(
           ALERT_LEVEL.ERROR,
           `Failed to sync transactions for tag ${tagId}: ${
             error instanceof Error ? error.message : error

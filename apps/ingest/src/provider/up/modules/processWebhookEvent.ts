@@ -15,19 +15,19 @@ import {
 const PROCESS_NAME = 'processWebhookEvent';
 
 export const processWebhookEvent = async (
-  event: components['schemas']['WebhookEventCallback'],
+  event: components['schemas']['WebhookEventCallback']
 ) => {
   const { data } = event;
 
   if (!data) {
-    notify(ALERT_LEVEL.ERROR, 'No webhook data found');
+    await notify(ALERT_LEVEL.ERROR, 'No webhook data found');
   }
 };
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   if (!Resource.UP_API_KEY.value || !Resource.UP_WEBHOOK_SECRET.value) {
     throw new Error(
-      'Up API key or webhook secret not provided. Please set them in .env and run load-env',
+      'Up API key or webhook secret not provided. Please set them in .env and run load-env'
     );
   }
 
@@ -56,11 +56,11 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   try {
     // Yes, I should probably validate the schema here ...
     const { data } = JSON.parse(
-      event.body,
+      event.body
     ) as unknown as components['schemas']['WebhookEventCallback'];
 
     if (!data) {
-      notify(ALERT_LEVEL.ERROR, 'No webhook data found');
+      await notify(ALERT_LEVEL.ERROR, 'No webhook data found');
       return {
         statusCode: 400,
         body: JSON.stringify({
@@ -80,6 +80,15 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       };
     }
 
+    // Check that we have a transaction ID
+    if (!relationships?.transaction?.data?.id) {
+      await notify(ALERT_LEVEL.WARN, 'Webhook event missing transaction ID');
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ message: 'Bad Request' }),
+      };
+    }
+
     /**
      * Sync accounts before processing
      * transaction
@@ -87,37 +96,31 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     await processAccounts();
     await processTags();
 
-    if (relationships?.transaction?.links?.related) {
-      /**
-       * Process transaction events
-       * @see https://developer.up.com.au/#callback_post_webhookURL
-       */
-      if (
-        eventType === WebhookEventTypeEnum.TRANSACTION_CREATED ||
-        eventType === WebhookEventTypeEnum.TRANSACTION_SETTLED
-      ) {
-        await processTransaction(
-          relationships?.transaction?.links?.related,
-          'insert',
-        );
+    /**
+     * Process transaction events
+     * @see https://developer.up.com.au/#callback_post_webhookURL
+     */
+    if (
+      eventType === WebhookEventTypeEnum.TRANSACTION_CREATED ||
+      eventType === WebhookEventTypeEnum.TRANSACTION_SETTLED
+    ) {
+      await processTransaction('insert', relationships.transaction.data.id);
 
-        /**
-         * Push notifications
-         */
-        await sendPushNotifications(relationships.transaction?.data?.id);
-      } else if (eventType === WebhookEventTypeEnum.TRANSACTION_DELETED) {
-        await processTransaction(
-          relationships?.transaction?.links?.related,
-          'delete',
-        );
+      /**
+       * Push notifications only on created
+       */
+      if (eventType === WebhookEventTypeEnum.TRANSACTION_CREATED) {
+        await sendPushNotifications(relationships.transaction.data.id);
       }
+    } else if (eventType === WebhookEventTypeEnum.TRANSACTION_DELETED) {
+      await processTransaction('delete', relationships.transaction.data.id);
     }
 
     return {
       statusCode: 200,
     };
   } catch (error) {
-    notify(ALERT_LEVEL.WARN, `Error in ${PROCESS_NAME}: ${error}`);
+    await notify(ALERT_LEVEL.WARN, `Error in ${PROCESS_NAME}: ${error}`);
     return {
       statusCode: 500,
       body: JSON.stringify({
