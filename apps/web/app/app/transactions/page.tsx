@@ -1,14 +1,11 @@
 import SearchInput from '@/components/misc/search-input';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import TransactionList from '@/components/vis/transaction/transaction-list';
 import TransactionListFilters from '@/components/vis/transaction/transaction-list-filters';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import { getParentCategories } from '@/lib/db/category';
-import { siteConfig } from '@/lib/siteConfig';
-import { ArrowLeft, Ellipsis } from 'lucide-react';
-import Link from 'next/link';
 import { Suspense } from 'react';
+import TransactionsPageHeader from './_components/page-header';
 
 const TransactionsPage = async ({
   searchParams,
@@ -23,26 +20,7 @@ const TransactionsPage = async ({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            className="rounded-full"
-            variant="outline"
-            size="icon-xl"
-            asChild
-          >
-            <Link href={siteConfig.baseLinks.appHome}>
-              <ArrowLeft className="size-5" />
-            </Link>
-          </Button>
-          <h1 className="text-2xl font-semibold">Transactions</h1>
-        </div>
-        <div>
-          <Button className="rounded-full" variant="outline" size="icon-xl">
-            <Ellipsis className="size-5" />
-          </Button>
-        </div>
-      </div>
+      <TransactionsPageHeader />
 
       <div className="flex flex-col gap-2">
         <SearchInput placeholder="Search transactions ..." />
