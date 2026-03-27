@@ -398,7 +398,7 @@ export const processTransactions = async () => {
     if (error) {
       await notify(
         ALERT_LEVEL.WARN,
-        `[Up] Failed to fetch transactions: ${error}`
+        `[Up] Failed to fetch transactions: ${JSON.stringify(error)}`
       );
       return;
     }
@@ -516,7 +516,7 @@ export const processTransaction = async (
       if (error) {
         await notify(
           ALERT_LEVEL.ERROR,
-          `[Up] Failed to fetch transaction (${transactionId}): ${error}`
+          `[Up] Failed to fetch transaction (${transactionId}): ${JSON.stringify(error)}`
         );
         return;
       }

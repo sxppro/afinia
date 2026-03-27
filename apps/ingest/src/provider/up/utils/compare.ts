@@ -38,6 +38,15 @@ export const compareProviderAndDb = async <T>({
   const insertResponse = await Promise.allSettled(
     toInsert.map((data) => insertToDb(data))
   );
+  const insertRejected = insertResponse.filter(
+    (res) => res.status === 'rejected'
+  );
+  if (insertRejected.length > 0) {
+    console.error(
+      `Failed to insert ${insertRejected.length} records: `,
+      insertRejected.map((res) => res.reason)
+    );
+  }
   const insertCount = insertResponse.filter(
     (res) => res.status === 'fulfilled'
   ).length;
@@ -47,6 +56,15 @@ export const compareProviderAndDb = async <T>({
   const deleteResponse = await Promise.allSettled(
     toDelete.map((data) => deleteFromDb(data))
   );
+  const deleteRejected = deleteResponse.filter(
+    (res) => res.status === 'rejected'
+  );
+  if (deleteRejected.length > 0) {
+    console.error(
+      `Failed to delete ${deleteRejected.length} records: `,
+      deleteRejected.map((res) => res.reason)
+    );
+  }
   const deleteCount = deleteResponse.filter(
     (res) => res.status === 'fulfilled'
   ).length;

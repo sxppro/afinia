@@ -127,7 +127,7 @@ const syncTransactionsForMonth = async (
   if (error) {
     await notify(
       ALERT_LEVEL.ERROR,
-      `[Up] Failed to fetch transactions for ${start} - ${end}: ${error}`
+      `[Up] Failed to fetch transactions for ${start} - ${end}: ${JSON.stringify(error)}`
     );
     return;
   }

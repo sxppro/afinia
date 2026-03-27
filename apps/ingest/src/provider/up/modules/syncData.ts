@@ -17,6 +17,8 @@ import { getNextPage } from '../utils/fetch';
 import { notify } from '../utils/notify';
 import { processTags } from './processTags';
 
+const PROCESS_NAME = 'syncData';
+
 const updateTransaction = async (
   providerId: string,
   updateFn: (transactionId: number) => Promise<unknown>
@@ -37,7 +39,10 @@ const updateTransaction = async (
 const syncCategorisedTransactions = async () => {
   const { data, error } = await upClient.GET('/categories');
   if (error) {
-    await notify(ALERT_LEVEL.WARN, `[Up] Failed to fetch categories: ${error}`);
+    await notify(
+      ALERT_LEVEL.WARN,
+      `[Up] Failed to fetch categories: ${JSON.stringify(error)}`
+    );
     return;
   }
   if (!data || !data.data.length) {
@@ -83,7 +88,7 @@ const syncCategorisedTransactions = async () => {
         if (error) {
           await notify(
             ALERT_LEVEL.WARN,
-            `[Up] Failed to fetch transactions for category ${categoryId}: ${error}`
+            `[Up] Failed to fetch transactions for category ${categoryId}: ${JSON.stringify(error)}`
           );
           return;
         }
@@ -147,7 +152,10 @@ const syncTaggedTransactions = async () => {
   const { data: tags, error } = await upClient.GET('/tags');
 
   if (error) {
-    await notify(ALERT_LEVEL.WARN, `[Up] Failed to fetch tags: ${error}`);
+    await notify(
+      ALERT_LEVEL.WARN,
+      `[Up] Failed to fetch tags: ${JSON.stringify(error)}`
+    );
     return;
   }
   if (!tags || !tags.data.length) {
@@ -188,7 +196,7 @@ const syncTaggedTransactions = async () => {
         if (error) {
           await notify(
             ALERT_LEVEL.WARN,
-            `[Up] Failed to fetch transactions for tag ${tagId}: ${error}`
+            `[Up] Failed to fetch transactions for tag ${tagId}: ${JSON.stringify(error)}`
           );
           return;
         }
@@ -233,7 +241,7 @@ const syncTaggedTransactions = async () => {
         await notify(
           ALERT_LEVEL.ERROR,
           `Failed to sync transactions for tag ${tagId}: ${
-            error instanceof Error ? error.message : error
+            error instanceof Error ? error.message : JSON.stringify(error)
           }`
         );
       }
@@ -244,12 +252,19 @@ const syncTaggedTransactions = async () => {
 };
 
 export const handler = async () => {
-  // Sync tags
-  await processTags();
-  // Sync tagged transactions
-  await syncTaggedTransactions();
-  // Sync categorised transactions
-  await syncCategorisedTransactions();
+  try {
+    // Sync tags
+    await processTags();
+    // Sync tagged transactions
+    await syncTaggedTransactions();
+    // Sync categorised transactions
+    await syncCategorisedTransactions();
+  } catch (error) {
+    await notify(
+      ALERT_LEVEL.ERROR,
+      `${PROCESS_NAME} failed: ${error instanceof Error ? error.message : error}`
+    );
+  }
 };
 
 if (fileURLToPath(import.meta.url) === process.argv[1]) {
