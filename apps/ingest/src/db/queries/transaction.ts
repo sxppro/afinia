@@ -1,5 +1,5 @@
 import { transactionTable, transactionTagTable } from 'afinia-common/schema';
-import { and, eq } from 'drizzle-orm';
+import { and, between, eq, isNull } from 'drizzle-orm';
 import { db } from '../client';
 
 export const getTransactionsByTag = (tag: string) =>
@@ -13,7 +13,12 @@ export const getTransactionsByTag = (tag: string) =>
       transactionTagTable,
       eq(transactionTable.transaction_id, transactionTagTable.transaction_id)
     )
-    .where(eq(transactionTagTable.tag_id, tag));
+    .where(
+      and(
+        eq(transactionTagTable.tag_id, tag),
+        isNull(transactionTable.deleted_at)
+      )
+    );
 
 /**
  * Retrieve a transaction by provider ID
@@ -38,7 +43,21 @@ export const getTransactionsByCategory = (id: string) =>
       providerId: transactionTable.provider_id,
     })
     .from(transactionTable)
-    .where(eq(transactionTable.category_id, id));
+    .where(
+      and(
+        eq(transactionTable.category_id, id),
+        isNull(transactionTable.deleted_at)
+      )
+    );
+
+export const getTransactionsByDateRange = (start: Date, end: Date) =>
+  db
+    .select({
+      id: transactionTable.transaction_id,
+      providerId: transactionTable.provider_id,
+    })
+    .from(transactionTable)
+    .where(between(transactionTable.created_at, start, end));
 
 /**
  * Tag a transaction
@@ -47,10 +66,13 @@ export const getTransactionsByCategory = (id: string) =>
  * @returns
  */
 export const updateTransactionTag = (id: number, tag: string) =>
-  db.insert(transactionTagTable).values({
-    transaction_id: id,
-    tag_id: tag,
-  });
+  db
+    .insert(transactionTagTable)
+    .values({
+      transaction_id: id,
+      tag_id: tag,
+    })
+    .onConflictDoNothing();
 
 /**
  *

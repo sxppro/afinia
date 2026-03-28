@@ -1,3 +1,6 @@
+import { ALERT_LEVEL } from './constants';
+import { notify } from './notify';
+
 /**
  * Compares data from an external provider with database records and synchronizes any differences.
  *
@@ -42,9 +45,10 @@ export const compareProviderAndDb = async <T>({
     (res) => res.status === 'rejected'
   );
   if (insertRejected.length > 0) {
-    console.error(
-      `Failed to insert ${insertRejected.length} records: `,
-      insertRejected.map((res) => res.reason)
+    console.error(insertRejected.map((res) => res.reason));
+    await notify(
+      ALERT_LEVEL.ERROR,
+      `Failed to insert ${insertRejected.length} records`
     );
   }
   const insertCount = insertResponse.filter(
@@ -60,9 +64,10 @@ export const compareProviderAndDb = async <T>({
     (res) => res.status === 'rejected'
   );
   if (deleteRejected.length > 0) {
-    console.error(
-      `Failed to delete ${deleteRejected.length} records: `,
-      deleteRejected.map((res) => res.reason)
+    console.error(deleteRejected.map((res) => res.reason));
+    await notify(
+      ALERT_LEVEL.ERROR,
+      `Failed to delete ${deleteRejected.length} records`
     );
   }
   const deleteCount = deleteResponse.filter(

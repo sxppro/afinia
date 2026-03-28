@@ -111,14 +111,14 @@ const syncCategorisedTransactions = async () => {
           await getTransactionsByCategory(categoryId);
         const { inserted, deleted } = await compareProviderAndDb({
           providerData: externalTransactionIds,
-          dbData: transactionsByCategory?.map((t) => t.providerId),
+          dbData: transactionsByCategory.map((t) => t.providerId),
           insertToDb: (providerId) =>
             updateTransaction(providerId, (transactionId) =>
-              updateTransactionCategory(transactionId, categoryId)
+              updateTransactionCategory(transactionId, categoryId, PROCESS_NAME)
             ),
           deleteFromDb: (providerId) =>
             updateTransaction(providerId, (transactionId) =>
-              updateTransactionCategory(transactionId, null)
+              updateTransactionCategory(transactionId, null, PROCESS_NAME)
             ),
         });
         if (inserted > 0) {
@@ -220,7 +220,7 @@ const syncTaggedTransactions = async () => {
         // Insert or delete relationship between tags and transactions
         const { inserted, deleted } = await compareProviderAndDb({
           providerData: externalTransactionIds,
-          dbData: transactionsByTag?.map((t) => t.providerId),
+          dbData: transactionsByTag.map((t) => t.providerId),
           insertToDb: (providerId) =>
             updateTransaction(providerId, (transactionId) =>
               updateTransactionTag(transactionId, tagId)
@@ -262,7 +262,7 @@ export const handler = async () => {
   } catch (error) {
     await notify(
       ALERT_LEVEL.ERROR,
-      `${PROCESS_NAME} failed: ${error instanceof Error ? error.message : error}`
+      `${PROCESS_NAME} failed: ${error instanceof Error ? error.message : JSON.stringify(error)}`
     );
   }
 };
