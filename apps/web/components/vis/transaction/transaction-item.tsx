@@ -39,7 +39,7 @@ const TransactionItem = ({
       >
         <span
           className={cn(
-            'flex aspect-square items-center justify-center size-12 rounded-full text-white text-xl font-semibold',
+            'flex aspect-square size-12 items-center justify-center rounded-full text-xl font-semibold text-white',
             category_parent_id
               ? colours[category_parent_id].background
               : 'bg-up-uncategorised'
@@ -48,10 +48,10 @@ const TransactionItem = ({
           {showCategoryIcon({ category_id, description })}
         </span>
       </Link>
-      <div className="flex flex-col flex-1 min-w-0">
+      <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex gap-4">
-          <p className="font-medium truncate">{description}</p>
-          <p className="shrink-0 font-medium ml-auto">
+          <p className="truncate font-medium">{description}</p>
+          <p className="ml-auto shrink-0 font-medium">
             {formatCurrency(value_in_base_units, {
               absolute: true,
               baseUnits: true,
@@ -60,12 +60,12 @@ const TransactionItem = ({
           </p>
         </div>
         <div className="flex gap-4">
-          <p className="shrink-0 font-medium text-muted-foreground">
+          <p className="text-muted-foreground shrink-0 font-medium">
             {isThisYear(created_at)
               ? format(created_at, 'd MMM, h:mm aaa')
               : format(created_at, 'd MMM yyyy, h:mm aaa')}
           </p>
-          <p className="min-w-8 font-medium text-muted-foreground ml-auto truncate">
+          <p className="text-muted-foreground ml-auto min-w-8 truncate font-medium">
             {type
               ? type
               : card_number_suffix

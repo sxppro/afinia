@@ -44,7 +44,7 @@ const TransactionListInfinite = ({
   // Refs
   const inFlightLoadRef = useRef(false);
   const cursorRef = useRef(initialCursor);
-  const offsetRef = useRef(filterMode ? options.offset ?? 0 : 0);
+  const offsetRef = useRef(filterMode ? (options.offset ?? 0) : 0);
   const hasMoreRef = useRef(hasMore);
 
   // Hooks
@@ -68,13 +68,13 @@ const TransactionListInfinite = ({
         // Fetch by filters or cursor
         filterMode
           ? {
-            ...options,
-            offset: nextOffset,
-          }
+              ...options,
+              offset: nextOffset,
+            }
           : {
-            cursor: cursorRef.current,
-            limit: pageSize,
-          }
+              cursor: cursorRef.current,
+              limit: pageSize,
+            }
       );
       if (filterMode) {
         offsetRef.current = nextOffset;
@@ -121,8 +121,8 @@ const TransactionListInfinite = ({
         </>
       ) : hasMore && error ? (
         // Retry if error
-        <div className="flex flex-col gap-2 items-center justify-center p-4 rounded border border-dashed">
-          <p className="text-sm text-muted-foreground">
+        <div className="flex flex-col items-center justify-center gap-2 rounded border border-dashed p-4">
+          <p className="text-muted-foreground text-sm">
             Failed to load more transactions
           </p>
           <Button variant="outline" size="sm" onClick={loadMore}>
