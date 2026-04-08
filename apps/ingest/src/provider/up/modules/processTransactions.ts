@@ -348,7 +348,7 @@ export const upsertTransactions = async (
   );
 };
 
-const deleteTransaction = async (
+export const deleteTransaction = async (
   transactionId: string,
   processName: string
 ) => {
@@ -504,6 +504,7 @@ export const processTransaction = async (
   try {
     if (operation === 'delete') {
       await deleteTransaction(transactionId, PROCESS_NAME);
+      await notify(ALERT_LEVEL.WARN, `Transaction deleted: ${transactionId}`);
     } else {
       // Insert - fetch transaction details
       const { data, error } = await upClient.GET('/transactions/{id}', {
