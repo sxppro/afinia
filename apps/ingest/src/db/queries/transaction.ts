@@ -57,7 +57,12 @@ export const getTransactionsByDateRange = (start: Date, end: Date) =>
       providerId: transactionTable.provider_id,
     })
     .from(transactionTable)
-    .where(between(transactionTable.created_at, start, end));
+    .where(
+      and(
+        between(transactionTable.created_at, start, end),
+        isNull(transactionTable.deleted_at)
+      )
+    );
 
 /**
  * Tag a transaction
