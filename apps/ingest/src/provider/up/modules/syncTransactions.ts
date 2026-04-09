@@ -12,6 +12,7 @@ import {
 import { TransactionResource } from 'afinia-common/types/up-api/overrides';
 import {
   addMonths,
+  isAfter,
   isBefore,
   isEqual,
   startOfMonth,
@@ -189,6 +190,7 @@ const syncTransactionsByDateRange = async (
   const startDate = start.toISOString();
   const endDate = end.toISOString();
   const providerTxns = new Map<string, TransactionResource>();
+  const syncStartTime = new Date();
 
   console.log(`[Up] Fetching transactions from ${startDate} to ${endDate}`);
 
@@ -239,7 +241,7 @@ const syncTransactionsByDateRange = async (
     }
 
     // Check db transactions
-    await checkTransactionsByDateRange(start, end, providerTxns);
+    await checkTransactionsByDateRange(start, end, syncStartTime, providerTxns);
   }
 };
 
@@ -248,12 +250,14 @@ const syncTransactionsByDateRange = async (
  * between start and end dates
  * @param start
  * @param end
+ * @param syncStartTime - Start time of sync
  * @param providerData - Map of provider transactions between start and end dates, if available
  * @returns
  */
 const checkTransactionsByDateRange = async (
   start: Date,
   end: Date,
+  syncStartTime: Date,
   providerData?: Map<string, TransactionResource>
 ) => {
   try {
@@ -299,18 +303,29 @@ const checkTransactionsByDateRange = async (
         );
         return;
       }
-      for (const txn of transactions) {
-        const providerTxn = providerData.get(txn.transaction.provider_id);
-        if (providerTxn) {
-          await checkTransactionAttributes(providerTxn, txn);
-        } else {
-          await deleteTransaction(txn.transaction.provider_id, PROCESS_NAME);
-          await notify(
-            ALERT_LEVEL.WARN,
-            `[DB Txns Check] Transaction ${txn.transaction.provider_id} deleted: not found in provider data between ${start.toISOString()} and ${end.toISOString()}`
-          );
-        }
-      }
+
+      await Promise.all(
+        transactions.map(async (txn) => {
+          const providerTxn = providerData.get(txn.transaction.provider_id);
+          if (providerTxn) {
+            await checkTransactionAttributes(providerTxn, txn);
+          } else {
+            // Skip if transaction was modified by another process after sync started
+            if (
+              txn.transaction.updated_by !== PROCESS_NAME &&
+              txn.transaction.updated_at &&
+              isAfter(txn.transaction.updated_at, syncStartTime)
+            ) {
+              return;
+            }
+            await deleteTransaction(txn.transaction.provider_id, PROCESS_NAME);
+            await notify(
+              ALERT_LEVEL.WARN,
+              `[DB Txns Check] Transaction ${txn.transaction.provider_id} deleted: not found in provider data between ${start.toISOString()} and ${end.toISOString()}`
+            );
+          }
+        })
+      );
     } else {
       const { response, error } = await upClient.GET('/util/ping');
 
@@ -366,6 +381,14 @@ const checkTransactionsByDateRange = async (
               await checkTransactionAttributes(providerTxn, txn);
             } else {
               if (response.status === 404) {
+                // Skip if transaction was modified by another process after sync started
+                if (
+                  txn.transaction.updated_by !== PROCESS_NAME &&
+                  txn.transaction.updated_at &&
+                  isAfter(txn.transaction.updated_at, syncStartTime)
+                ) {
+                  return;
+                }
                 await deleteTransaction(
                   txn.transaction.provider_id,
                   PROCESS_NAME
