@@ -52,10 +52,7 @@ export const getTransactionsByCategory = (id: string) =>
 
 export const getTransactionsByDateRange = (start: Date, end: Date) =>
   db
-    .select({
-      id: transactionTable.transaction_id,
-      providerId: transactionTable.provider_id,
-    })
+    .select()
     .from(transactionTable)
     .where(
       and(

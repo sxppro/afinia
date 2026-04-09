@@ -1,6 +1,14 @@
 import { db } from '@/src/db/client';
+import { checkDatabaseConnection } from '@/src/db/connection';
 import { getEarliestAccountCreatedAt } from '@/src/db/queries/account';
-import { jobStateTable } from 'afinia-common/schema';
+import { getTransactionsByDateRange } from '@/src/db/queries/transaction';
+import {
+  jobStateTable,
+  transactionCashbackTable,
+  transactionHoldInfoTable,
+  transactionRoundUpTable,
+  transactionTable,
+} from 'afinia-common/schema';
 import { TransactionResource } from 'afinia-common/types/up-api/overrides';
 import {
   addMonths,
@@ -10,14 +18,20 @@ import {
   subMonths,
 } from 'date-fns';
 import { eq } from 'drizzle-orm';
+import pLimit from 'p-limit';
 import { upClient } from '../utils/clients';
-import { ALERT_LEVEL, RATE_LIMIT_HEADER } from '../utils/constants';
+import {
+  ALERT_LEVEL,
+  MAX_CONCURRENCY,
+  RATE_LIMIT_HEADER,
+} from '../utils/constants';
 import { getNextPage } from '../utils/fetch';
 import { notify } from '../utils/notify';
 import { processAccounts } from './processAccounts';
 import { processCategories } from './processCategories';
 import { processTags } from './processTags';
 import {
+  deleteTransaction,
   ProcessTransactionsMetrics,
   upsertTransactions,
 } from './processTransactions';
@@ -102,48 +116,270 @@ const getMonthToSync = async (currentMonth: Date): Promise<Date | null> => {
   }
 };
 
-const syncTransactionsForMonth = async (
-  start: string,
-  end: string,
+/**
+ * Sanity checking transaction attributes match
+ * @param providerTxn - Provider transaction
+ * @param txn - Transaction in database
+ */
+const checkTransactionAttributes = async (
+  providerTxn: TransactionResource,
+  txn: {
+    transaction: typeof transactionTable.$inferSelect;
+    transaction_hold_info: typeof transactionHoldInfoTable.$inferSelect | null;
+    transaction_round_up: typeof transactionRoundUpTable.$inferSelect | null;
+    transaction_cashback: typeof transactionCashbackTable.$inferSelect | null;
+  }
+) => {
+  if (
+    providerTxn.attributes.amount.valueInBaseUnits !==
+    txn.transaction.value_in_base_units
+  ) {
+    await notify(
+      ALERT_LEVEL.WARN,
+      `Transaction ${txn.transaction.provider_id} has incorrect value in base units: expected ${providerTxn.attributes.amount.valueInBaseUnits}, received ${txn.transaction.value_in_base_units}`
+    );
+  }
+  if (providerTxn.attributes.status !== txn.transaction.status) {
+    await notify(
+      ALERT_LEVEL.WARN,
+      `Transaction ${txn.transaction.provider_id} has incorrect status: expected ${providerTxn.attributes.status}, received ${txn.transaction.status}`
+    );
+  }
+  if (
+    providerTxn.attributes.holdInfo?.amount.valueInBaseUnits !==
+    txn.transaction_hold_info?.value_in_base_units
+  ) {
+    await notify(
+      ALERT_LEVEL.WARN,
+      `Transaction ${txn.transaction.provider_id} has incorrect hold info value in base units: expected ${providerTxn.attributes.holdInfo?.amount.valueInBaseUnits}, received ${txn.transaction_hold_info?.value_in_base_units}`
+    );
+  }
+  if (
+    providerTxn.attributes.roundUp?.amount.valueInBaseUnits !==
+    txn.transaction_round_up?.value_in_base_units
+  ) {
+    await notify(
+      ALERT_LEVEL.WARN,
+      `Transaction ${txn.transaction.provider_id} has incorrect round up value in base units: expected ${providerTxn.attributes.roundUp?.amount.valueInBaseUnits}, received ${txn.transaction_round_up?.value_in_base_units}`
+    );
+  }
+  if (
+    providerTxn.attributes.cashback?.amount.valueInBaseUnits !==
+    txn.transaction_cashback?.value_in_base_units
+  ) {
+    await notify(
+      ALERT_LEVEL.WARN,
+      `Transaction ${txn.transaction.provider_id} has incorrect cashback value in base units: expected ${providerTxn.attributes.cashback?.amount.valueInBaseUnits}, received ${txn.transaction_cashback?.value_in_base_units}`
+    );
+  }
+};
+
+/**
+ * Sync transactions from Up between start and end dates
+ * @param startDate - ISO timestamp
+ * @param endDate - ISO timestamp
+ * @param metrics - `ProcessTransactionsMetrics`
+ * @returns
+ */
+const syncTransactionsByDateRange = async (
+  start: Date,
+  end: Date,
   metrics: ProcessTransactionsMetrics
 ) => {
-  console.log(`[Up] Fetching transactions from ${start} to ${end}`);
+  const startDate = start.toISOString();
+  const endDate = end.toISOString();
+  const providerTxns = new Map<string, TransactionResource>();
+
+  console.log(`[Up] Fetching transactions from ${startDate} to ${endDate}`);
 
   const { data, response, error } = await upClient.GET('/transactions', {
     params: {
       query: {
-        'filter[since]': start,
-        'filter[until]': end,
+        'filter[since]': startDate,
+        'filter[until]': endDate,
       },
     },
   });
 
   const rateLimitRemaining = response.headers.get(RATE_LIMIT_HEADER);
   if (rateLimitRemaining && parseInt(rateLimitRemaining, 10) === 0) {
-    await notify(ALERT_LEVEL.ERROR, 'Rate limit exceeded');
-    return;
-  }
-
-  if (error) {
     await notify(
-      ALERT_LEVEL.ERROR,
-      `[Up] Failed to fetch transactions for ${start} - ${end}: ${JSON.stringify(error)}`
+      ALERT_LEVEL.WARN,
+      'Skipping sync transactions from Up: Rate limit exceeded'
     );
     return;
   }
 
+  if (error) {
+    console.error(error);
+    await notify(
+      ALERT_LEVEL.ERROR,
+      `[Up] Failed to fetch transactions for ${startDate} - ${endDate}: ${JSON.stringify(error)}`
+    );
+    return;
+  }
+
+  // Upsert transactions from Up
   if (data) {
     const CURRENT_PAGE = 1;
+
     if (data.data) {
       await upsertTransactions(data.data, CURRENT_PAGE, metrics, PROCESS_NAME);
+      data.data.forEach((t) => providerTxns.set(t.id, t));
     }
     if (data.links?.next) {
       await getNextPage<TransactionResource>(
         data.links.next,
-        (txns, page) => upsertTransactions(txns, page, metrics, PROCESS_NAME),
+        async (txns, page) => {
+          await upsertTransactions(txns, page, metrics, PROCESS_NAME);
+          txns.forEach((t) => providerTxns.set(t.id, t));
+        },
         CURRENT_PAGE + 1
       );
     }
+
+    // Check db transactions
+    // await checkTransactionsByDateRange(start, end);
+    await checkTransactionsByDateRange(start, end, providerTxns);
+  }
+};
+
+/**
+ * Checks transactions in database against provider
+ * between start and end dates
+ * @param start
+ * @param end
+ * @param providerData - Map of provider transactions between start and end dates, if available
+ * @returns
+ */
+const checkTransactionsByDateRange = async (
+  start: Date,
+  end: Date,
+  providerData?: Map<string, TransactionResource>
+) => {
+  try {
+    const transactions = await getTransactionsByDateRange(start, end)
+      .leftJoin(
+        transactionHoldInfoTable,
+        eq(
+          transactionHoldInfoTable.transaction_id,
+          transactionTable.transaction_id
+        )
+      )
+      .leftJoin(
+        transactionRoundUpTable,
+        eq(
+          transactionRoundUpTable.transaction_id,
+          transactionTable.transaction_id
+        )
+      )
+      .leftJoin(
+        transactionCashbackTable,
+        eq(
+          transactionCashbackTable.transaction_id,
+          transactionTable.transaction_id
+        )
+      );
+
+    if (transactions.length === 0) {
+      return;
+    }
+
+    // Compare with provider data if available
+    if (providerData) {
+      if (providerData.size === 0 && transactions.length > 0) {
+        await notify(
+          ALERT_LEVEL.WARN,
+          `[Up] No transaction data found between ${start.toISOString()} and ${end.toISOString()}`
+        );
+        return;
+      }
+      for (const txn of transactions) {
+        const providerTxn = providerData.get(txn.transaction.provider_id);
+        if (providerTxn) {
+          await checkTransactionAttributes(providerTxn, txn);
+        } else {
+          await deleteTransaction(txn.transaction.provider_id, PROCESS_NAME);
+          await notify(
+            ALERT_LEVEL.WARN,
+            `Transaction ${txn.transaction.provider_id} deleted: not found in provider data between ${start.toISOString()} and ${end.toISOString()}`
+          );
+        }
+      }
+    } else {
+      const { response, error } = await upClient.GET('/util/ping');
+
+      if (error) {
+        console.error(error);
+        await notify(ALERT_LEVEL.ERROR, `[Up] Failed to ping API`);
+      }
+      if (response.ok) {
+        const rateLimitRemaining = response.headers.get(RATE_LIMIT_HEADER);
+        if (
+          rateLimitRemaining &&
+          parseInt(rateLimitRemaining, 10) < transactions.length
+        ) {
+          await notify(
+            ALERT_LEVEL.WARN,
+            'Skipping check transactions from db: Up rate limit exceeded'
+          );
+          return;
+        }
+      }
+
+      const limit = pLimit(MAX_CONCURRENCY);
+
+      await Promise.all(
+        transactions.map(async (txn) =>
+          limit(async () => {
+            const { data, response, error } = await upClient.GET(
+              '/transactions/{id}',
+              {
+                params: {
+                  path: {
+                    id: txn.transaction.provider_id,
+                  },
+                },
+              }
+            );
+
+            if (error) {
+              console.error(error);
+              await notify(
+                ALERT_LEVEL.WARN,
+                `[Up] Failed to fetch transaction (${txn.transaction.provider_id})`
+              );
+              return;
+            }
+
+            if (response.ok && data.data) {
+              const providerTxn = data.data;
+              await checkTransactionAttributes(providerTxn, txn);
+            } else {
+              if (response.status === 404) {
+                await deleteTransaction(
+                  txn.transaction.provider_id,
+                  PROCESS_NAME
+                );
+                await notify(
+                  ALERT_LEVEL.WARN,
+                  `Transaction ${txn.transaction.provider_id} deleted: not found in provider data between ${start.toISOString()} and ${end.toISOString()}`
+                );
+              } else {
+                await notify(
+                  ALERT_LEVEL.WARN,
+                  `[Up] Unknown response status fetching transaction (${txn.transaction.provider_id}): ${response.status} ${response.statusText}`
+                );
+              }
+            }
+          })
+        )
+      );
+    }
+  } catch (error) {
+    console.error(error);
+    await notify(ALERT_LEVEL.ERROR, `Failed to check transactions from db`);
+    return;
   }
 };
 
@@ -159,6 +395,16 @@ export const handler = async () => {
   };
 
   try {
+    // Check database connection
+    const isConnected = await checkDatabaseConnection();
+    if (!isConnected) {
+      await notify(
+        ALERT_LEVEL.ERROR,
+        `Failed to connect to database. Skipping ${PROCESS_NAME}`
+      );
+      return;
+    }
+
     // Sync all accounts, categories and tags
     await processAccounts();
     await processCategories();
@@ -168,9 +414,9 @@ export const handler = async () => {
     const currentMonth = startOfMonth(now);
 
     // Sync current month
-    await syncTransactionsForMonth(
-      currentMonth.toISOString(),
-      addMonths(currentMonth, 1).toISOString(),
+    await syncTransactionsByDateRange(
+      currentMonth,
+      addMonths(currentMonth, 1),
       metrics
     );
 
@@ -181,9 +427,9 @@ export const handler = async () => {
     }
 
     // Sync cursor month
-    await syncTransactionsForMonth(
-      cursorMonth.toISOString(),
-      addMonths(cursorMonth, 1).toISOString(),
+    await syncTransactionsByDateRange(
+      cursorMonth,
+      addMonths(cursorMonth, 1),
       metrics
     );
 
