@@ -239,7 +239,6 @@ const syncTransactionsByDateRange = async (
     }
 
     // Check db transactions
-    // await checkTransactionsByDateRange(start, end);
     await checkTransactionsByDateRange(start, end, providerTxns);
   }
 };
@@ -282,11 +281,17 @@ const checkTransactionsByDateRange = async (
       );
 
     if (transactions.length === 0) {
+      console.log(
+        `[DB Txns Check] No transactions found in database between ${start.toISOString()} and ${end.toISOString()}`
+      );
       return;
     }
 
     // Compare with provider data if available
     if (providerData) {
+      console.log(
+        `[DB Txns Check] Comparing with provider data: ${providerData.size} transactions from provider, ${transactions.length} transactions in database`
+      );
       if (providerData.size === 0 && transactions.length > 0) {
         await notify(
           ALERT_LEVEL.WARN,
@@ -302,7 +307,7 @@ const checkTransactionsByDateRange = async (
           await deleteTransaction(txn.transaction.provider_id, PROCESS_NAME);
           await notify(
             ALERT_LEVEL.WARN,
-            `Transaction ${txn.transaction.provider_id} deleted: not found in provider data between ${start.toISOString()} and ${end.toISOString()}`
+            `[DB Txns Check] Transaction ${txn.transaction.provider_id} deleted: not found in provider data between ${start.toISOString()} and ${end.toISOString()}`
           );
         }
       }
@@ -321,11 +326,15 @@ const checkTransactionsByDateRange = async (
         ) {
           await notify(
             ALERT_LEVEL.WARN,
-            'Skipping check transactions from db: Up rate limit exceeded'
+            '[DB Txns Check] Skipping: Up rate limit exceeded'
           );
           return;
         }
       }
+
+      console.log(
+        `[DB Txns Check] Checking ${transactions.length} transactions in database, fetching provider data ...`
+      );
 
       const limit = pLimit(MAX_CONCURRENCY);
 
@@ -363,7 +372,7 @@ const checkTransactionsByDateRange = async (
                 );
                 await notify(
                   ALERT_LEVEL.WARN,
-                  `Transaction ${txn.transaction.provider_id} deleted: not found in provider data between ${start.toISOString()} and ${end.toISOString()}`
+                  `[DB Txns Check] Transaction ${txn.transaction.provider_id} deleted: not found in provider data between ${start.toISOString()} and ${end.toISOString()}`
                 );
               } else {
                 await notify(
@@ -378,7 +387,10 @@ const checkTransactionsByDateRange = async (
     }
   } catch (error) {
     console.error(error);
-    await notify(ALERT_LEVEL.ERROR, `Failed to check transactions from db`);
+    await notify(
+      ALERT_LEVEL.ERROR,
+      `[DB Txns Check] Failed to check transactions from db`
+    );
     return;
   }
 };

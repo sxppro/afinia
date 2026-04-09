@@ -50,6 +50,12 @@ export const getTransactionsByCategory = (id: string) =>
       )
     );
 
+/**
+ * Retrieve transactions by date range
+ * @param start - Start date
+ * @param end - End date
+ * @returns
+ */
 export const getTransactionsByDateRange = (start: Date, end: Date) =>
   db
     .select()
