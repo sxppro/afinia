@@ -19,6 +19,11 @@ import {
 } from 'date-fns';
 import { eq } from 'drizzle-orm';
 import pLimit from 'p-limit';
+import {
+  deleteTransaction,
+  ProcessTransactionsMetrics,
+  upsertTransactions,
+} from '../common/transaction';
 import { upClient } from '../utils/clients';
 import {
   ALERT_LEVEL,
@@ -30,11 +35,6 @@ import { notify } from '../utils/notify';
 import { processAccounts } from './processAccounts';
 import { processCategories } from './processCategories';
 import { processTags } from './processTags';
-import {
-  deleteTransaction,
-  ProcessTransactionsMetrics,
-  upsertTransactions,
-} from './processTransactions';
 
 const PROCESS_NAME = 'syncTransactions';
 const CURSOR_KEY = 'syncTransactions.cursor';
