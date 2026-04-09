@@ -120,7 +120,10 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       statusCode: 200,
     };
   } catch (error) {
-    await notify(ALERT_LEVEL.WARN, `Error in ${PROCESS_NAME}: ${error}`);
+    await notify(
+      ALERT_LEVEL.WARN,
+      `Error in ${PROCESS_NAME}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
+    );
     return {
       statusCode: 500,
       body: JSON.stringify({

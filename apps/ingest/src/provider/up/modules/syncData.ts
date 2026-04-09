@@ -1,3 +1,4 @@
+import { checkDatabaseConnection } from '@/src/db/connection';
 import { getCategoryById } from '@/src/db/queries/category';
 import { getTag } from '@/src/db/queries/tag';
 import {
@@ -16,6 +17,8 @@ import { ALERT_LEVEL } from '../utils/constants';
 import { getNextPage } from '../utils/fetch';
 import { notify } from '../utils/notify';
 import { processTags } from './processTags';
+
+const PROCESS_NAME = 'syncData';
 
 const updateTransaction = async (
   providerId: string,
@@ -37,7 +40,8 @@ const updateTransaction = async (
 const syncCategorisedTransactions = async () => {
   const { data, error } = await upClient.GET('/categories');
   if (error) {
-    await notify(ALERT_LEVEL.WARN, `[Up] Failed to fetch categories: ${error}`);
+    console.error(error);
+    await notify(ALERT_LEVEL.WARN, `[Up] Failed to fetch categories`);
     return;
   }
   if (!data || !data.data.length) {
@@ -83,7 +87,7 @@ const syncCategorisedTransactions = async () => {
         if (error) {
           await notify(
             ALERT_LEVEL.WARN,
-            `[Up] Failed to fetch transactions for category ${categoryId}: ${error}`
+            `[Up] Failed to fetch transactions for category ${categoryId}: ${JSON.stringify(error)}`
           );
           return;
         }
@@ -106,14 +110,14 @@ const syncCategorisedTransactions = async () => {
           await getTransactionsByCategory(categoryId);
         const { inserted, deleted } = await compareProviderAndDb({
           providerData: externalTransactionIds,
-          dbData: transactionsByCategory?.map((t) => t.providerId),
+          dbData: transactionsByCategory.map((t) => t.providerId),
           insertToDb: (providerId) =>
             updateTransaction(providerId, (transactionId) =>
-              updateTransactionCategory(transactionId, categoryId)
+              updateTransactionCategory(transactionId, categoryId, PROCESS_NAME)
             ),
           deleteFromDb: (providerId) =>
             updateTransaction(providerId, (transactionId) =>
-              updateTransactionCategory(transactionId, null)
+              updateTransactionCategory(transactionId, null, PROCESS_NAME)
             ),
         });
         if (inserted > 0) {
@@ -130,6 +134,7 @@ const syncCategorisedTransactions = async () => {
           `Finished syncing transactions for category: ${categoryId}`
         );
       } catch (error) {
+        console.error(error);
         await notify(
           ALERT_LEVEL.ERROR,
           `Failed to sync transactions for category ${categoryId}: ${
@@ -147,7 +152,8 @@ const syncTaggedTransactions = async () => {
   const { data: tags, error } = await upClient.GET('/tags');
 
   if (error) {
-    await notify(ALERT_LEVEL.WARN, `[Up] Failed to fetch tags: ${error}`);
+    console.error(error);
+    await notify(ALERT_LEVEL.WARN, `[Up] Failed to fetch tags`);
     return;
   }
   if (!tags || !tags.data.length) {
@@ -186,9 +192,10 @@ const syncTaggedTransactions = async () => {
           },
         });
         if (error) {
+          console.error(error);
           await notify(
             ALERT_LEVEL.WARN,
-            `[Up] Failed to fetch transactions for tag ${tagId}: ${error}`
+            `[Up] Failed to fetch transactions for tag ${tagId}`
           );
           return;
         }
@@ -212,7 +219,7 @@ const syncTaggedTransactions = async () => {
         // Insert or delete relationship between tags and transactions
         const { inserted, deleted } = await compareProviderAndDb({
           providerData: externalTransactionIds,
-          dbData: transactionsByTag?.map((t) => t.providerId),
+          dbData: transactionsByTag.map((t) => t.providerId),
           insertToDb: (providerId) =>
             updateTransaction(providerId, (transactionId) =>
               updateTransactionTag(transactionId, tagId)
@@ -230,11 +237,10 @@ const syncTaggedTransactions = async () => {
         }
         console.log(`Finished syncing transactions for tag: ${tagId}`);
       } catch (error) {
+        console.error(error);
         await notify(
           ALERT_LEVEL.ERROR,
-          `Failed to sync transactions for tag ${tagId}: ${
-            error instanceof Error ? error.message : error
-          }`
+          `Failed to sync transactions for tag ${tagId}`
         );
       }
     }
@@ -244,12 +250,27 @@ const syncTaggedTransactions = async () => {
 };
 
 export const handler = async () => {
-  // Sync tags
-  await processTags();
-  // Sync tagged transactions
-  await syncTaggedTransactions();
-  // Sync categorised transactions
-  await syncCategorisedTransactions();
+  try {
+    // Check database connection
+    const isConnected = await checkDatabaseConnection();
+    if (!isConnected) {
+      await notify(
+        ALERT_LEVEL.ERROR,
+        `Failed to connect to database. Skipping ${PROCESS_NAME}`
+      );
+      return;
+    }
+
+    // Sync tags
+    await processTags();
+    // Sync tagged transactions
+    await syncTaggedTransactions();
+    // Sync categorised transactions
+    await syncCategorisedTransactions();
+  } catch (error) {
+    console.error(error);
+    await notify(ALERT_LEVEL.ERROR, `${PROCESS_NAME} failed`);
+  }
 };
 
 if (fileURLToPath(import.meta.url) === process.argv[1]) {

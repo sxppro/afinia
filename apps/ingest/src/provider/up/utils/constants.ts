@@ -5,3 +5,5 @@ export enum ALERT_LEVEL {
   WARN = 'warn',
   ERROR = 'error',
 }
+
+export const MAX_CONCURRENCY = 32;

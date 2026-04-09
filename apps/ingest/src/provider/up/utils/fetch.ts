@@ -48,7 +48,7 @@ export const getNextPage = async <T>(
   } catch (error) {
     throw new Error(
       `Failed to parse JSON response for page ${page}: ${
-        error instanceof Error ? error.message : error
+        error instanceof Error ? error.message : JSON.stringify(error)
       }`
     );
   }
