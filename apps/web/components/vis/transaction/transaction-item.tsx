@@ -1,6 +1,8 @@
 import CategoryIcon from '@/components/category-icon';
+import { TZ } from '@/lib/constants';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours, formatCurrency } from '@/lib/ui';
+import { TZDateMini } from '@date-fns/tz';
 import { transactionExternalTable } from 'afinia-common/schema';
 import { format, isThisYear } from 'date-fns';
 import Link from 'next/link';
@@ -19,6 +21,9 @@ const TransactionItem = ({
     type,
     value_in_base_units,
   } = transaction;
+
+  // Format timestamp in timezone
+  const tzCreatedAt = new TZDateMini(created_at, TZ);
 
   const showCategoryIcon = ({
     category_id,
@@ -61,9 +66,9 @@ const TransactionItem = ({
         </div>
         <div className="flex gap-4">
           <p className="text-muted-foreground shrink-0 font-medium">
-            {isThisYear(created_at)
-              ? format(created_at, 'd MMM, h:mm aaa')
-              : format(created_at, 'd MMM yyyy, h:mm aaa')}
+            {isThisYear(tzCreatedAt)
+              ? format(tzCreatedAt, 'd MMM, h:mm aaa')
+              : format(tzCreatedAt, 'd MMM yyyy, h:mm aaa')}
           </p>
           <p className="text-muted-foreground ml-auto min-w-8 truncate font-medium">
             {type
