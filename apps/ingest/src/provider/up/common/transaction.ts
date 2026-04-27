@@ -362,16 +362,21 @@ export const upsertTransactions = async (
  */
 export const deleteTransaction = async (
   transactionId: string,
-  processName: string
+  processName: string,
+  deletedAt?: Date
 ) => {
   const now = new Date();
-  await db
+  const res = await db
     .update(transactionTable)
     .set({
-      deleted_at: now,
+      deleted_at: deletedAt || now,
       updated_at: now,
       updated_by: processName,
     })
-    .where(eq(transactionTable.provider_id, transactionId));
-  console.log(`Deleted transaction: ${transactionId}`);
+    .where(eq(transactionTable.provider_id, transactionId))
+    .returning();
+  if (res.length === 1 && res[0]) {
+    console.log(`Deleted transaction: ${res[0].provider_id}`);
+  }
+  return res.length;
 };
