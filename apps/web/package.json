@@ -9,7 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@base-ui/react": "^1.2.0",
     "@date-fns/tz": "catalog:",
     "@number-flow/react": "^0.5.10",
     "@trpc/client": "^11.8.0",
@@ -33,6 +32,7 @@
     "recharts": "^3.5.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
+    "vaul": "^1.1.2",
     "web-push": "^3.6.7",
     "zod": "^4.2.1"
   },
