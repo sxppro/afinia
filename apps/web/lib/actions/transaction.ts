@@ -1,7 +1,7 @@
 'use server';
 
 import { transactionExternalTable } from 'afinia-common/schema';
-import { and, desc, eq, or, SQL, sql } from 'drizzle-orm';
+import { and, desc, eq, isNull, or, SQL, sql } from 'drizzle-orm';
 import { db } from '../db/client';
 import { Prettify } from '../types';
 
@@ -60,12 +60,16 @@ export const getTransactionsPaginated = async (
     }
 
     if (categoryId) {
-      conditions.push(
-        or(
-          eq(transactionExternalTable.category_id, categoryId),
-          eq(transactionExternalTable.category_parent_id, categoryId)
-        )
-      );
+      if (categoryId === 'uncategorised') {
+        conditions.push(isNull(transactionExternalTable.category_id));
+      } else {
+        conditions.push(
+          or(
+            eq(transactionExternalTable.category_id, categoryId),
+            eq(transactionExternalTable.category_parent_id, categoryId)
+          )
+        );
+      }
     }
 
     if (searchTerm) {
@@ -90,7 +94,7 @@ export const getTransactionsPaginated = async (
         desc(transactionExternalTable.transaction_id)
       )
       .offset(offset);
-      
+
     const transactions = await (limit ? query.limit(limit + 1) : query);
     const hasMore = limit ? transactions.length > limit : false;
     const page = hasMore ? transactions.slice(0, limit) : transactions;
