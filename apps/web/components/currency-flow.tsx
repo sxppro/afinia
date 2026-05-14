@@ -5,10 +5,12 @@ const CurrencyFlow = ({
   className,
   value,
   signDisplay,
+  currency,
 }: {
   className?: string;
   value: number;
   signDisplay?: keyof Intl.NumberFormatOptionsSignDisplayRegistry;
+  currency?: string;
 }) => {
   return (
     <NumberFlow
@@ -16,13 +18,13 @@ const CurrencyFlow = ({
       value={formatValueInBaseUnits(value)}
       format={{
         style: 'currency',
-        currency: 'AUD',
+        currency: currency ?? 'AUD',
         currencyDisplay: 'narrowSymbol',
         signDisplay: signDisplay
           ? signDisplay
           : value > 0
-          ? 'exceptZero'
-          : 'never',
+            ? 'exceptZero'
+            : 'never',
       }}
     />
   );
