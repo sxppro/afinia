@@ -55,7 +55,9 @@ const SpendingByDay = ({
       startEndOnly
       showLegend={false}
       showYAxis={false}
-      valueFormatter={(value) => formatCurrency(formatValueInBaseUnits(value))}
+      valueFormatter={(value) =>
+        formatCurrency(formatValueInBaseUnits(value, 'AUD'))
+      }
     />
   );
 };

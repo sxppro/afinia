@@ -45,12 +45,19 @@ export const cn = (...inputs: ClassValue[]) => {
  * Formats integer values in base units (cents)
  * to dollar amounts
  * @param value cents
+ * @param currency currency code
  * @returns dollars
  */
-export const formatValueInBaseUnits = (value: number) => {
-  return parseFloat((value / 100).toFixed(2));
-};
+export const formatValueInBaseUnits = (value: number, currency: string) => {
+  const fractionDigits = new Intl.NumberFormat('en-au', {
+    style: 'currency',
+    currency,
+  }).resolvedOptions().minimumFractionDigits;
 
+  // Don't modify value if unable to lookup fraction
+  // digits for currency
+  return value / Math.pow(10, fractionDigits ?? 0);
+};
 /**
  * Currency formatter for numbers
  * @param number number to format
@@ -74,7 +81,7 @@ export const formatCurrency = (
     currency = 'AUD',
   } = options ?? {};
 
-  const value = baseUnits ? formatValueInBaseUnits(number) : number;
+  const value = baseUnits ? formatValueInBaseUnits(number, currency) : number;
 
   return Intl.NumberFormat('default', {
     style: 'currency',

@@ -15,7 +15,7 @@ const CurrencyFlow = ({
   return (
     <NumberFlow
       className={cn('text-2xl font-semibold', className)}
-      value={formatValueInBaseUnits(value)}
+      value={formatValueInBaseUnits(value, currency ?? 'AUD')}
       format={{
         style: 'currency',
         currency: currency ?? 'AUD',
