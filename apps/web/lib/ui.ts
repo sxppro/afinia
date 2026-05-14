@@ -63,6 +63,7 @@ export const formatCurrency = (
     compact?: boolean;
     absolute?: boolean;
     baseUnits?: boolean;
+    currency?: string;
   }
 ) => {
   const {
@@ -70,13 +71,14 @@ export const formatCurrency = (
     compact = false,
     absolute = false,
     baseUnits = false,
+    currency = 'AUD',
   } = options ?? {};
 
   const value = baseUnits ? formatValueInBaseUnits(number) : number;
 
   return Intl.NumberFormat('default', {
     style: 'currency',
-    currency: 'AUD',
+    currency,
     currencyDisplay: 'narrowSymbol',
     maximumFractionDigits: decimals,
     signDisplay: absolute ? (number > 0 ? 'exceptZero' : 'never') : 'auto',
