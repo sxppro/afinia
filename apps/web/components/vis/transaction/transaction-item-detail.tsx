@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerFooter,
@@ -21,7 +20,7 @@ import { cn, colours } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
 import { ExternalLink, SquarePen } from 'lucide-react';
 import Link from 'next/link';
-import { PropsWithChildren, useState } from 'react';
+import { CSSProperties, PropsWithChildren, useState } from 'react';
 
 const TransactionItemDetail = ({
   children,
@@ -90,7 +89,6 @@ const TransactionItemDetail = ({
                       : currency_code
                   }
                 />
-
                 {isForeignTxn ? (
                   <CurrencySwitch
                     checked={showForeignAmount}
@@ -99,7 +97,7 @@ const TransactionItemDetail = ({
                     foreignCurrency={foreign_currency_code}
                   />
                 ) : (
-                  <Badge>{currency_code}</Badge>
+                  <Badge variant="secondary">{currency_code}</Badge>
                 )}
               </div>
             </div>
@@ -107,13 +105,13 @@ const TransactionItemDetail = ({
               <DrawerTitle className="text-start text-xl">
                 {description}
               </DrawerTitle>
-              <DrawerDescription className="text-start">
+              <DrawerDescription className="text-start font-mono">
                 {raw_text}
               </DrawerDescription>
             </div>
           </DrawerHeader>
         </div>
-        <div className="px-4">
+        <div className="flex flex-col gap-2 px-4">
           {note ? (
             <Alert className="border-none bg-lime-50 dark:bg-lime-950/70">
               <SquarePen className="size-4" />
@@ -121,22 +119,45 @@ const TransactionItemDetail = ({
               <AlertDescription>{note}</AlertDescription>
             </Alert>
           ) : null}
+          <div className="border-muted-foreground/20 rounded-md border"></div>
         </div>
-        <DrawerFooter className="flex-row">
-          <DrawerClose asChild>
-            <Button variant="outline" className="flex-1">
-              Close
-            </Button>
-          </DrawerClose>
-          {deep_link_url && (
-            <Button asChild>
-              <Link href={deep_link_url} className="flex-1">
-                Open in app
-                <ExternalLink aria-hidden="true" className="ml-1 size-4" />
-              </Link>
-            </Button>
-          )}
-        </DrawerFooter>
+        {deep_link_url && (
+          <DrawerFooter>
+            <div
+              className="rounded-lg transition"
+              style={
+                {
+                  // A purplish colour
+                  '--highlight': 'oklch(0.69 0.3 329.98)',
+                  '--bg-color':
+                    'linear-gradient(var(--background), var(--background))',
+                  '--border-color': `conic-gradient(
+                      from var(--border-angle),
+                      var(--highlight) 0%,
+                      color-mix(in oklch, var(--highlight) 20%, transparent) 25%,
+                      color-mix(in oklch, var(--highlight) 80%, transparent) 50%,
+                      color-mix(in oklch, var(--highlight) 20%, transparent) 75%,
+                      var(--highlight) 100%
+                    )`,
+                  animation: 'border-rotate 10s linear infinite',
+                  backgroundImage:
+                    'linear-gradient(var(--background), var(--background)), var(--border-color)',
+                  backgroundOrigin: 'padding-box, border-box',
+                  backgroundClip: 'padding-box, border-box',
+                  borderColor: 'transparent',
+                  borderWidth: '2px',
+                } as CSSProperties
+              }
+            >
+              <Button variant="secondary" asChild>
+                <Link href={deep_link_url} className="w-full">
+                  Open in app
+                  <ExternalLink aria-hidden="true" className="ml-1 size-4" />
+                </Link>
+              </Button>
+            </div>
+          </DrawerFooter>
+        )}
       </DrawerContent>
     </Drawer>
   );
