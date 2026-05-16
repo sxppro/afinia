@@ -35,7 +35,9 @@ const TransactionItemDetail = ({
   const {
     card_purchase_method,
     card_number_suffix,
+    category,
     category_id,
+    category_parent,
     category_parent_id,
     created_at,
     currency_code,
@@ -109,7 +111,7 @@ const TransactionItemDetail = ({
               </div>
             </div>
             <div>
-              <DrawerTitle className="text-start text-xl">
+              <DrawerTitle className="text-start text-xl font-bold">
                 {description}
               </DrawerTitle>
               <DrawerDescription className="text-start font-mono">
@@ -119,6 +121,21 @@ const TransactionItemDetail = ({
           </DrawerHeader>
         </div>
         <div className="flex flex-col gap-4 px-4">
+          <div className="flex items-center self-center rounded-full border">
+            <span
+              className={cn(
+                'rounded-full px-4 py-1 font-medium',
+                category_parent_id
+                  ? colours[category_parent_id].background
+                  : 'bg-up-uncategorised'
+              )}
+            >
+              {category_parent || 'Uncategorised'}
+            </span>
+            {category && (
+              <span className="px-4 py-1 font-medium">{category}</span>
+            )}
+          </div>
           {note ? (
             <Alert className="border-none bg-lime-50 dark:bg-lime-950/70">
               <SquarePen className="size-4" />
@@ -128,30 +145,32 @@ const TransactionItemDetail = ({
           ) : null}
           <div className="flex flex-col gap-2">
             <h2 className="text-lg font-semibold">Transaction Details</h2>
+            {message && (
+              <div className="flex items-start justify-between gap-6">
+                <p className="text-muted-foreground">Message</p>
+                <p className="text-end font-medium">{message}</p>
+              </div>
+            )}
             {type && (
-              <div className="flex items-center justify-between">
-                <p className="text-muted-foreground">Payment Type</p>
+              <div className="flex justify-between">
+                <p className="text-muted-foreground">Type</p>
                 <p>{type}</p>
               </div>
             )}
-            {message && (
-              <div className="flex items-center">
-                <p className="text-muted-foreground">Message</p>
-                <p>{message}</p>
-              </div>
-            )}
-            <div className="flex items-center justify-between">
+            <div className="flex justify-between">
               <p className="text-muted-foreground">When</p>
-              <p>{format(created_at, "do MMM yyyy 'at' h:mm aaa")}</p>
+              <p className="text-end">
+                {format(created_at, "do MMM yyyy 'at' h:mm aaa")}
+              </p>
             </div>
             {card_number_suffix && (
-              <div className="flex items-center justify-between">
+              <div className="flex justify-between">
                 <p className="text-muted-foreground">Which card</p>
                 <p>{`· · · ·  ${card_number_suffix}`}</p>
               </div>
             )}
             {card_purchase_method && (
-              <div className="flex items-center justify-between">
+              <div className="flex justify-between">
                 <p className="text-muted-foreground">Authorised via</p>
                 <p>
                   {capitalise(
