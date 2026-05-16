@@ -3,6 +3,7 @@
 import CategoryIconOrInitial from '@/components/category-icon-or-initial';
 import CurrencyFlow from '@/components/currency-flow';
 import CurrencySwitch from '@/components/currency-switch';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,7 +19,7 @@ import {
 import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, SquarePen } from 'lucide-react';
 import Link from 'next/link';
 import { PropsWithChildren, useState } from 'react';
 
@@ -40,6 +41,7 @@ const TransactionItemDetail = ({
     raw_text,
     foreign_currency_code,
     foreign_value_in_base_units,
+    note,
   } = transaction;
 
   const isForeignTxn =
@@ -111,7 +113,15 @@ const TransactionItemDetail = ({
             </div>
           </DrawerHeader>
         </div>
-        <div className="p-4 pb-0"></div>
+        <div className="px-4">
+          {note ? (
+            <Alert className="border-none bg-lime-50 dark:bg-lime-950/70">
+              <SquarePen className="size-4" />
+              <AlertTitle>Notes</AlertTitle>
+              <AlertDescription>{note}</AlertDescription>
+            </Alert>
+          ) : null}
+        </div>
         <DrawerFooter className="flex-row">
           <DrawerClose asChild>
             <Button variant="outline" className="flex-1">
