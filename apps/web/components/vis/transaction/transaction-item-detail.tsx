@@ -2,6 +2,7 @@
 
 import CategoryIconOrInitial from '@/components/category-icon-or-initial';
 import CurrencyFlow from '@/components/currency-flow';
+import CurrencySwitch from '@/components/currency-switch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,7 +18,7 @@ import {
 import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
-import { ExternalLink, RefreshCcw } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { PropsWithChildren, useState } from 'react';
 
@@ -27,6 +28,7 @@ const TransactionItemDetail = ({
 }: {
   transaction: typeof transactionExternalTable.$inferSelect;
 } & PropsWithChildren) => {
+  const [open, setOpen] = useState(false);
   const [showForeignAmount, setShowForeignAmount] = useState(false);
   const {
     deep_link_url,
@@ -44,7 +46,7 @@ const TransactionItemDetail = ({
     foreign_currency_code !== null && foreign_value_in_base_units !== null;
 
   return (
-    <Drawer>
+    <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>{children}</DrawerTrigger>
       <DrawerContent className="font-sans">
         <div className="w-full">
@@ -73,33 +75,30 @@ const TransactionItemDetail = ({
                 </span>
               </Link>
               <div className="-mt-2 flex flex-col items-end">
-                <div className="flex items-center gap-2">
-                  {isForeignTxn ? (
-                    <Button
-                      variant="outline"
-                      className="size-8"
-                      onClick={() => setShowForeignAmount(!showForeignAmount)}
-                    >
-                      <RefreshCcw className="size-4" />
-                    </Button>
-                  ) : null}
-                  <CurrencyFlow
-                    className="text-4xl font-semibold"
-                    value={
-                      showForeignAmount && isForeignTxn
-                        ? foreign_value_in_base_units
-                        : value_in_base_units
-                    }
-                    currency={
-                      showForeignAmount && isForeignTxn
-                        ? foreign_currency_code
-                        : currency_code
-                    }
+                <CurrencyFlow
+                  className="text-4xl font-semibold"
+                  value={
+                    showForeignAmount && isForeignTxn
+                      ? foreign_value_in_base_units
+                      : value_in_base_units
+                  }
+                  currency={
+                    showForeignAmount && isForeignTxn
+                      ? foreign_currency_code
+                      : currency_code
+                  }
+                />
+
+                {isForeignTxn ? (
+                  <CurrencySwitch
+                    checked={showForeignAmount}
+                    onCheckedChange={setShowForeignAmount}
+                    baseCurrency={currency_code}
+                    foreignCurrency={foreign_currency_code}
                   />
-                </div>
-                <Badge className="-mt-1">
-                  {showForeignAmount ? foreign_currency_code : currency_code}
-                </Badge>
+                ) : (
+                  <Badge>{currency_code}</Badge>
+                )}
               </div>
             </div>
             <div>
