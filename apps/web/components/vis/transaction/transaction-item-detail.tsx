@@ -16,8 +16,10 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer';
 import { siteConfig } from '@/lib/siteConfig';
+import { capitalise } from '@/lib/string';
 import { cn, colours } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
+import { format } from 'date-fns';
 import { ExternalLink, SquarePen } from 'lucide-react';
 import Link from 'next/link';
 import { CSSProperties, PropsWithChildren, useState } from 'react';
@@ -31,16 +33,21 @@ const TransactionItemDetail = ({
   const [open, setOpen] = useState(false);
   const [showForeignAmount, setShowForeignAmount] = useState(false);
   const {
-    deep_link_url,
+    card_purchase_method,
+    card_number_suffix,
     category_id,
     category_parent_id,
+    created_at,
     currency_code,
+    deep_link_url,
     description,
-    value_in_base_units,
-    raw_text,
     foreign_currency_code,
     foreign_value_in_base_units,
+    message,
     note,
+    raw_text,
+    type,
+    value_in_base_units,
   } = transaction;
 
   const isForeignTxn =
@@ -111,7 +118,7 @@ const TransactionItemDetail = ({
             </div>
           </DrawerHeader>
         </div>
-        <div className="flex flex-col gap-2 px-4">
+        <div className="flex flex-col gap-4 px-4">
           {note ? (
             <Alert className="border-none bg-lime-50 dark:bg-lime-950/70">
               <SquarePen className="size-4" />
@@ -119,7 +126,41 @@ const TransactionItemDetail = ({
               <AlertDescription>{note}</AlertDescription>
             </Alert>
           ) : null}
-          <div className="border-muted-foreground/20 rounded-md border"></div>
+          <div className="flex flex-col gap-2">
+            <h2 className="text-lg font-semibold">Transaction Details</h2>
+            {type && (
+              <div className="flex items-center justify-between">
+                <p className="text-muted-foreground">Payment Type</p>
+                <p>{type}</p>
+              </div>
+            )}
+            {message && (
+              <div className="flex items-center">
+                <p className="text-muted-foreground">Message</p>
+                <p>{message}</p>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <p className="text-muted-foreground">When</p>
+              <p>{format(created_at, "do MMM yyyy 'at' h:mm aaa")}</p>
+            </div>
+            {card_number_suffix && (
+              <div className="flex items-center justify-between">
+                <p className="text-muted-foreground">Which card</p>
+                <p>{`· · · ·  ${card_number_suffix}`}</p>
+              </div>
+            )}
+            {card_purchase_method && (
+              <div className="flex items-center justify-between">
+                <p className="text-muted-foreground">Authorised via</p>
+                <p>
+                  {capitalise(
+                    card_purchase_method.replace('_', ' ').toLowerCase()
+                  )}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
         {deep_link_url && (
           <DrawerFooter>
