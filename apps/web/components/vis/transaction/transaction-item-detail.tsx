@@ -121,19 +121,23 @@ const TransactionItemDetail = ({
           </DrawerHeader>
         </div>
         <div className="flex flex-col gap-4 px-4">
-          <div className="flex items-center self-center rounded-full border">
+          <div className="flex max-w-full items-center self-center rounded-full border">
             <span
               className={cn(
                 'rounded-full px-4 py-1 font-medium',
                 category_parent_id
                   ? colours[category_parent_id].background
-                  : 'bg-up-uncategorised'
+                  : 'bg-up-uncategorised',
+                // Invert text colour for all categories except for Good Life
+                category_parent_id !== 'good-life'
+                  ? 'text-primary-foreground'
+                  : 'text-secondary-foreground'
               )}
             >
               {category_parent || 'Uncategorised'}
             </span>
             {category && (
-              <span className="px-4 py-1 font-medium">{category}</span>
+              <span className="truncate px-4 py-1 font-medium">{category}</span>
             )}
           </div>
           {note ? (
