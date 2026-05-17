@@ -6,7 +6,7 @@ import { TZDateMini } from '@date-fns/tz';
 import { transactionExternalTable } from 'afinia-common/schema';
 import { format, isThisYear } from 'date-fns';
 import Link from 'next/link';
-import TransactionItemDetail from './transaction-item-detail';
+import TransactionItemDetails from './transaction-item-details';
 
 const TransactionItem = ({
   transaction,
@@ -48,7 +48,7 @@ const TransactionItem = ({
           />
         </span>
       </Link>
-      <TransactionItemDetail transaction={transaction}>
+      <TransactionItemDetails transaction={transaction}>
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex gap-4">
             <p className="truncate font-medium">{description}</p>
@@ -76,7 +76,7 @@ const TransactionItem = ({
             </p>
           </div>
         </div>
-      </TransactionItemDetail>
+      </TransactionItemDetails>
     </div>
   );
 };

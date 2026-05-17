@@ -15,6 +15,7 @@ const CurrencySwitch = ({
   return (
     <div className="relative inline-grid h-6 grid-cols-[1fr_1fr] items-center text-xs font-medium">
       <Switch
+        // Flipped because we want base currency to be default
         checked={!checked}
         onCheckedChange={() => onCheckedChange(!checked)}
         className={cn(
