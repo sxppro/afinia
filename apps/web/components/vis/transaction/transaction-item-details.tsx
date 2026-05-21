@@ -17,10 +17,9 @@ import {
 } from '@/components/ui/drawer';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getTransactionDetailById } from '@/lib/actions/transaction';
-import { SMALL_PAGE_SIZE } from '@/lib/constants';
 import { siteConfig } from '@/lib/siteConfig';
 import { capitalise } from '@/lib/string';
-import { cn, colours } from '@/lib/ui';
+import { cn, colours, formatCurrency } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
 import { format } from 'date-fns';
 import { ExternalLink, SquarePen } from 'lucide-react';
@@ -205,13 +204,76 @@ const TransactionItemDetails = ({
               </div>
             )}
           </div>
-          {isLoading ? (
-            <>
-              {[...Array(SMALL_PAGE_SIZE)].map((_, i) => (
-                <Skeleton className="h-4 w-full" key={i} />
-              ))}
-            </>
-          ) : null}
+          <div className="flex flex-col gap-2">
+            <h2 className="text-lg font-semibold">Additional Details</h2>
+            {isLoading ? (
+              <div className="flex flex-col gap-2">
+                {[...Array(4)].map((_, i) => (
+                  <Skeleton className="h-8 w-full" key={i} />
+                ))}
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <p className="text-muted-foreground">Account</p>
+                  <p className="font-medium">
+                    {transactionDetails?.account?.display_name ?? '—'}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-muted-foreground">Round Up</p>
+                  <p className="font-medium tabular-nums">
+                    {transactionDetails?.round_up?.value_in_base_units
+                      ? formatCurrency(
+                          transactionDetails?.round_up?.value_in_base_units,
+                          {
+                            absolute: true,
+                            baseUnits: true,
+                            decimals: 2,
+                            currency:
+                              transactionDetails?.round_up?.currency_code,
+                          }
+                        )
+                      : '—'}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-muted-foreground">Cashback</p>
+                  <p className="font-medium tabular-nums">
+                    {transactionDetails?.cashback?.value_in_base_units
+                      ? formatCurrency(
+                          transactionDetails?.cashback?.value_in_base_units,
+                          {
+                            absolute: true,
+                            baseUnits: true,
+                            decimals: 2,
+                            currency:
+                              transactionDetails?.cashback?.currency_code,
+                          }
+                        )
+                      : '—'}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-muted-foreground">Held Amount</p>
+                  <p className="font-medium tabular-nums">
+                    {transactionDetails?.hold_info?.value_in_base_units
+                      ? formatCurrency(
+                          transactionDetails?.hold_info?.value_in_base_units,
+                          {
+                            absolute: true,
+                            baseUnits: true,
+                            decimals: 2,
+                            currency:
+                              transactionDetails?.hold_info?.currency_code,
+                          }
+                        )
+                      : '—'}
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
         </div>
         {deep_link_url && (
           <DrawerFooter>

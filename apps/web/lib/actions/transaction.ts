@@ -1,6 +1,14 @@
 'use server';
 
-import { transactionExternalTable } from 'afinia-common/schema';
+import {
+  accountTable,
+  transactionCashbackTable,
+  transactionExternalTable,
+  transactionHoldInfoTable,
+  transactionRoundUpTable,
+  transactionTable,
+  transactionTagTable,
+} from 'afinia-common/schema';
 import { and, desc, eq, isNull, or, SQL, sql } from 'drizzle-orm';
 import { db } from '../db/client';
 import { Prettify } from '../types';
@@ -112,5 +120,90 @@ export const getTransactionsPaginated = async (
   } catch (error) {
     console.error('Error fetching paginated transactions: ', error);
     return { transactions: [], hasMore: false, next: null };
+  }
+};
+
+/**
+ * Retrieve transaction details by ID
+ * - Account name
+ * - Round up
+ * - Cashback
+ * - Hold info
+ * - Tags
+ * @param id transaction ID
+ */
+export const getTransactionDetailById = async (id: number) => {
+  try {
+    const tags = await db
+      .select({ tag_id: transactionTagTable.tag_id })
+      .from(transactionTagTable)
+      .where(eq(transactionTagTable.transaction_id, id));
+
+    const transaction = await db
+      .select({
+        account: {
+          display_name: accountTable.display_name,
+          type: accountTable.type,
+        },
+        hold_info: {
+          currency_code: transactionHoldInfoTable.currency_code,
+          value: transactionHoldInfoTable.value,
+          value_in_base_units: transactionHoldInfoTable.value_in_base_units,
+          foreign_currency_code: transactionHoldInfoTable.foreign_currency_code,
+          foreign_value: transactionHoldInfoTable.foreign_value,
+          foreign_value_in_base_units:
+            transactionHoldInfoTable.foreign_value_in_base_units,
+        },
+        round_up: {
+          currency_code: transactionRoundUpTable.currency_code,
+          value: transactionRoundUpTable.value,
+          value_in_base_units: transactionRoundUpTable.value_in_base_units,
+          boost_currency_code: transactionRoundUpTable.boost_currency_code,
+          boost_value: transactionRoundUpTable.boost_value,
+          boost_value_in_base_units:
+            transactionRoundUpTable.boost_value_in_base_units,
+        },
+        cashback: {
+          description: transactionCashbackTable.description,
+          currency_code: transactionCashbackTable.currency_code,
+          value: transactionCashbackTable.value,
+          value_in_base_units: transactionCashbackTable.value_in_base_units,
+        },
+      })
+      .from(transactionTable)
+      .leftJoin(
+        accountTable,
+        eq(accountTable.account_id, transactionTable.account_id)
+      )
+      .leftJoin(
+        transactionRoundUpTable,
+        eq(
+          transactionTable.transaction_id,
+          transactionRoundUpTable.transaction_id
+        )
+      )
+      .leftJoin(
+        transactionCashbackTable,
+        eq(
+          transactionTable.transaction_id,
+          transactionCashbackTable.transaction_id
+        )
+      )
+      .leftJoin(
+        transactionHoldInfoTable,
+        eq(
+          transactionTable.transaction_id,
+          transactionHoldInfoTable.transaction_id
+        )
+      )
+      .where(eq(transactionTable.transaction_id, id))
+      .limit(1);
+
+    return transaction.at(0)
+      ? { ...transaction.at(0), tags: tags.map((tag) => tag.tag_id) }
+      : null;
+  } catch (error) {
+    console.error('Error fetching transaction details: ', error);
+    return null;
   }
 };
