@@ -24,12 +24,7 @@ import { transactionExternalTable } from 'afinia-common/schema';
 import { format } from 'date-fns';
 import { ExternalLink, SquarePen } from 'lucide-react';
 import Link from 'next/link';
-import {
-  CSSProperties,
-  PropsWithChildren,
-  useState,
-  useTransition,
-} from 'react';
+import { CSSProperties, PropsWithChildren, useState } from 'react';
 
 const TransactionItemDetails = ({
   children,
@@ -41,7 +36,7 @@ const TransactionItemDetails = ({
     useState<Awaited<ReturnType<typeof getTransactionDetailById>>>(null);
   const [open, setOpen] = useState(false);
   const [showForeignAmount, setShowForeignAmount] = useState(false);
-  const [isLoading, startTransition] = useTransition();
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
   const {
     card_purchase_method,
@@ -67,13 +62,23 @@ const TransactionItemDetails = ({
   const isForeignTxn =
     foreign_currency_code !== null && foreign_value_in_base_units !== null;
 
-  const handleOpenChange = (open: boolean) => {
+  const handleOpenChange = async (open: boolean) => {
     setOpen(open);
     if (open && !transactionDetails) {
-      startTransition(async () => {
+      /**
+       * Not using startTransition here as it causes weird
+       * UI behaviour showing a flash of content behind the
+       * the drawer when additional details load
+       */
+      try {
+        setIsLoadingDetails(true);
         const details = await getTransactionDetailById(transaction_id);
         setTransactionDetails(details);
-      });
+      } catch (error) {
+        console.error('Error fetching transaction details: ', error);
+      } finally {
+        setIsLoadingDetails(false);
+      }
     }
   };
 
@@ -206,10 +211,10 @@ const TransactionItemDetails = ({
           </div>
           <div className="flex flex-col gap-2">
             <h2 className="text-lg font-semibold">Additional Details</h2>
-            {isLoading ? (
+            {isLoadingDetails ? (
               <div className="flex flex-col gap-2">
                 {[...Array(4)].map((_, i) => (
-                  <Skeleton className="h-8 w-full" key={i} />
+                  <Skeleton className="h-6 w-full" key={i} />
                 ))}
               </div>
             ) : (
