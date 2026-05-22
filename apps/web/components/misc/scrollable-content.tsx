@@ -16,20 +16,42 @@ const ScrollableContent = ({
     const bottomGradient = bottomGradientRef.current;
     if (!scrollContainer || !bottomGradient || !topGradient) return;
 
-    const handleScroll = () => {
+    const handleUpdateGradients = () => {
       const maxScroll =
         scrollContainer.scrollHeight - scrollContainer.clientHeight;
       const currentScroll = scrollContainer.scrollTop;
 
-      const topOpacity = Math.min(currentScroll / 100, 1);
-      const bottomOpacity = Math.min((maxScroll - currentScroll) / 100, 1);
+      // Hide gradients if no overflow
+      if (maxScroll <= 0) {
+        topGradient.style.opacity = '0';
+        bottomGradient.style.opacity = '0';
+        return;
+      }
+
+      const fadeDistance = Math.min(100, maxScroll / 2);
+      const topOpacity = Math.min(currentScroll / fadeDistance, 1);
+      const bottomOpacity = Math.min(
+        (maxScroll - currentScroll) / fadeDistance,
+        1
+      );
 
       topGradient.style.opacity = topOpacity.toString();
       bottomGradient.style.opacity = bottomOpacity.toString();
     };
 
-    scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
-    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    // Initialise gradients depending on overflow
+    handleUpdateGradients();
+
+    // Watch for scroll container resizes
+    const resizeObserver = new ResizeObserver(handleUpdateGradients);
+    resizeObserver.observe(scrollContainer);
+    scrollContainer.addEventListener('scroll', handleUpdateGradients, {
+      passive: true,
+    });
+    return () => {
+      scrollContainer.removeEventListener('scroll', handleUpdateGradients);
+      resizeObserver.disconnect();
+    };
   }, []);
 
   return (
