@@ -3,6 +3,7 @@
 import CategoryIconOrInitial from '@/components/category-icon-or-initial';
 import CurrencyFlow from '@/components/currency-flow';
 import CurrencySwitch from '@/components/currency-switch';
+import ScrollableContent from '@/components/misc/scrollable-content';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -145,7 +146,7 @@ const TransactionItemDetails = ({
             </DrawerDescription>
           </div>
         </DrawerHeader>
-        <div className="flex flex-col gap-4 px-4">
+        <div className="mb-4 flex shrink-0 flex-col px-4">
           <div className="flex max-w-full items-center self-center rounded-full border">
             <span
               className={cn(
@@ -165,121 +166,125 @@ const TransactionItemDetails = ({
               <span className="truncate px-4 py-1 font-medium">{category}</span>
             )}
           </div>
-          {note ? (
-            <Alert className="border-none bg-lime-50 dark:bg-lime-950/70">
-              <SquarePen className="size-4" />
-              <AlertTitle>Notes</AlertTitle>
-              <AlertDescription>{note}</AlertDescription>
-            </Alert>
-          ) : null}
-          <div className="flex flex-col gap-2">
-            <h2 className="text-lg font-semibold">Transaction Details</h2>
-            {message && (
-              <div className="flex items-start justify-between gap-6">
-                <p className="text-muted-foreground">Message</p>
-                <p className="text-end font-medium">{message}</p>
-              </div>
-            )}
-            <div className="flex justify-between">
-              <p className="text-muted-foreground">When</p>
-              <p className="text-end">
-                {format(created_at, "do MMM yyyy 'at' h:mm aaa")}
-              </p>
-            </div>
-            {card_number_suffix && (
+        </div>
+        <ScrollableContent className="px-4" hideScrollbar>
+          <div className="flex flex-col gap-4">
+            {note ? (
+              <Alert className="border-none bg-lime-50 dark:bg-lime-950/70">
+                <SquarePen className="size-4" />
+                <AlertTitle>Notes</AlertTitle>
+                <AlertDescription>{note}</AlertDescription>
+              </Alert>
+            ) : null}
+            <div className="flex flex-col gap-2">
+              <h2 className="text-lg font-semibold">Transaction Details</h2>
+              {message && (
+                <div className="flex items-start justify-between gap-6">
+                  <p className="text-muted-foreground">Message</p>
+                  <p className="text-end font-medium">{message}</p>
+                </div>
+              )}
               <div className="flex justify-between">
-                <p className="text-muted-foreground">Which card</p>
-                <p>{`· · · ·  ${card_number_suffix}`}</p>
-              </div>
-            )}
-            {card_purchase_method && (
-              <div className="flex justify-between">
-                <p className="text-muted-foreground">Authorised via</p>
-                <p>
-                  {capitalise(
-                    card_purchase_method.replaceAll('_', ' ').toLowerCase()
-                  )}
+                <p className="text-muted-foreground">When</p>
+                <p className="text-end">
+                  {format(created_at, "do MMM yyyy 'at' h:mm aaa")}
                 </p>
               </div>
-            )}
-            {type && (
-              <div className="flex justify-between">
-                <p className="text-muted-foreground">Type</p>
-                <p>{type}</p>
-              </div>
-            )}
+              {card_number_suffix && (
+                <div className="flex justify-between">
+                  <p className="text-muted-foreground">Which card</p>
+                  <p>{`· · · ·  ${card_number_suffix}`}</p>
+                </div>
+              )}
+              {card_purchase_method && (
+                <div className="flex justify-between">
+                  <p className="text-muted-foreground">Authorised via</p>
+                  <p>
+                    {capitalise(
+                      card_purchase_method.replaceAll('_', ' ').toLowerCase()
+                    )}
+                  </p>
+                </div>
+              )}
+              {type && (
+                <div className="flex justify-between">
+                  <p className="text-muted-foreground">Type</p>
+                  <p>{type}</p>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <h2 className="text-lg font-semibold">Additional Details</h2>
+              {isLoadingDetails ? (
+                <div className="flex flex-col gap-2">
+                  {[...Array(4)].map((_, i) => (
+                    <Skeleton className="h-6 w-full" key={i} />
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <p className="text-muted-foreground">Account</p>
+                    <p className="font-medium">
+                      {transactionDetails?.account?.display_name ?? '—'}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-muted-foreground">Round Up</p>
+                    <p className="font-medium tabular-nums">
+                      {transactionDetails?.round_up?.value_in_base_units
+                        ? formatCurrency(
+                            transactionDetails?.round_up?.value_in_base_units,
+                            {
+                              absolute: true,
+                              baseUnits: true,
+                              decimals: 2,
+                              currency:
+                                transactionDetails?.round_up?.currency_code,
+                            }
+                          )
+                        : '—'}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-muted-foreground">Cashback</p>
+                    <p className="font-medium tabular-nums">
+                      {transactionDetails?.cashback?.value_in_base_units
+                        ? formatCurrency(
+                            transactionDetails?.cashback?.value_in_base_units,
+                            {
+                              absolute: true,
+                              baseUnits: true,
+                              decimals: 2,
+                              currency:
+                                transactionDetails?.cashback?.currency_code,
+                            }
+                          )
+                        : '—'}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-muted-foreground">Held Amount</p>
+                    <p className="font-medium tabular-nums">
+                      {transactionDetails?.hold_info?.value_in_base_units
+                        ? formatCurrency(
+                            transactionDetails?.hold_info?.value_in_base_units,
+                            {
+                              absolute: true,
+                              baseUnits: true,
+                              decimals: 2,
+                              currency:
+                                transactionDetails?.hold_info?.currency_code,
+                            }
+                          )
+                        : '—'}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <h2 className="text-lg font-semibold">Additional Details</h2>
-            {isLoadingDetails ? (
-              <div className="flex flex-col gap-2">
-                {[...Array(4)].map((_, i) => (
-                  <Skeleton className="h-6 w-full" key={i} />
-                ))}
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between">
-                  <p className="text-muted-foreground">Account</p>
-                  <p className="font-medium">
-                    {transactionDetails?.account?.display_name ?? '—'}
-                  </p>
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-muted-foreground">Round Up</p>
-                  <p className="font-medium tabular-nums">
-                    {transactionDetails?.round_up?.value_in_base_units
-                      ? formatCurrency(
-                          transactionDetails?.round_up?.value_in_base_units,
-                          {
-                            absolute: true,
-                            baseUnits: true,
-                            decimals: 2,
-                            currency:
-                              transactionDetails?.round_up?.currency_code,
-                          }
-                        )
-                      : '—'}
-                  </p>
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-muted-foreground">Cashback</p>
-                  <p className="font-medium tabular-nums">
-                    {transactionDetails?.cashback?.value_in_base_units
-                      ? formatCurrency(
-                          transactionDetails?.cashback?.value_in_base_units,
-                          {
-                            absolute: true,
-                            baseUnits: true,
-                            decimals: 2,
-                            currency:
-                              transactionDetails?.cashback?.currency_code,
-                          }
-                        )
-                      : '—'}
-                  </p>
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-muted-foreground">Held Amount</p>
-                  <p className="font-medium tabular-nums">
-                    {transactionDetails?.hold_info?.value_in_base_units
-                      ? formatCurrency(
-                          transactionDetails?.hold_info?.value_in_base_units,
-                          {
-                            absolute: true,
-                            baseUnits: true,
-                            decimals: 2,
-                            currency:
-                              transactionDetails?.hold_info?.currency_code,
-                          }
-                        )
-                      : '—'}
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+        </ScrollableContent>
         {deep_link_url && (
           <DrawerFooter>
             <div
