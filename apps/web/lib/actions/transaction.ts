@@ -10,6 +10,7 @@ import {
   transactionTagTable,
 } from 'afinia-common/schema';
 import { and, desc, eq, isNull, or, SQL, sql } from 'drizzle-orm';
+import { getServerSession } from '../auth/session';
 import { db } from '../db/client';
 import { Prettify } from '../types';
 
@@ -44,6 +45,11 @@ export const getTransactionsPaginated = async (
       }
     | { filters?: TransactionFilters; limit?: number; offset?: number }
 ) => {
+  const session = await getServerSession();
+  if (!session) {
+    throw new Error('Unauthorised');
+  }
+
   let offset = 0;
   const { limit } = options;
   const conditions: (SQL | undefined)[] = [];
@@ -133,6 +139,11 @@ export const getTransactionsPaginated = async (
  * @param id transaction ID
  */
 export const getTransactionDetailById = async (id: number) => {
+  const session = await getServerSession();
+  if (!session) {
+    throw new Error('Unauthorised');
+  }
+
   try {
     const tags = await db
       .select({ tag_id: transactionTagTable.tag_id })
