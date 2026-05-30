@@ -16,6 +16,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getTransactionDetailById } from '@/lib/actions/transaction';
 import { siteConfig } from '@/lib/siteConfig';
@@ -38,6 +39,9 @@ const TransactionItemDetails = ({
   const [open, setOpen] = useState(false);
   const [showForeignAmount, setShowForeignAmount] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+
+  const hasTags =
+    transactionDetails?.tags && transactionDetails?.tags.length > 0;
 
   const {
     card_purchase_method,
@@ -214,7 +218,7 @@ const TransactionItemDetails = ({
               )}
             </div>
             <div className="flex flex-col gap-2">
-              <h2 className="text-lg font-semibold">Additional Details</h2>
+              <Separator className="mb-2" />
               {isLoadingDetails ? (
                 <div className="flex flex-col gap-2">
                   {[...Array(4)].map((_, i) => (
@@ -280,6 +284,18 @@ const TransactionItemDetails = ({
                         : '—'}
                     </p>
                   </div>
+                  {hasTags && (
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      {transactionDetails?.tags?.map((tag) => (
+                        <Badge
+                          key={tag}
+                          className="bg-fuchsia-100 px-3 text-base text-fuchsia-900"
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </>
               )}
             </div>
