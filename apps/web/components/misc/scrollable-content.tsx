@@ -1,3 +1,5 @@
+'use client';
+
 import { cn } from '@/lib/ui';
 import { PropsWithChildren, useEffect, useRef } from 'react';
 

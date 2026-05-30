@@ -145,12 +145,12 @@ export const getTransactionDetailById = async (id: number) => {
   }
 
   try {
-    const tags = await db
+    const getTransactionTags = db
       .select({ tag_id: transactionTagTable.tag_id })
       .from(transactionTagTable)
       .where(eq(transactionTagTable.transaction_id, id));
 
-    const transaction = await db
+    const getTransactionDetails = db
       .select({
         account: {
           display_name: accountTable.display_name,
@@ -209,6 +209,11 @@ export const getTransactionDetailById = async (id: number) => {
       )
       .where(eq(transactionTable.transaction_id, id))
       .limit(1);
+
+    const [tags, transaction] = await Promise.all([
+      getTransactionTags,
+      getTransactionDetails,
+    ]);
 
     return transaction.at(0)
       ? { ...transaction.at(0), tags: tags.map((tag) => tag.tag_id) }
