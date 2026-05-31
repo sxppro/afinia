@@ -1,4 +1,4 @@
-import { getStartOfDay } from '@/lib/constants';
+import { getStartOfDay } from '@/lib/dateTime';
 import { getAccounts } from '@/lib/db/account';
 import { db } from '@/lib/db/client';
 import { getCategorySpendingByTimestamp } from '@/lib/db/spending';

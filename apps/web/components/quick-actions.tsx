@@ -1,4 +1,4 @@
-import { getStartOfDay, now } from '@/lib/constants';
+import { getStartOfDay, now } from '@/lib/dateTime';
 import { getParentCategories } from '@/lib/db/category';
 import { getCategorySpending } from '@/lib/db/spending';
 import { siteConfig } from '@/lib/siteConfig';
@@ -28,9 +28,9 @@ const QuickAction = ({
 }) => {
   return (
     <Link href={`${siteConfig.baseLinks.spending}/${id}`} key={id}>
-      <Card className={cn('p-4 rounded-3xl', colours[id]?.background)}>
-        <CardContent className="flex flex-col justify-start items-start p-0 text-white font-medium">
-          <div className="p-2 mb-4 rounded-lg bg-black/20">
+      <Card className={cn('rounded-3xl p-4', colours[id]?.background)}>
+        <CardContent className="flex flex-col items-start justify-start p-0 font-medium text-white">
+          <div className="mb-4 rounded-lg bg-black/20 p-2">
             <CategoryIcon category={id} />
           </div>
           <p>{name}</p>
@@ -76,7 +76,7 @@ const QuickActions = async () => {
     <div className="flex flex-col gap-2">
       <Button
         variant="link"
-        className="justify-start has-[>svg]:px-0 gap-0"
+        className="justify-start gap-0 has-[>svg]:px-0"
         asChild
       >
         <Link href={siteConfig.baseLinks.spending}>
@@ -85,7 +85,7 @@ const QuickActions = async () => {
         </Link>
       </Button>
       <div className="grid grid-cols-2 gap-2">
-        <p className="col-span-2 text-muted-foreground">
+        <p className="text-muted-foreground col-span-2">
           {format(now(), 'MMMM yyyy')}
         </p>
         {spendingByCategory.map((category) => (

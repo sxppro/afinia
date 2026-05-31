@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { now } from './constants';
+import { DEFAULT_CURRENCY } from './constants';
+import { now } from './dateTime';
 
 export const colours: {
   [key: string]: Record<'background' | 'stroke' | 'fill' | 'text', string>;
@@ -78,7 +79,7 @@ export const formatCurrency = (
     compact = false,
     absolute = false,
     baseUnits = false,
-    currency = 'AUD',
+    currency = DEFAULT_CURRENCY,
   } = options ?? {};
 
   const value = baseUnits ? formatValueInBaseUnits(number, currency) : number;
