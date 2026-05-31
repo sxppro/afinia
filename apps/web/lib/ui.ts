@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { now } from './constants';
+import { DEFAULT_CURRENCY } from './constants';
+import { now } from './dateTime';
 
 export const colours: {
   [key: string]: Record<'background' | 'stroke' | 'fill' | 'text', string>;
@@ -45,12 +46,19 @@ export const cn = (...inputs: ClassValue[]) => {
  * Formats integer values in base units (cents)
  * to dollar amounts
  * @param value cents
+ * @param currency currency code
  * @returns dollars
  */
-export const formatValueInBaseUnits = (value: number) => {
-  return parseFloat((value / 100).toFixed(2));
-};
+export const formatValueInBaseUnits = (value: number, currency: string) => {
+  const fractionDigits = new Intl.NumberFormat('en-au', {
+    style: 'currency',
+    currency,
+  }).resolvedOptions().minimumFractionDigits;
 
+  // Don't modify value if unable to lookup fraction
+  // digits for currency
+  return value / Math.pow(10, fractionDigits ?? 0);
+};
 /**
  * Currency formatter for numbers
  * @param number number to format
@@ -63,6 +71,7 @@ export const formatCurrency = (
     compact?: boolean;
     absolute?: boolean;
     baseUnits?: boolean;
+    currency?: string;
   }
 ) => {
   const {
@@ -70,13 +79,14 @@ export const formatCurrency = (
     compact = false,
     absolute = false,
     baseUnits = false,
+    currency = DEFAULT_CURRENCY,
   } = options ?? {};
 
-  const value = baseUnits ? formatValueInBaseUnits(number) : number;
+  const value = baseUnits ? formatValueInBaseUnits(number, currency) : number;
 
   return Intl.NumberFormat('default', {
     style: 'currency',
-    currency: 'AUD',
+    currency,
     currencyDisplay: 'narrowSymbol',
     maximumFractionDigits: decimals,
     signDisplay: absolute ? (number > 0 ? 'exceptZero' : 'never') : 'auto',

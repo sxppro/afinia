@@ -1,5 +1,5 @@
 import CurrencyFlow from '@/components/currency-flow';
-import { getStartOfDay } from '@/lib/constants';
+import { getStartOfDay } from '@/lib/dateTime';
 import { getCategorySpending } from '@/lib/db/spending';
 import { transactionExternalTable } from 'afinia-common/schema';
 import { endOfMonth, startOfMonth } from 'date-fns';
@@ -27,7 +27,7 @@ const SpendingTotal = async ({ category }: { category?: string }) => {
   return (
     <>
       <CurrencyFlow value={value} />
-      <p className="text-muted-foreground font-medium pb-1">
+      <p className="text-muted-foreground pb-1 font-medium">
         {value > 0 ? 'Received' : 'Spent'}
       </p>
     </>

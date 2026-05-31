@@ -6,7 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import SpendingByCategory from '@/components/vis/category/spending-by-category';
 import SpendingByMonth from '@/components/vis/category/spending-by-month';
-import { getStartOfDay } from '@/lib/constants';
+import { getStartOfDay } from '@/lib/dateTime';
 import {
   getCategorySpending,
   getCategorySpendingByTimestamp,
@@ -148,18 +148,18 @@ const SpendingPage = async ({
           <div className="flex items-center gap-2">
             <div
               className={cn(
-                'p-2 rounded-lg',
+                'rounded-lg p-2',
                 colours[id]?.background ?? 'bg-gray-300'
               )}
             >
-              <CategoryIcon category={id} className="stroke-white size-4" />
+              <CategoryIcon category={id} className="size-4 stroke-white" />
             </div>
             <Link href={`${siteConfig.baseLinks.spending}/${id}`}>
-              <p className="text-lg underline underline-offset-4 font-medium">
+              <p className="text-lg font-medium underline underline-offset-4">
                 {name}
               </p>
             </Link>
-            <p className="text-xl font-bold ml-auto">
+            <p className="ml-auto text-xl font-bold">
               {formatCurrency(value, {
                 absolute: true,
                 baseUnits: true,

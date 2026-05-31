@@ -34,8 +34,10 @@ const TransactionListFilters = ({
           <SelectValue placeholder="Category">
             {category === 'all'
               ? 'All Categories'
-              : categories.find((c) => c.category_id === category)
-                  ?.category_name}
+              : category === 'uncategorised'
+                ? 'Uncategorised'
+                : categories.find((c) => c.category_id === category)
+                    ?.category_name}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -53,6 +55,9 @@ const TransactionListFilters = ({
                 {category.category_name}
               </SelectItem>
             ))}
+            <SelectItem className="text-base" value="uncategorised">
+              Uncategorised
+            </SelectItem>
           </SelectGroup>
         </SelectContent>
       </Select>

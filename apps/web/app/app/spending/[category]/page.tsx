@@ -7,7 +7,8 @@ import SpendingByCategory from '@/components/vis/category/spending-by-category';
 import SpendingByDay from '@/components/vis/category/spending-by-day';
 import SpendingTotal from '@/components/vis/category/spending-total';
 import TransactionList from '@/components/vis/transaction/transaction-list';
-import { SMALL_PAGE_SIZE, getStartOfDay } from '@/lib/constants';
+import { SMALL_PAGE_SIZE } from '@/lib/constants';
+import { getStartOfDay } from '@/lib/dateTime';
 import { getCategoryById } from '@/lib/db/category';
 import {
   getCategorySpending,
@@ -96,7 +97,7 @@ const CategorySpendingPage = async ({
       <div className="flex items-center gap-4">
         <span
           className={cn(
-            'flex aspect-square items-center justify-center text-white size-16 rounded-2xl',
+            'flex aspect-square size-16 items-center justify-center rounded-2xl text-white',
             category_parent?.category_id
               ? colours[category_parent.category_id].background
               : colours[category.category_id].background ||
@@ -125,7 +126,7 @@ const CategorySpendingPage = async ({
             </Button>
           </div>
         </div>
-        <div className="h-10 flex items-end gap-1 pb-1">
+        <div className="flex h-10 items-end gap-1 pb-1">
           <Suspense fallback={<Skeleton className="h-full w-24" />}>
             <SpendingTotal category={category.category_id} />
           </Suspense>

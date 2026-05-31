@@ -23,9 +23,9 @@ const AppHome = async () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Avatar className="rounded-full size-12">
+          <Avatar className="size-12 rounded-full">
             <AvatarImage
               src={session?.user?.image ?? undefined}
               alt={session?.user?.name}
@@ -60,7 +60,7 @@ const AppHome = async () => {
       <div className="flex flex-col gap-2">
         <Button
           variant="link"
-          className="justify-start has-[>svg]:px-0 gap-0"
+          className="justify-start gap-0 has-[>svg]:px-0"
           asChild
         >
           <Link href={siteConfig.baseLinks.transactions}>

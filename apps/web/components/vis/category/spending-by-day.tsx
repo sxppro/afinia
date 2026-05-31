@@ -1,6 +1,7 @@
 'use client';
 
 import { getColorClassName } from '@/lib/chart';
+import { DEFAULT_CURRENCY } from '@/lib/constants';
 import { getCategorySpendingByTimestamp } from '@/lib/db/spending';
 import { cn, formatCurrency, formatValueInBaseUnits } from '@/lib/ui';
 import { use } from 'react';
@@ -55,7 +56,9 @@ const SpendingByDay = ({
       startEndOnly
       showLegend={false}
       showYAxis={false}
-      valueFormatter={(value) => formatCurrency(formatValueInBaseUnits(value))}
+      valueFormatter={(value) =>
+        formatCurrency(formatValueInBaseUnits(value, DEFAULT_CURRENCY))
+      }
     />
   );
 };
