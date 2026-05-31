@@ -375,8 +375,8 @@ export const deleteTransaction = async (
     })
     .where(eq(transactionTable.provider_id, transactionId))
     .returning();
-  if (res.length === 1 && res[0]) {
-    console.log(`Deleted transaction: ${res[0].provider_id}`);
-  }
+    
+    console.log(`Deleted ${res.length} transaction${res.length > 1 ? 's' : ''}: ${res.map((r) => r.provider_id).join(', ')}`);
+  
   return res.length;
 };
