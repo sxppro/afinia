@@ -11,12 +11,12 @@ const TransactionsPageHeader = () => {
           className="rounded-full"
           variant="outline"
           size="icon-xl"
-          asChild
-        >
-          <Link href={siteConfig.baseLinks.appHome}>
-            <ArrowLeft className="size-5" />
-          </Link>
-        </Button>
+          render={
+            <Link href={siteConfig.baseLinks.appHome}>
+              <ArrowLeft className="size-5" />
+            </Link>
+          }
+        />
         <h1 className="text-2xl font-semibold">Transactions</h1>
       </div>
       <div>

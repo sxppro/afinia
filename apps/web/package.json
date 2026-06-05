@@ -6,9 +6,11 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@base-ui/react": "^1.5.0",
     "@date-fns/tz": "catalog:",
     "@number-flow/react": "^0.5.10",
     "afinia-common": "workspace:*",

@@ -27,6 +27,7 @@ import { format } from 'date-fns';
 import { ExternalLink, SquarePen } from 'lucide-react';
 import Link from 'next/link';
 import { CSSProperties, PropsWithChildren, useState } from 'react';
+import TransactionItemCategory from './transaction-item-category';
 
 const TransactionItemDetails = ({
   children,
@@ -155,25 +156,7 @@ const TransactionItemDetails = ({
           </div>
         </DrawerHeader>
         <div className="mb-4 flex shrink-0 flex-col px-4">
-          <div className="flex max-w-full items-center self-center rounded-full border">
-            <span
-              className={cn(
-                'rounded-full px-4 py-1 font-medium',
-                category_parent_id
-                  ? colours[category_parent_id].background
-                  : 'bg-up-uncategorised',
-                // Invert text colour for all categories except for Good Life
-                category_parent_id !== 'good-life'
-                  ? 'text-primary-foreground'
-                  : 'text-secondary-foreground'
-              )}
-            >
-              {category_parent || 'Uncategorised'}
-            </span>
-            {category && (
-              <span className="truncate px-4 py-1 font-medium">{category}</span>
-            )}
-          </div>
+          <TransactionItemCategory transaction={transaction} />
         </div>
         <ScrollableContent className="px-4" hideScrollbar>
           <div className="flex flex-col gap-4">
@@ -333,12 +316,15 @@ const TransactionItemDetails = ({
                 } as CSSProperties
               }
             >
-              <Button variant="secondary" asChild>
-                <Link href={deep_link_url} className="w-full">
-                  Open in app
-                  <ExternalLink aria-hidden="true" className="ml-1 size-4" />
-                </Link>
-              </Button>
+              <Button
+                variant="secondary"
+                render={
+                  <Link href={deep_link_url} className="w-full">
+                    Open in app
+                    <ExternalLink aria-hidden="true" className="ml-1 size-4" />
+                  </Link>
+                }
+              />
             </div>
           </DrawerFooter>
         )}

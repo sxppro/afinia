@@ -77,13 +77,13 @@ const QuickActions = async () => {
       <Button
         variant="link"
         className="justify-start gap-0 has-[>svg]:px-0"
-        asChild
-      >
-        <Link href={siteConfig.baseLinks.spending}>
-          <h2 className="text-xl font-semibold">Spending</h2>
-          <ChevronRight className="size-6" />
-        </Link>
-      </Button>
+        render={
+          <Link href={siteConfig.baseLinks.spending}>
+            <h2 className="text-xl font-semibold">Spending</h2>
+            <ChevronRight className="size-6" />
+          </Link>
+        }
+      />
       <div className="grid grid-cols-2 gap-2">
         <p className="text-muted-foreground col-span-2">
           {format(now(), 'MMMM yyyy')}
