@@ -6,6 +6,7 @@ const Home = () => {
   return (
     <div className="flex h-screen items-center justify-center">
       <Button
+        nativeButton={false}
         render={
           <Link href={siteConfig.baseLinks.appHome} className="m-auto">
             Go to dashboard

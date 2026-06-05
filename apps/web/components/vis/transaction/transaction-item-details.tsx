@@ -318,6 +318,7 @@ const TransactionItemDetails = ({
             >
               <Button
                 variant="secondary"
+                nativeButton={false}
                 render={
                   <Link href={deep_link_url} className="w-full">
                     Open in app

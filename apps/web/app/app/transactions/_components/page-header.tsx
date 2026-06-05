@@ -11,6 +11,7 @@ const TransactionsPageHeader = () => {
           className="rounded-full"
           variant="outline"
           size="icon-xl"
+          nativeButton={false}
           render={
             <Link href={siteConfig.baseLinks.appHome}>
               <ArrowLeft className="size-5" />

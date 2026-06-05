@@ -61,6 +61,7 @@ const AppHome = async () => {
         <Button
           variant="link"
           className="justify-start gap-0 has-[>svg]:px-0"
+          nativeButton={false}
           render={
             <Link href={siteConfig.baseLinks.transactions}>
               <h2 className="text-xl font-semibold">Transactions</h2>

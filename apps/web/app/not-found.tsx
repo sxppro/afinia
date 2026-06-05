@@ -18,6 +18,7 @@ const NotFoundPage = async () => {
       <Button
         className="group mt-8"
         variant="ghost"
+        nativeButton={false}
         render={
           <Link
             href={
