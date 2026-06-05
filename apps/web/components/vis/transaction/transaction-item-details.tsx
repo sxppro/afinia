@@ -88,7 +88,11 @@ const TransactionItemDetails = ({
   };
 
   return (
-    <Drawer open={open} onOpenChange={handleOpenChange}>
+    <Drawer
+      open={open}
+      onOpenChange={handleOpenChange}
+      repositionInputs={false}
+    >
       <DrawerTrigger asChild>{children}</DrawerTrigger>
       <DrawerContent className="font-sans">
         <DrawerHeader className="gap-2">
