@@ -27,7 +27,7 @@ import { format } from 'date-fns';
 import { ExternalLink, SquarePen } from 'lucide-react';
 import Link from 'next/link';
 import { CSSProperties, PropsWithChildren, useState } from 'react';
-import TransactionItemCategory from './transaction-item-category';
+import TransactionEditCategory from './transaction-edit-category';
 
 const TransactionItemDetails = ({
   children,
@@ -307,7 +307,7 @@ const TransactionItemDetails = ({
           </div>
         </ScrollableContent>
         <DrawerFooter className="grid grid-cols-2">
-          <TransactionItemCategory transaction={transaction} />
+          <TransactionEditCategory transaction={transaction} />
           {deep_link_url && (
             <div
               className="rounded-lg transition"
