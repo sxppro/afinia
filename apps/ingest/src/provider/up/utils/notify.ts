@@ -12,10 +12,10 @@ export const notify = async (alertLevel: ALERT_LEVEL, message: string) => {
   const payload =
     alertLevel === ALERT_LEVEL.ERROR
       ? {
-          message: `<@${Resource.DISCORD_USER_ID.value}> ${message}`,
+          content: `<@${Resource.DISCORD_USER_ID.value}> ${message}`,
           flags: 1 << 12, // suppress notifs so im not spammed
         }
-      : { message };
+      : { content: message };
   const res = await fetch(Resource.DISCORD_WEBHOOK_URL.value, {
     method: 'POST',
     headers: {
