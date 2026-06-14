@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/field';
 import { RadioGroup, RadioGroupItemTick } from '@/components/ui/radio-group';
 import { Skeleton } from '@/components/ui/skeleton';
-import { SMALL_PAGE_SIZE } from '@/lib/constants';
+import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import { cn, colours } from '@/lib/ui';
 import { useTRPC } from '@/trpc/client';
 import { useQuery } from '@tanstack/react-query';
@@ -74,7 +74,7 @@ const TransactionEditCategory = ({
         >
           {isLoading ? (
             <div className="flex flex-col gap-2">
-              {[...Array(SMALL_PAGE_SIZE)].map((_, i) => (
+              {[...Array(DEFAULT_PAGE_SIZE)].map((_, i) => (
                 <Skeleton className="h-10 w-full" key={i} />
               ))}
             </div>
