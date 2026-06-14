@@ -12,9 +12,6 @@ catalogs:
     date-fns:
       specifier: ^4.1.0
       version: 4.1.0
-    openapi-fetch:
-      specifier: ^0.17.0
-      version: 0.17.0
 
 importers:
 
@@ -188,7 +185,7 @@ importers:
         specifier: ^0.44.6
         version: 0.44.6(kysely@0.28.8)(postgres@3.4.7)
       openapi-fetch:
-        specifier: 'catalog:'
+        specifier: ^0.17.0
         version: 0.17.0
     devDependencies:
       '@types/node':

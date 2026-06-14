@@ -17,6 +17,6 @@
   },
   "dependencies": {
     "drizzle-orm": "^0.44.6",
-    "openapi-fetch": "catalog:"
+    "openapi-fetch": "^0.17.0"
   }
 }
