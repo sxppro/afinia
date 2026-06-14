@@ -29,6 +29,7 @@ import { Fragment, useState } from 'react';
 import { toast } from 'sonner';
 
 interface TransactionItemCategoryProps {
+  initialCategory: string | null;
   transaction: typeof transactionExternalTable.$inferSelect;
   onCategoryUpdated: (info: {
     category_id: string;
@@ -39,14 +40,13 @@ interface TransactionItemCategoryProps {
 }
 
 const TransactionEditCategory = ({
+  initialCategory,
   transaction,
   onCategoryUpdated,
 }: TransactionItemCategoryProps) => {
-  const { category_id } = transaction;
-
   const [open, setOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
-    category_id
+    initialCategory
   );
   const trpc = useTRPC();
 
@@ -184,7 +184,11 @@ const TransactionEditCategory = ({
           <Button
             size="lg"
             onClick={handleSave}
-            disabled={!selectedCategory || reassignCategory.isPending}
+            disabled={
+              !selectedCategory ||
+              selectedCategory === initialCategory ||
+              reassignCategory.isPending
+            }
           >
             Save
             {reassignCategory.isPending && (

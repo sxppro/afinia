@@ -313,6 +313,7 @@ const TransactionItemDetails = ({
         </ScrollableContent>
         <DrawerFooter className="grid grid-cols-2">
           <TransactionEditCategory
+            initialCategory={categoryInfo.category_id}
             transaction={transaction}
             onCategoryUpdated={setCategoryInfo}
           />
