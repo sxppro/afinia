@@ -12,6 +12,9 @@ catalogs:
     date-fns:
       specifier: ^4.1.0
       version: 4.1.0
+    openapi-fetch:
+      specifier: ^0.17.0
+      version: 0.17.0
 
 importers:
 
@@ -29,8 +32,8 @@ importers:
         specifier: ^0.44.6
         version: 0.44.6(kysely@0.28.8)(postgres@3.4.7)
       openapi-fetch:
-        specifier: ^0.15.0
-        version: 0.15.0
+        specifier: 'catalog:'
+        version: 0.17.0
       p-limit:
         specifier: ^7.3.0
         version: 7.3.0
@@ -207,6 +210,9 @@ importers:
       drizzle-orm:
         specifier: ^0.44.6
         version: 0.44.6(kysely@0.28.8)(postgres@3.4.7)
+      openapi-fetch:
+        specifier: 'catalog:'
+        version: 0.17.0
     devDependencies:
       '@types/node':
         specifier: ^20.19.21
@@ -3536,11 +3542,11 @@ packages:
   once@1.4.0:
     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
 
-  openapi-fetch@0.15.0:
-    resolution: {integrity: sha512-OjQUdi61WO4HYhr9+byCPMj0+bgste/LtSBEcV6FzDdONTs7x0fWn8/ndoYwzqCsKWIxEZwo4FN/TG1c1rI8IQ==}
+  openapi-fetch@0.17.0:
+    resolution: {integrity: sha512-PsbZR1wAPcG91eEthKhN+Zn92FMHxv+/faECIwjXdxfTODGSGegYv0sc1Olz+HYPvKOuoXfp+0pA2XVt2cI0Ig==}
 
-  openapi-typescript-helpers@0.0.15:
-    resolution: {integrity: sha512-opyTPaunsklCBpTK8JGef6mfPhLSnyy5a0IN9vKtx3+4aExf+KxEqYwIy3hqkedXIB97u357uLMJsOnm3GVjsw==}
+  openapi-typescript-helpers@0.1.0:
+    resolution: {integrity: sha512-OKTGPthhivLw/fHz6c3OPtg72vi86qaMlqbJuVJ23qOvQ+53uw1n7HdmkJFibloF7QEjDrDkzJiOJuockM/ljw==}
 
   openapi-typescript@7.10.1:
     resolution: {integrity: sha512-rBcU8bjKGGZQT4K2ekSTY2Q5veOQbVG/lTKZ49DeCyT9z62hM2Vj/LLHjDHC9W7LJG8YMHcdXpRZDqC1ojB/lw==}
@@ -7689,11 +7695,11 @@ snapshots:
     dependencies:
       wrappy: 1.0.2
 
-  openapi-fetch@0.15.0:
+  openapi-fetch@0.17.0:
     dependencies:
-      openapi-typescript-helpers: 0.0.15
+      openapi-typescript-helpers: 0.1.0
 
-  openapi-typescript-helpers@0.0.15: {}
+  openapi-typescript-helpers@0.1.0: {}
 
   openapi-typescript@7.10.1(typescript@5.9.3):
     dependencies:
