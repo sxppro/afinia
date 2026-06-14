@@ -1,3 +1,5 @@
+'use client';
+
 import CategoryIconOrInitial from '@/components/category-icon-or-initial';
 import ScrollableContent from '@/components/misc/scrollable-content';
 import { Button } from '@/components/ui/button';
@@ -20,17 +22,25 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import { cn, colours } from '@/lib/ui';
 import { useTRPC } from '@/trpc/client';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { transactionExternalTable } from 'afinia-common/schema';
-import { PencilIcon, X } from 'lucide-react';
+import { Loader2, PencilIcon, X } from 'lucide-react';
 import { Fragment, useState } from 'react';
+import { toast } from 'sonner';
 
 interface TransactionItemCategoryProps {
   transaction: typeof transactionExternalTable.$inferSelect;
+  onCategoryUpdated: (info: {
+    category_id: string;
+    category: string;
+    category_parent: string;
+    category_parent_id: string;
+  }) => void;
 }
 
 const TransactionEditCategory = ({
   transaction,
+  onCategoryUpdated,
 }: TransactionItemCategoryProps) => {
   const { category_id } = transaction;
 
@@ -40,15 +50,37 @@ const TransactionEditCategory = ({
   );
   const trpc = useTRPC();
 
-  const {
-    data: categoryGroups,
-    isLoading,
-    isError,
-  } = useQuery(
+  // API
+  const { data: categoryGroups, isLoading } = useQuery(
     trpc.category.getCategoriesForReassignment.queryOptions(undefined, {
       enabled: open,
     })
   );
+  const reassignCategory = useMutation(
+    trpc.transaction.reassignCategory.mutationOptions({
+      onSuccess: (data) => {
+        onCategoryUpdated({
+          category_id: data.category_id,
+          category: data.category,
+          category_parent: data.category_parent,
+          category_parent_id: data.category_parent_id,
+        });
+        setOpen(false);
+      },
+      onError: () => {
+        toast.error('Failed to update transaction category');
+      },
+    })
+  );
+
+  const handleSave = () => {
+    if (!selectedCategory) return;
+    reassignCategory.mutate({
+      transactionId: transaction.transaction_id,
+      providerId: transaction.provider_id,
+      category: selectedCategory,
+    });
+  };
 
   return (
     <DrawerNested open={open} onOpenChange={setOpen}>
@@ -149,7 +181,16 @@ const TransactionEditCategory = ({
           )}
         </ScrollableContent>
         <DrawerFooter>
-          <Button size="lg">Save</Button>
+          <Button
+            size="lg"
+            onClick={handleSave}
+            disabled={!selectedCategory || reassignCategory.isPending}
+          >
+            Save
+            {reassignCategory.isPending && (
+              <Loader2 className="size-4 animate-spin" />
+            )}
+          </Button>
         </DrawerFooter>
       </DrawerContent>
     </DrawerNested>
