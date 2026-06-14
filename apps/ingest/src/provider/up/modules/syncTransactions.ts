@@ -2,6 +2,7 @@ import { db } from '@/src/db/client';
 import { checkDatabaseConnection } from '@/src/db/connection';
 import { getEarliestAccountCreatedAt } from '@/src/db/queries/account';
 import { getTransactionsByDateRange } from '@/src/db/queries/transaction';
+import { TransactionResource } from 'afinia-common/providers/up';
 import {
   jobStateTable,
   transactionCashbackTable,
@@ -9,7 +10,6 @@ import {
   transactionRoundUpTable,
   transactionTable,
 } from 'afinia-common/schema';
-import { TransactionResource } from 'afinia-common/types/up-api/overrides';
 import {
   addMonths,
   isAfter,

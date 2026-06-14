@@ -9,7 +9,7 @@ import {
   updateTransactionCategory,
   updateTransactionTag,
 } from '@/src/db/queries/transaction';
-import { TransactionResource } from 'afinia-common/types/up-api/overrides';
+import { TransactionResource } from 'afinia-common/providers/up';
 import { fileURLToPath } from 'node:url';
 import { upClient } from '../utils/clients';
 import { compareProviderAndDb } from '../utils/compare';

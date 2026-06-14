@@ -1,4 +1,4 @@
-import type { PaginatedResponse } from 'afinia-common/types/up-api/overrides';
+import type { PaginatedResponse } from 'afinia-common/providers/up';
 import { createHmac } from 'crypto';
 import { Resource } from 'sst';
 import { RATE_LIMIT_HEADER } from './constants';

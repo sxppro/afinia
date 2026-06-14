@@ -38,9 +38,6 @@ importers:
       drizzle-orm:
         specifier: ^0.44.6
         version: 0.44.6(kysely@0.28.8)(postgres@3.4.7)
-      openapi-fetch:
-        specifier: 'catalog:'
-        version: 0.17.0
       p-limit:
         specifier: ^7.3.0
         version: 7.3.0

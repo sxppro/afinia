@@ -4,8 +4,6 @@
   "description": "",
   "exports": {
     "./schema": "./db/schema/index.ts",
-    "./types/up-api": "./types/up-api.ts",
-    "./types/up-api/overrides": "./types/up-api-overrides.ts",
     "./providers/up": "./providers/up/index.ts"
   },
   "scripts": {
