@@ -32,8 +32,14 @@ interface TransactionItemCategoryProps {
 const TransactionEditCategory = ({
   transaction,
 }: TransactionItemCategoryProps) => {
+  const { category_id } = transaction;
+
   const [open, setOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    category_id
+  );
   const trpc = useTRPC();
+
   const {
     data: categoryGroups,
     isLoading,
@@ -64,14 +70,19 @@ const TransactionEditCategory = ({
         </DrawerHeader>
         <ScrollableContent
           hideScrollbar
-          className="flex max-h-96 flex-col gap-2 px-4"
+          className="flex max-h-128 flex-col gap-2 px-4"
         >
           {isLoading ? (
-            [...Array(SMALL_PAGE_SIZE)].map((_, i) => (
-              <Skeleton className="h-10 w-full" key={i} />
-            ))
+            <div className="flex flex-col gap-2">
+              {[...Array(SMALL_PAGE_SIZE)].map((_, i) => (
+                <Skeleton className="h-10 w-full" key={i} />
+              ))}
+            </div>
           ) : categoryGroups ? (
-            <RadioGroup>
+            <RadioGroup
+              value={selectedCategory}
+              onValueChange={setSelectedCategory}
+            >
               {categoryGroups.map((group) => {
                 const categoryColour = colours[group.category_parent_id];
 
@@ -82,46 +93,56 @@ const TransactionEditCategory = ({
                     </p>
                     <div
                       className={cn(
-                        'flex flex-col rounded-lg border',
+                        'flex flex-col overflow-hidden rounded-lg border',
                         categoryColour.backgroundMuted,
                         categoryColour.borderMuted
                       )}
                     >
-                      {group.categories.map((category) => (
-                        <FieldLabel
-                          key={category.category_id}
-                          htmlFor={category.category_id}
-                          className="overflow-hidden has-[>[data-slot=field]]:border-0 [&>[data-slot=field]]:p-2"
-                        >
-                          <Field
-                            orientation="horizontal"
-                            className={cn(
-                              'hover:bg-accent has-[[data-checked]]:bg-accent transition'
-                            )}
+                      {group.categories.map((category) => {
+                        const isSelected =
+                          category.category_id === selectedCategory;
+
+                        return (
+                          <FieldLabel
+                            key={category.category_id}
+                            htmlFor={category.category_id}
+                            className="has-[>[data-slot=field]]:rounded-none has-[>[data-slot=field]]:border-0 [&>[data-slot=field]]:p-2"
                           >
-                            <FieldContent className="flex-row gap-2">
-                              <CategoryIconOrInitial
-                                category_id={category.category_id}
-                                description={category.category_name}
+                            <Field
+                              orientation="horizontal"
+                              className={cn(
+                                'transition has-[>[data-slot=field-content]]:items-center',
+                                isSelected
+                                  ? categoryColour.backgroundAccent
+                                  : ''
+                              )}
+                            >
+                              <FieldContent className="flex-row gap-2">
+                                <CategoryIconOrInitial
+                                  category_id={category.category_id}
+                                  description={category.category_name}
+                                />
+                                <FieldTitle>
+                                  {category.category_name}
+                                </FieldTitle>
+                              </FieldContent>
+                              <RadioGroupItemTick
+                                value={category.category_id}
+                                id={category.category_id}
                               />
-                              <FieldTitle>{category.category_name}</FieldTitle>
-                            </FieldContent>
-                            <RadioGroupItemTick
-                              value={category.category_id}
-                              id={category.category_id}
-                            />
-                          </Field>
-                        </FieldLabel>
-                      ))}
+                            </Field>
+                          </FieldLabel>
+                        );
+                      })}
                     </div>
                   </Fragment>
                 );
               })}
             </RadioGroup>
           ) : (
-            <div>
-              <X className="size-8" />
-              <p className="text-lg tracking-tight">
+            <div className="flex h-128 flex-col items-center justify-center gap-2">
+              <X className="text-muted-foreground size-8" />
+              <p className="text-muted-foreground text-lg tracking-tight">
                 Failed to retrieve categories
               </p>
             </div>

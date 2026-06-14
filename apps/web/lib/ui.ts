@@ -6,6 +6,7 @@ import { now } from './dateTime';
 export const colours: {
   [key: string]: Record<
     | 'background'
+    | 'backgroundAccent'
     | 'backgroundMuted'
     | 'border'
     | 'borderMuted'
@@ -17,6 +18,7 @@ export const colours: {
 } = {
   'good-life': {
     background: 'bg-up-good-life',
+    backgroundAccent: 'bg-up-good-life/40',
     backgroundMuted: 'bg-up-good-life/10',
     border: 'border-up-good-life',
     borderMuted: 'border-up-good-life/20',
@@ -26,6 +28,7 @@ export const colours: {
   },
   home: {
     background: 'bg-up-home',
+    backgroundAccent: 'bg-up-home/40',
     backgroundMuted: 'bg-up-home/10',
     border: 'border-up-home',
     borderMuted: 'border-up-home/20',
@@ -35,6 +38,7 @@ export const colours: {
   },
   personal: {
     background: 'bg-up-personal',
+    backgroundAccent: 'bg-up-personal/40',
     backgroundMuted: 'bg-up-personal/10',
     border: 'border-up-personal',
     borderMuted: 'border-up-personal/20',
@@ -44,6 +48,7 @@ export const colours: {
   },
   transport: {
     background: 'bg-up-transport',
+    backgroundAccent: 'bg-up-transport/40',
     backgroundMuted: 'bg-up-transport/10',
     border: 'border-up-transport',
     borderMuted: 'border-up-transport/20',
@@ -53,6 +58,7 @@ export const colours: {
   },
   uncategorised: {
     background: 'bg-up-uncategorised',
+    backgroundAccent: 'bg-up-uncategorised/40',
     backgroundMuted: 'bg-up-uncategorised/10',
     border: 'border-up-uncategorised',
     borderMuted: 'border-up-uncategorised/20',
