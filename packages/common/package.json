@@ -9,7 +9,7 @@
     "./providers/up": "./providers/up/index.ts"
   },
   "scripts": {
-    "generate:types": "pnpm exec openapi-typescript --enum https://raw.githubusercontent.com/up-banking/api/refs/heads/master/v1/openapi.json -o types/up-api.d.ts"
+    "generate:types": "openapi-typescript --enum https://raw.githubusercontent.com/up-banking/api/refs/heads/master/v1/openapi.json -o providers/up/types.ts"
   },
   "license": "ISC",
   "packageManager": "pnpm@10.18.3",

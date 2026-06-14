@@ -17,7 +17,7 @@ import {
   AccountTypeEnum,
   OwnershipTypeEnum,
   TransactionStatusEnum,
-} from '../../providers/up/types';
+} from '../../providers/up';
 import { user } from './auth';
 
 /**
