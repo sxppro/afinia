@@ -1,5 +1,6 @@
 import { getCategories } from '@/lib/db/category';
 import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
 import { authProcedure, router } from '../init';
 
 type CategoryGroup = {
@@ -50,6 +51,23 @@ export const categoryRouter = router({
       });
     }
   }),
+  reassignCategory: authProcedure
+    .input(
+      z.object({
+        transactionId: z.number(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        const { transactionId } = input;
+      } catch (error) {
+        console.error(error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to reassign transaction category',
+        });
+      }
+    }),
 });
 
 export type CategoryRouter = typeof categoryRouter;
