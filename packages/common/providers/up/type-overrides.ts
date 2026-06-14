@@ -1,4 +1,4 @@
-import { components } from './up-api';
+import { components } from './types';
 
 export type TransactionResource =
   components['schemas']['TransactionResource'] & {
@@ -6,6 +6,7 @@ export type TransactionResource =
       deepLinkURL?: string | null;
     };
   };
+
 /**
  * Paginated API response with links
  */

@@ -1,4 +1,5 @@
 import { db } from '@/src/db/client';
+import { TransactionResource } from 'afinia-common/providers/up';
 import {
   accountTable,
   categoryTable,
@@ -9,7 +10,6 @@ import {
   transactionTable,
   transactionTagTable,
 } from 'afinia-common/schema';
-import { TransactionResource } from 'afinia-common/types/up-api/overrides';
 import { eq, InferInsertModel } from 'drizzle-orm';
 import { ALERT_LEVEL } from '../utils/constants';
 import { notify } from '../utils/notify';
@@ -375,8 +375,10 @@ export const deleteTransaction = async (
     })
     .where(eq(transactionTable.provider_id, transactionId))
     .returning();
-    
-    console.log(`Deleted ${res.length} transaction${res.length > 1 ? 's' : ''}: ${res.map((r) => r.provider_id).join(', ')}`);
-  
+
+  console.log(
+    `Deleted ${res.length} transaction${res.length > 1 ? 's' : ''}: ${res.map((r) => r.provider_id).join(', ')}`
+  );
+
   return res.length;
 };

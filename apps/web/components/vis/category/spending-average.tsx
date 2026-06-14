@@ -3,8 +3,8 @@ import { getAccounts } from '@/lib/db/account';
 import { db } from '@/lib/db/client';
 import { getCategorySpendingByTimestamp } from '@/lib/db/spending';
 import { formatCurrency } from '@/lib/ui';
+import { AccountTypeEnum } from 'afinia-common/providers/up';
 import { accountTable } from 'afinia-common/schema';
-import { AccountTypeEnum } from 'afinia-common/types/up-api';
 import {
   differenceInMonths,
   endOfMonth,

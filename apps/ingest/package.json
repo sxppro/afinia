@@ -15,7 +15,6 @@
     "afinia-common": "workspace:*",
     "date-fns": "catalog:",
     "drizzle-orm": "^0.44.6",
-    "openapi-fetch": "^0.15.0",
     "p-limit": "^7.3.0",
     "postgres": "^3.4.7",
     "sst": "3.19.3",
