@@ -18,7 +18,14 @@ catalogs:
 
 importers:
 
-  .: {}
+  .:
+    devDependencies:
+      prettier:
+        specifier: ^3.8.1
+        version: 3.8.1
+      prettier-plugin-tailwindcss:
+        specifier: ^0.7.2
+        version: 0.7.2(prettier@3.8.1)
 
   apps/ingest:
     dependencies:
@@ -31,9 +38,6 @@ importers:
       drizzle-orm:
         specifier: ^0.44.6
         version: 0.44.6(kysely@0.28.8)(postgres@3.4.7)
-      openapi-fetch:
-        specifier: 'catalog:'
-        version: 0.17.0
       p-limit:
         specifier: ^7.3.0
         version: 7.3.0
@@ -189,12 +193,6 @@ importers:
       eslint-plugin-react-hooks:
         specifier: ^7.0.1
         version: 7.0.1(eslint@9.37.0(jiti@2.6.1))
-      prettier:
-        specifier: ^3.8.1
-        version: 3.8.1
-      prettier-plugin-tailwindcss:
-        specifier: ^0.7.2
-        version: 0.7.2(prettier@3.8.1)
       tailwindcss:
         specifier: ^4
         version: 4.1.14
@@ -211,7 +209,7 @@ importers:
         specifier: ^0.44.6
         version: 0.44.6(kysely@0.28.8)(postgres@3.4.7)
       openapi-fetch:
-        specifier: 'catalog:'
+        specifier: ^0.17.0
         version: 0.17.0
     devDependencies:
       '@types/node':

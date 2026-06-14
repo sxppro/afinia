@@ -1,22 +1,4 @@
-import { paths } from 'afinia-common/types/up-api';
-import createClient, { Middleware } from 'openapi-fetch';
+import { createUpClient } from 'afinia-common/providers/up';
 import { Resource } from 'sst';
 
-const authMiddleware: Middleware = {
-  async onRequest({ request }) {
-    if (!Resource.UP_API_KEY.value) {
-      throw new Error(
-        'Up API key is not defined. Please set it in .env and run load-env'
-      );
-    }
-
-    request.headers.set('Authorization', `Bearer ${Resource.UP_API_KEY.value}`);
-    return request;
-  },
-};
-
-export const upClient = createClient<paths>({
-  baseUrl: 'https://api.up.com.au/api/v1',
-});
-
-upClient.use(authMiddleware);
+export const upClient = createUpClient(() => Resource.UP_API_KEY.value)

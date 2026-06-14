@@ -1,4 +1,4 @@
-import { components, WebhookEventTypeEnum } from 'afinia-common/types/up-api';
+import { components, WebhookEventTypeEnum } from 'afinia-common/providers/up';
 import { APIGatewayProxyHandlerV2 } from 'aws-lambda';
 import { Resource } from 'sst';
 import { ALERT_LEVEL, AUTHENTICITY_HEADER } from '../utils/constants';

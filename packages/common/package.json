@@ -4,12 +4,10 @@
   "description": "",
   "exports": {
     "./schema": "./db/schema/index.ts",
-    "./types/up-api": "./types/up-api.ts",
-    "./types/up-api/overrides": "./types/up-api-overrides.ts",
     "./providers/up": "./providers/up/index.ts"
   },
   "scripts": {
-    "generate:types": "pnpm exec openapi-typescript --enum https://raw.githubusercontent.com/up-banking/api/refs/heads/master/v1/openapi.json -o types/up-api.d.ts"
+    "generate:types": "openapi-typescript --enum https://raw.githubusercontent.com/up-banking/api/refs/heads/master/v1/openapi.json -o providers/up/types.ts"
   },
   "license": "ISC",
   "packageManager": "pnpm@10.18.3",
@@ -19,6 +17,6 @@
   },
   "dependencies": {
     "drizzle-orm": "^0.44.6",
-    "openapi-fetch": "catalog:"
+    "openapi-fetch": "^0.17.0"
   }
 }

@@ -1,4 +1,4 @@
-import { TransactionResource } from 'afinia-common/types/up-api/overrides';
+import { TransactionResource } from 'afinia-common/providers/up';
 import {
   deleteTransaction,
   ProcessTransactionsMetrics,

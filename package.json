@@ -5,15 +5,20 @@
     "pnpm": ">=8"
   },
   "scripts": {
-    "db:seed": "pnpm --filter afinia-ingest db:seed",
+    "common:generate:types": "pnpm --filter afinia-common generate:types",
     "db:generate": "pnpm --filter afinia-ingest db:generate",
     "db:migrate": "pnpm --filter afinia-ingest db:migrate",
-    "common:generate:types": "pnpm --filter afinia-common generate:types",
-    "sso": "pnpm --filter afinia-ingest sso",
-    "web:dev": "pnpm --filter afinia-web dev"
+    "db:seed": "pnpm --filter afinia-ingest db:seed",
+    "ingest:deploy": "pnpm --filter afinia-ingest deploy:prod",
+    "web:dev": "pnpm --filter afinia-web dev",
+    "sso": "pnpm --filter afinia-ingest sso"
   },
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "devDependencies": {
+    "prettier": "^3.8.1",
+    "prettier-plugin-tailwindcss": "^0.7.2"
+  }
 }

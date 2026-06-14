@@ -8,5 +8,5 @@
     "target": "ES2020",
     "esModuleInterop": true
   },
-  "include": ["db/**/*", "types/**/*"]
+  "include": ["db/**/*", "providers/**/*"]
 }

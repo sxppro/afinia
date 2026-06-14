@@ -1,5 +1,5 @@
+import { AccountTypeEnum } from 'afinia-common/providers/up';
 import { accountTable } from 'afinia-common/schema';
-import { AccountTypeEnum } from 'afinia-common/types/up-api';
 import { and, eq, sum } from 'drizzle-orm';
 import { SelectedFields } from 'drizzle-orm/pg-core';
 import { db } from './client';
