@@ -8,10 +8,10 @@ When the Up Banking API specification changes, its schema will need to be regene
 
 ```zsh
 # If you use npm
-npx openapi-typescript https://raw.githubusercontent.com/up-banking/api/refs/heads/master/v1/openapi.json -o types/up-api.ts
+npx openapi-typescript https://raw.githubusercontent.com/up-banking/api/refs/heads/master/v1/openapi.json -o providers/up/types.ts --enum
 
 # If you use pnpm
-pnpm exec openapi-typescript https://raw.githubusercontent.com/up-banking/api/refs/heads/master/v1/openapi.json -o types/up-api.ts
+pnpm exec openapi-typescript https://raw.githubusercontent.com/up-banking/api/refs/heads/master/v1/openapi.json -o providers/up/types.ts --enum
 
-# 🚀 https://raw.githubusercontent.com/up-banking/api/refs/heads/master/v1/openapi.json -> types/up-api.ts
+# 🚀 https://raw.githubusercontent.com/up-banking/api/refs/heads/master/v1/openapi.json -> providers/up/types.ts
 ```

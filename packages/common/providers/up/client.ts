@@ -1,5 +1,5 @@
 import createClient, { Middleware } from 'openapi-fetch';
-import { paths } from '../../types/up-api';
+import { paths } from './types';
 
 /**
  * Create Up client with credentials
