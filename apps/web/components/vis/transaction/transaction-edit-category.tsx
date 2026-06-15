@@ -83,7 +83,7 @@ const TransactionEditCategory = ({
   };
 
   return (
-    <DrawerNested open={open} onOpenChange={setOpen}>
+    <DrawerNested open={open} onOpenChange={setOpen} repositionInputs={false}>
       <DrawerTrigger asChild>
         <Button size="lg" className="rounded-lg">
           Edit Category
