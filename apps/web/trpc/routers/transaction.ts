@@ -47,11 +47,16 @@ export const transactionRouter = router({
           categoryInfoFetch,
         ]);
 
+        // Throw if for some reason we don't have this category in the db
+        if (!categoryInfo) {
+          throw new Error('Category not found');
+        }
+
         return {
-          category_id: categoryInfo?.category.category_id,
-          category: categoryInfo?.category.category_name,
-          category_parent: categoryInfo?.category_parent?.category_name ?? '',
-          category_parent_id: categoryInfo?.category_parent?.category_id ?? '',
+          category_id: categoryInfo.category.category_id,
+          category: categoryInfo.category.category_name,
+          category_parent: categoryInfo.category_parent?.category_name ?? '',
+          category_parent_id: categoryInfo.category_parent?.category_id ?? '',
         };
       } catch (error) {
         console.error(error);
@@ -62,3 +67,5 @@ export const transactionRouter = router({
       }
     }),
 });
+
+export type TransactionRouter = typeof transactionRouter;
