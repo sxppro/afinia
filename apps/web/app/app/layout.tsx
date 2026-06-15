@@ -1,6 +1,7 @@
 import { Toaster } from '@/components/ui/sonner';
 import { getServerSession } from '@/lib/auth/session';
 import { siteConfig } from '@/lib/siteConfig';
+import { TRPCReactProvider } from '@/trpc/client';
 import { redirect } from 'next/navigation';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import React, { ViewTransition } from 'react';
@@ -17,12 +18,14 @@ const AppLayout = async ({
   }
 
   return (
-    <ViewTransition>
-      <NuqsAdapter>
-        <div className="min-h-screen overscroll-none p-3">{children}</div>
-        <Toaster />
-      </NuqsAdapter>
-    </ViewTransition>
+    <TRPCReactProvider>
+      <ViewTransition>
+        <NuqsAdapter>
+          <div className="min-h-screen overscroll-none p-3">{children}</div>
+          <Toaster />
+        </NuqsAdapter>
+      </ViewTransition>
+    </TRPCReactProvider>
   );
 };
 

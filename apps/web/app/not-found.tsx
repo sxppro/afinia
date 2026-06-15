@@ -15,19 +15,24 @@ const NotFoundPage = async () => {
       <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
         Sorry, we couldn&apos;t find the page you&apos;re looking for.
       </p>
-      <Button asChild className="group mt-8" variant="ghost">
-        <Link
-          href={
-            session ? siteConfig.baseLinks.appHome : siteConfig.baseLinks.home
-          }
-        >
-          Go to the home page
-          <ArrowRight
-            className="ml-1 size-5 text-gray-900 dark:text-gray-50"
-            aria-hidden="true"
-          />
-        </Link>
-      </Button>
+      <Button
+        className="group mt-8"
+        variant="ghost"
+        nativeButton={false}
+        render={
+          <Link
+            href={
+              session ? siteConfig.baseLinks.appHome : siteConfig.baseLinks.home
+            }
+          >
+            Go to the home page
+            <ArrowRight
+              className="ml-1 size-5 text-gray-900 dark:text-gray-50"
+              aria-hidden="true"
+            />
+          </Link>
+        }
+      />
     </div>
   );
 };

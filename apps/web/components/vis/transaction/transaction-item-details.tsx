@@ -27,6 +27,7 @@ import { format } from 'date-fns';
 import { ExternalLink, SquarePen } from 'lucide-react';
 import Link from 'next/link';
 import { CSSProperties, PropsWithChildren, useState } from 'react';
+import TransactionEditCategory from './transaction-edit-category';
 
 const TransactionItemDetails = ({
   children,
@@ -34,22 +35,9 @@ const TransactionItemDetails = ({
 }: {
   transaction: typeof transactionExternalTable.$inferSelect;
 } & PropsWithChildren) => {
-  const [transactionDetails, setTransactionDetails] =
-    useState<Awaited<ReturnType<typeof getTransactionDetailById>>>(null);
-  const [open, setOpen] = useState(false);
-  const [showForeignAmount, setShowForeignAmount] = useState(false);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-
-  const hasTags =
-    transactionDetails?.tags && transactionDetails?.tags.length > 0;
-
   const {
     card_purchase_method,
     card_number_suffix,
-    category,
-    category_id,
-    category_parent,
-    category_parent_id,
     created_at,
     currency_code,
     deep_link_url,
@@ -63,6 +51,22 @@ const TransactionItemDetails = ({
     type,
     value_in_base_units,
   } = transaction;
+
+  // State
+  const [transactionDetails, setTransactionDetails] =
+    useState<Awaited<ReturnType<typeof getTransactionDetailById>>>(null);
+  const [open, setOpen] = useState(false);
+  const [showForeignAmount, setShowForeignAmount] = useState(false);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [categoryInfo, setCategoryInfo] = useState({
+    category_id: transaction.category_id,
+    category: transaction.category,
+    category_parent: transaction.category_parent,
+    category_parent_id: transaction.category_parent_id,
+  });
+
+  const hasTags =
+    transactionDetails?.tags && transactionDetails?.tags.length > 0;
 
   const isForeignTxn =
     foreign_currency_code !== null && foreign_value_in_base_units !== null;
@@ -88,28 +92,32 @@ const TransactionItemDetails = ({
   };
 
   return (
-    <Drawer open={open} onOpenChange={handleOpenChange}>
+    <Drawer
+      open={open}
+      onOpenChange={handleOpenChange}
+      repositionInputs={false}
+    >
       <DrawerTrigger asChild>{children}</DrawerTrigger>
       <DrawerContent className="font-sans">
         <DrawerHeader className="gap-2">
           <div className="flex justify-between gap-2">
             <Link
               href={
-                category_id
-                  ? `${siteConfig.baseLinks.spending}/${category_id}`
+                categoryInfo.category_id
+                  ? `${siteConfig.baseLinks.spending}/${categoryInfo.category_id}`
                   : '#'
               }
             >
               <span
                 className={cn(
                   'flex aspect-square size-16 items-center justify-center rounded-2xl text-2xl font-semibold text-white',
-                  category_parent_id
-                    ? colours[category_parent_id].background
+                  categoryInfo.category_parent_id
+                    ? colours[categoryInfo.category_parent_id].background
                     : 'bg-up-uncategorised'
                 )}
               >
                 <CategoryIconOrInitial
-                  category_id={category_id}
+                  category_id={categoryInfo.category_id}
                   description={description}
                   className="size-8"
                 />
@@ -155,19 +163,21 @@ const TransactionItemDetails = ({
             <span
               className={cn(
                 'rounded-full px-4 py-1 font-medium',
-                category_parent_id
-                  ? colours[category_parent_id].background
+                categoryInfo.category_parent_id
+                  ? colours[categoryInfo.category_parent_id].background
                   : 'bg-up-uncategorised',
                 // Invert text colour for all categories except for Good Life
-                category_parent_id !== 'good-life'
+                categoryInfo.category_parent_id !== 'good-life'
                   ? 'text-primary-foreground'
                   : 'text-secondary-foreground'
               )}
             >
-              {category_parent || 'Uncategorised'}
+              {categoryInfo.category_parent || 'Uncategorised'}
             </span>
-            {category && (
-              <span className="truncate px-4 py-1 font-medium">{category}</span>
+            {categoryInfo.category && (
+              <span className="truncate px-4 py-1 font-medium">
+                {categoryInfo.category}
+              </span>
             )}
           </div>
         </div>
@@ -301,8 +311,13 @@ const TransactionItemDetails = ({
             </div>
           </div>
         </ScrollableContent>
-        {deep_link_url && (
-          <DrawerFooter>
+        <DrawerFooter className="grid grid-cols-2">
+          <TransactionEditCategory
+            initialCategory={categoryInfo.category_id}
+            transaction={transaction}
+            onCategoryUpdated={setCategoryInfo}
+          />
+          {deep_link_url && (
             <div
               className="rounded-lg transition"
               style={
@@ -329,15 +344,23 @@ const TransactionItemDetails = ({
                 } as CSSProperties
               }
             >
-              <Button variant="secondary" asChild>
-                <Link href={deep_link_url} className="w-full">
-                  Open in app
-                  <ExternalLink aria-hidden="true" className="ml-1 size-4" />
-                </Link>
-              </Button>
+              <Button
+                variant="secondary"
+                nativeButton={false}
+                render={
+                  <Link href={deep_link_url} className="w-full">
+                    Open in app
+                    <ExternalLink
+                      aria-hidden="true"
+                      className="size-4"
+                      data-icon="inline-end"
+                    />
+                  </Link>
+                }
+              />
             </div>
-          </DrawerFooter>
-        )}
+          )}
+        </DrawerFooter>
       </DrawerContent>
     </Drawer>
   );

@@ -61,13 +61,14 @@ const AppHome = async () => {
         <Button
           variant="link"
           className="justify-start gap-0 has-[>svg]:px-0"
-          asChild
-        >
-          <Link href={siteConfig.baseLinks.transactions}>
-            <h2 className="text-xl font-semibold">Transactions</h2>
-            <ChevronRight className="size-6" />
-          </Link>
-        </Button>
+          nativeButton={false}
+          render={
+            <Link href={siteConfig.baseLinks.transactions}>
+              <h2 className="text-xl font-semibold">Transactions</h2>
+              <ChevronRight className="size-6" />
+            </Link>
+          }
+        />
         <Suspense
           fallback={
             <>

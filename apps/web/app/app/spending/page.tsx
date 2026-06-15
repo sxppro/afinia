@@ -92,12 +92,13 @@ const SpendingPage = async ({
             className="rounded-full"
             variant="outline"
             size="icon-xl"
-            asChild
-          >
-            <Link href={siteConfig.baseLinks.appHome}>
-              <ArrowLeft className="size-5" />
-            </Link>
-          </Button>
+            nativeButton={false}
+            render={
+              <Link href={siteConfig.baseLinks.appHome}>
+                <ArrowLeft className="size-5" />
+              </Link>
+            }
+          />
           <h1 className="text-2xl font-semibold">Spending</h1>
         </div>
         <div>
@@ -114,21 +115,26 @@ const SpendingPage = async ({
             className="text-4xl/tight font-semibold"
             value={spending.reduce((acc, curr) => acc + curr.value, 0)}
           />
-          <Button variant="outline" className="size-12 rounded-full" asChild>
-            <Link
-              href={
-                isChartView
-                  ? siteConfig.baseLinks.spending
-                  : `${siteConfig.baseLinks.spending}?view=chart`
-              }
-            >
-              {isChartView ? (
-                <List className="size-6" />
-              ) : (
-                <ChartColumn className="size-6" />
-              )}
-            </Link>
-          </Button>
+          <Button
+            variant="outline"
+            className="size-12 rounded-full"
+            nativeButton={false}
+            render={
+              <Link
+                href={
+                  isChartView
+                    ? siteConfig.baseLinks.spending
+                    : `${siteConfig.baseLinks.spending}?view=chart`
+                }
+              >
+                {isChartView ? (
+                  <List className="size-6" />
+                ) : (
+                  <ChartColumn className="size-6" />
+                )}
+              </Link>
+            }
+          />
         </div>
       </div>
 

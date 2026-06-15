@@ -4,34 +4,64 @@ import { DEFAULT_CURRENCY } from './constants';
 import { now } from './dateTime';
 
 export const colours: {
-  [key: string]: Record<'background' | 'stroke' | 'fill' | 'text', string>;
+  [key: string]: Record<
+    | 'background'
+    | 'backgroundAccent'
+    | 'backgroundMuted'
+    | 'border'
+    | 'borderMuted'
+    | 'stroke'
+    | 'fill'
+    | 'text',
+    string
+  >;
 } = {
   'good-life': {
     background: 'bg-up-good-life',
+    backgroundAccent: 'bg-up-good-life/40',
+    backgroundMuted: 'bg-up-good-life/10',
+    border: 'border-up-good-life',
+    borderMuted: 'border-up-good-life/20',
     stroke: 'stroke-up-good-life',
     fill: 'fill-up-good-life',
     text: 'text-up-good-life',
   },
   home: {
     background: 'bg-up-home',
+    backgroundAccent: 'bg-up-home/40',
+    backgroundMuted: 'bg-up-home/10',
+    border: 'border-up-home',
+    borderMuted: 'border-up-home/20',
     stroke: 'stroke-up-home',
     fill: 'fill-up-home',
     text: 'text-up-home',
   },
   personal: {
     background: 'bg-up-personal',
+    backgroundAccent: 'bg-up-personal/40',
+    backgroundMuted: 'bg-up-personal/10',
+    border: 'border-up-personal',
+    borderMuted: 'border-up-personal/20',
     stroke: 'stroke-up-personal',
     fill: 'fill-up-personal',
     text: 'text-up-personal',
   },
   transport: {
     background: 'bg-up-transport',
+    backgroundAccent: 'bg-up-transport/40',
+    backgroundMuted: 'bg-up-transport/10',
+    border: 'border-up-transport',
+    borderMuted: 'border-up-transport/20',
     stroke: 'stroke-up-transport',
     fill: 'fill-up-transport',
     text: 'text-up-transport',
   },
   uncategorised: {
     background: 'bg-up-uncategorised',
+    backgroundAccent: 'bg-up-uncategorised/40',
+    backgroundMuted: 'bg-up-uncategorised/10',
+    border: 'border-up-uncategorised',
+    borderMuted: 'border-up-uncategorised/20',
     stroke: 'stroke-up-uncategorised',
     fill: 'fill-up-uncategorised',
     text: 'text-up-uncategorised',
