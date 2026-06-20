@@ -1,3 +1,6 @@
+import CategoryIcon from '@/components/category-icon';
+import CurrencyFlow from '@/components/currency-flow';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getStartOfDay } from '@/lib/dateTime';
 import { getParentCategories } from '@/lib/db/category';
@@ -8,9 +11,6 @@ import { transactionExternalTable } from 'afinia-common/schema';
 import { endOfMonth, startOfMonth } from 'date-fns';
 import { sum } from 'drizzle-orm';
 import Link from 'next/link';
-import CategoryIcon from '../../../components/category-icon';
-import CurrencyFlow from '../../../components/currency-flow';
-import { Card, CardContent } from '../../../components/ui/card';
 
 export const QuickActionsLoading = () => {
   return (

@@ -14,6 +14,7 @@ import { ChevronRight, Search } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import AccountBalanceTotal from './_components/account-balance-total';
+import AccountsList from './_components/accounts-list';
 import QuickActions, { QuickActionsLoading } from './_components/quick-actions';
 
 const AppHome = async () => {
@@ -69,6 +70,12 @@ const AppHome = async () => {
         </div>
         <Suspense fallback={<QuickActionsLoading />}>
           <QuickActions />
+        </Suspense>
+      </div>
+      <div className="flex flex-col gap-2">
+        <h2 className="text-xl font-semibold">Accounts</h2>
+        <Suspense fallback={<Skeleton className="h-40 w-full" />}>
+          <AccountsList />
         </Suspense>
       </div>
       <div className="flex flex-col gap-2">
