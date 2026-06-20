@@ -1,17 +1,32 @@
-import { getStartOfDay, now } from '@/lib/dateTime';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getStartOfDay } from '@/lib/dateTime';
 import { getParentCategories } from '@/lib/db/category';
 import { getCategorySpending } from '@/lib/db/spending';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
-import { endOfMonth, format, startOfMonth } from 'date-fns';
+import { endOfMonth, startOfMonth } from 'date-fns';
 import { sum } from 'drizzle-orm';
-import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import CategoryIcon from './category-icon';
-import CurrencyFlow from './currency-flow';
-import { Button } from './ui/button';
-import { Card, CardContent } from './ui/card';
+import CategoryIcon from '../../../components/category-icon';
+import CurrencyFlow from '../../../components/currency-flow';
+import { Card, CardContent } from '../../../components/ui/card';
+
+export const QuickActionsLoading = () => {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {[...Array(4)].map((_, i) => (
+        <Card className="rounded-3xl bg-gray-50 p-4" key={i}>
+          <CardContent className="flex flex-col items-start gap-1 p-0">
+            <Skeleton className="mb-4 size-10 rounded-lg" />
+            <Skeleton className="h-6 w-20" />
+            <Skeleton className="h-6 w-16" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+};
 
 /**
  * Single quick action tile
@@ -46,18 +61,22 @@ const QuickActions = async () => {
     start: startOfMonth(getStartOfDay()),
     end: endOfMonth(getStartOfDay()),
   };
-  const spending = await getCategorySpending({
-    select: {
-      id: transactionExternalTable.category_parent_id,
-      name: transactionExternalTable.category_parent,
-      value: sum(transactionExternalTable.value_in_base_units).mapWith(Number),
-    },
-    range,
-  }).groupBy(
-    transactionExternalTable.category_parent_id,
-    transactionExternalTable.category_parent
-  );
-  const categories = await getParentCategories();
+  const [spending, categories] = await Promise.all([
+    getCategorySpending({
+      select: {
+        id: transactionExternalTable.category_parent_id,
+        name: transactionExternalTable.category_parent,
+        value: sum(transactionExternalTable.value_in_base_units).mapWith(
+          Number
+        ),
+      },
+      range,
+    }).groupBy(
+      transactionExternalTable.category_parent_id,
+      transactionExternalTable.category_parent
+    ),
+    getParentCategories(),
+  ]);
   /**
    * Merge results to include all categories,
    * including those with no spending & sort
@@ -73,26 +92,10 @@ const QuickActions = async () => {
     .sort((a, b) => (a.id > b.id ? 1 : -1));
 
   return (
-    <div className="flex flex-col gap-2">
-      <Button
-        variant="link"
-        className="justify-start gap-0 has-[>svg]:px-0"
-        nativeButton={false}
-        render={
-          <Link href={siteConfig.baseLinks.spending}>
-            <h2 className="text-xl font-semibold">Spending</h2>
-            <ChevronRight className="size-6" />
-          </Link>
-        }
-      />
-      <div className="grid grid-cols-2 gap-2">
-        <p className="text-muted-foreground col-span-2">
-          {format(now(), 'MMMM yyyy')}
-        </p>
-        {spendingByCategory.map((category) => (
-          <QuickAction key={category.id} {...category} />
-        ))}
-      </div>
+    <div className="grid grid-cols-2 gap-2">
+      {spendingByCategory.map((category) => (
+        <QuickAction key={category.id} {...category} />
+      ))}
     </div>
   );
 };
