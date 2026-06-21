@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { db } from '@/lib/db/client';
 import { AccountTypeEnum } from 'afinia-common/providers/up';
 import { accountTable } from 'afinia-common/schema';
-import { desc } from 'drizzle-orm';
+import { desc, isNull } from 'drizzle-orm';
 import { CircleQuestionMark, Landmark, PiggyBank, Wallet } from 'lucide-react';
 
 const AccountsList = async () => {
@@ -15,6 +15,7 @@ const AccountsList = async () => {
       type: accountTable.type,
     })
     .from(accountTable)
+    .where(isNull(accountTable.deleted_at))
     .orderBy(accountTable.display_name, desc(accountTable.value_in_base_units));
 
   if (accounts.length === 0) {
