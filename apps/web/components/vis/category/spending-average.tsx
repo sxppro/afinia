@@ -1,5 +1,4 @@
 import { getStartOfDay } from '@/lib/dateTime';
-import { getAccounts } from '@/lib/db/account';
 import { db } from '@/lib/db/client';
 import { getCategorySpendingByTimestamp } from '@/lib/db/spending';
 import { formatCurrency } from '@/lib/ui';
@@ -12,14 +11,15 @@ import {
   startOfMonth,
   subMonths,
 } from 'date-fns';
-import { avg } from 'drizzle-orm';
+import { avg, eq } from 'drizzle-orm';
 
 const SpendingAverage = async ({ category }: { category: string }) => {
   const MIN_MONTHS = 3;
-  const account = await getAccounts(
-    { createdAt: accountTable.created_at },
-    { type: AccountTypeEnum.TRANSACTIONAL }
-  );
+  const account = await db
+    .select({ createdAt: accountTable.created_at })
+    .from(accountTable)
+    .where(eq(accountTable.type, AccountTypeEnum.TRANSACTIONAL))
+    .limit(1);
 
   if (!account[0]) {
     <p className="text-3xl/tight font-semibold">{formatCurrency(0)}</p>;
