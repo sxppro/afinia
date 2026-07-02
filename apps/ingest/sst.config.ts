@@ -22,10 +22,42 @@ export default $config({
     };
     const allSecrets = Object.values(secrets);
 
+    const dlq = new sst.aws.Queue('AfiniaWebhookDlq', { fifo: true });
+    dlq.subscribe({
+      handler: 'src/provider/up/modules/notifyWebhookFailure.handler',
+      link: [secrets.discordWebhookUrl, secrets.discordUserId],
+      runtime: 'nodejs22.x',
+    });
+
+    const queue = new sst.aws.Queue('AfiniaWebhookQueue', {
+      fifo: true,
+      dlq: { queue: dlq.arn, retry: 3 },
+      visibilityTimeout: '6 minutes',
+    });
+    queue.subscribe(
+      {
+        handler: 'src/provider/up/modules/processQueuedWebhookEvent.handler',
+        link: [...allSecrets],
+        runtime: 'nodejs22.x',
+        timeout: '60 seconds',
+        logging: { retention: '3 months' },
+      },
+      { batch: { size: 1 } }
+    );
+
     const api = new sst.aws.ApiGatewayV1('AfiniaIngestApi');
     api.route('POST /webhook', {
       handler: 'src/provider/up/modules/processWebhookEvent.handler',
-      link: [...allSecrets],
+      link: [
+        queue,
+        secrets.upApiKey,
+        secrets.upWebhookSecret,
+        secrets.discordWebhookUrl,
+        secrets.discordUserId,
+        secrets.vapidPrivateKey,
+        secrets.vapidPublicKey,
+        secrets.baseUrl,
+      ],
       logging: {
         retention: '3 months',
       },
