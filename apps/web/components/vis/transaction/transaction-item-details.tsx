@@ -18,12 +18,10 @@ import {
 } from '@/components/ui/drawer';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  getTransactionDetailById,
-  TransactionRow,
-} from '@/lib/actions/transaction';
+import { getTransactionDetailById } from '@/lib/actions/transaction';
 import { siteConfig } from '@/lib/siteConfig';
 import { capitalise } from '@/lib/string';
+import { TransactionRow } from '@/lib/types';
 import { cn, colours, formatCurrency } from '@/lib/ui';
 import { format } from 'date-fns';
 import { ExternalLink, SquarePen } from 'lucide-react';
@@ -314,29 +312,30 @@ const TransactionItemDetails = ({
             </div>
           </div>
         </ScrollableContent>
-        <DrawerFooter
-          className={cn(
-            'grid',
-            is_categorizable ? 'grid-cols-2' : 'grid-cols-1'
-          )}
-        >
-          {is_categorizable && (
-            <TransactionEditCategory
-              initialCategory={categoryInfo.category_id}
-              transaction={transaction}
-              onCategoryUpdated={setCategoryInfo}
-            />
-          )}
-          {deep_link_url && (
-            <div
-              className="rounded-lg transition"
-              style={
-                {
-                  // A purplish colour
-                  '--highlight': 'oklch(0.69 0.3 329.98)',
-                  '--bg-color':
-                    'linear-gradient(var(--background), var(--background))',
-                  '--border-color': `conic-gradient(
+        {(is_categorizable || deep_link_url) && (
+          <DrawerFooter
+            className={cn(
+              'grid',
+              is_categorizable ? 'grid-cols-2' : 'grid-cols-1'
+            )}
+          >
+            {is_categorizable && (
+              <TransactionEditCategory
+                initialCategory={categoryInfo.category_id}
+                transaction={transaction}
+                onCategoryUpdated={setCategoryInfo}
+              />
+            )}
+            {deep_link_url && (
+              <div
+                className="rounded-lg transition"
+                style={
+                  {
+                    // A purplish colour
+                    '--highlight': 'oklch(0.69 0.3 329.98)',
+                    '--bg-color':
+                      'linear-gradient(var(--background), var(--background))',
+                    '--border-color': `conic-gradient(
                       from var(--border-angle),
                       var(--highlight) 0%,
                       color-mix(in oklch, var(--highlight) 20%, transparent) 25%,
@@ -344,33 +343,34 @@ const TransactionItemDetails = ({
                       color-mix(in oklch, var(--highlight) 20%, transparent) 75%,
                       var(--highlight) 100%
                     )`,
-                  animation: 'border-rotate 10s linear infinite',
-                  backgroundImage:
-                    'linear-gradient(var(--background), var(--background)), var(--border-color)',
-                  backgroundOrigin: 'padding-box, border-box',
-                  backgroundClip: 'padding-box, border-box',
-                  borderColor: 'transparent',
-                  borderWidth: '2px',
-                } as CSSProperties
-              }
-            >
-              <Button
-                variant="secondary"
-                nativeButton={false}
-                render={
-                  <Link href={deep_link_url} className="w-full">
-                    Open in app
-                    <ExternalLink
-                      aria-hidden="true"
-                      className="size-4"
-                      data-icon="inline-end"
-                    />
-                  </Link>
+                    animation: 'border-rotate 10s linear infinite',
+                    backgroundImage:
+                      'linear-gradient(var(--background), var(--background)), var(--border-color)',
+                    backgroundOrigin: 'padding-box, border-box',
+                    backgroundClip: 'padding-box, border-box',
+                    borderColor: 'transparent',
+                    borderWidth: '2px',
+                  } as CSSProperties
                 }
-              />
-            </div>
-          )}
-        </DrawerFooter>
+              >
+                <Button
+                  variant="secondary"
+                  nativeButton={false}
+                  render={
+                    <Link href={deep_link_url} className="w-full">
+                      Open in app
+                      <ExternalLink
+                        aria-hidden="true"
+                        className="size-4"
+                        data-icon="inline-end"
+                      />
+                    </Link>
+                  }
+                />
+              </div>
+            )}
+          </DrawerFooter>
+        )}
       </DrawerContent>
     </Drawer>
   );

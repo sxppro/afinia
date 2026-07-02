@@ -6,9 +6,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   getTransactionsPaginated,
   TransactionCursor,
-  TransactionRow,
 } from '@/lib/actions/transaction';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
+import { TransactionRow } from '@/lib/types';
 import {
   Fragment,
   useCallback,

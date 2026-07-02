@@ -34,10 +34,6 @@ export type TransactionFilters = Prettify<
   > & { search_term?: string; include_transfers?: boolean }
 >;
 
-export type TransactionRow = Awaited<
-  ReturnType<typeof getTransactionsPaginated>
->['transactions'][number];
-
 /**
  * Paginated transaction retrieval.
  * @param options Cannot use cursor and filters together as it will require many indexes to be performant.

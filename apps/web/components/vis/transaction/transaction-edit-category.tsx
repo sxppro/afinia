@@ -19,8 +19,8 @@ import {
 } from '@/components/ui/field';
 import { RadioGroup, RadioGroupItemTick } from '@/components/ui/radio-group';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TransactionRow } from '@/lib/actions/transaction';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
+import { TransactionRow } from '@/lib/types';
 import { cn, colours } from '@/lib/ui';
 import { useTRPC } from '@/trpc/client';
 import { useMutation, useQuery } from '@tanstack/react-query';

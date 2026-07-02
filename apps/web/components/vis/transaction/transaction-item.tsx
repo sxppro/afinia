@@ -1,7 +1,7 @@
 import CategoryIconOrInitial from '@/components/category-icon-or-initial';
-import { TransactionRow } from '@/lib/actions/transaction';
 import { TZ } from '@/lib/constants';
 import { siteConfig } from '@/lib/siteConfig';
+import { TransactionRow } from '@/lib/types';
 import { cn, colours, formatCurrency } from '@/lib/ui';
 import { TZDateMini } from '@date-fns/tz';
 import { format, isThisYear } from 'date-fns';

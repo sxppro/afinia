@@ -1,4 +1,4 @@
-import { TransactionRow } from '@/lib/actions/transaction';
+import { TransactionRow } from '@/lib/types';
 import CategoryIcon from './category-icon';
 
 const CategoryIconOrInitial = ({
