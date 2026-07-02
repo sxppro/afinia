@@ -10,7 +10,7 @@ const AccountTransactions = async ({
   return (
     <TransactionList
       options={{
-        filters: { account_id: Number(accountId) },
+        filters: { account_id: Number(accountId), include_transfers: true },
       }}
     />
   );

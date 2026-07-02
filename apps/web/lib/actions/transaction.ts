@@ -2,33 +2,41 @@
 
 import {
   accountTable,
+  categoryTable,
   transactionCashbackTable,
-  transactionExternalTable,
   transactionHoldInfoTable,
   transactionRoundUpTable,
   transactionTable,
   transactionTagTable,
 } from 'afinia-common/schema';
-import { and, desc, eq, isNull, or, SQL, sql } from 'drizzle-orm';
+import {
+  and,
+  desc,
+  eq,
+  getTableColumns,
+  isNull,
+  or,
+  SQL,
+  sql,
+} from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { getServerSession } from '../auth/session';
 import { db } from '../db/client';
 import { Prettify } from '../types';
 
 export type TransactionCursor = Prettify<
-  Pick<
-    typeof transactionExternalTable.$inferSelect,
-    'transaction_id' | 'created_at'
-  >
+  Pick<typeof transactionTable.$inferSelect, 'transaction_id' | 'created_at'>
 >;
 
 export type TransactionFilters = Prettify<
   Partial<
-    Pick<
-      typeof transactionExternalTable.$inferSelect,
-      'account_id' | 'category_id'
-    >
-  > & { search_term?: string }
+    Pick<typeof transactionTable.$inferSelect, 'account_id' | 'category_id'>
+  > & { search_term?: string; include_transfers?: boolean }
 >;
+
+export type TransactionRow = Awaited<
+  ReturnType<typeof getTransactionsPaginated>
+>['transactions'][number];
 
 /**
  * Paginated transaction retrieval.
@@ -54,12 +62,19 @@ export const getTransactionsPaginated = async (
   const { limit } = options;
   const conditions: (SQL | undefined)[] = [];
 
+  // Include internal transfers
+  const includeTransfers =
+    'filters' in options ? options.filters?.include_transfers : false;
+  if (!includeTransfers) {
+    conditions.push(eq(transactionTable.is_categorizable, true));
+  }
+
   // Cursor mode
   if ('cursor' in options) {
     const { cursor } = options;
     if (cursor) {
       conditions.push(
-        sql`(${transactionExternalTable.created_at}, ${transactionExternalTable.transaction_id}) < (${cursor.created_at.toISOString()}::timestamptz, ${cursor.transaction_id})`
+        sql`(${transactionTable.created_at}, ${transactionTable.transaction_id}) < (${cursor.created_at.toISOString()}::timestamptz, ${cursor.transaction_id})`
       );
     }
     // Filter mode
@@ -70,17 +85,17 @@ export const getTransactionsPaginated = async (
     const searchTerm = filters?.search_term?.trim();
 
     if (accountId !== undefined) {
-      conditions.push(eq(transactionExternalTable.account_id, accountId));
+      conditions.push(eq(transactionTable.account_id, accountId));
     }
 
     if (categoryId) {
       if (categoryId === 'uncategorised') {
-        conditions.push(isNull(transactionExternalTable.category_id));
+        conditions.push(isNull(transactionTable.category_id));
       } else {
         conditions.push(
           or(
-            eq(transactionExternalTable.category_id, categoryId),
-            eq(transactionExternalTable.category_parent_id, categoryId)
+            eq(transactionTable.category_id, categoryId),
+            eq(categoryTable.category_parent_id, categoryId)
           )
         );
       }
@@ -88,7 +103,7 @@ export const getTransactionsPaginated = async (
 
     if (searchTerm) {
       conditions.push(
-        sql`${transactionExternalTable.text_search} @@ websearch_to_tsquery('english', ${searchTerm})`
+        sql`${transactionTable.text_search} @@ websearch_to_tsquery('english', ${searchTerm})`
       );
     }
 
@@ -98,14 +113,33 @@ export const getTransactionsPaginated = async (
   }
 
   try {
+    const categoryParent = alias(categoryTable, 'category_parent');
+
     // Note: will require another index if we will be filtering on category and account together
     const query = db
-      .select()
-      .from(transactionExternalTable)
-      .where(and(...conditions))
+      .select({
+        ...getTableColumns(transactionTable),
+        category: sql<string>`${categoryTable.category_name}`.as('category'),
+        category_parent_id: sql<string>`${categoryParent.category_id}`.as(
+          'category_parent_id'
+        ),
+        category_parent: sql<string>`${categoryParent.category_name}`.as(
+          'category_parent'
+        ),
+      })
+      .from(transactionTable)
+      .leftJoin(
+        categoryTable,
+        eq(transactionTable.category_id, categoryTable.category_id)
+      )
+      .leftJoin(
+        categoryParent,
+        eq(categoryTable.category_parent_id, categoryParent.category_id)
+      )
+      .where(and(...conditions, isNull(transactionTable.deleted_at)))
       .orderBy(
-        desc(transactionExternalTable.created_at),
-        desc(transactionExternalTable.transaction_id)
+        desc(transactionTable.created_at),
+        desc(transactionTable.transaction_id)
       )
       .offset(offset);
 

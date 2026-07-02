@@ -18,11 +18,13 @@ import {
 } from '@/components/ui/drawer';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getTransactionDetailById } from '@/lib/actions/transaction';
+import {
+  getTransactionDetailById,
+  TransactionRow,
+} from '@/lib/actions/transaction';
 import { siteConfig } from '@/lib/siteConfig';
 import { capitalise } from '@/lib/string';
 import { cn, colours, formatCurrency } from '@/lib/ui';
-import { transactionExternalTable } from 'afinia-common/schema';
 import { format } from 'date-fns';
 import { ExternalLink, SquarePen } from 'lucide-react';
 import Link from 'next/link';
@@ -33,7 +35,7 @@ const TransactionItemDetails = ({
   children,
   transaction,
 }: {
-  transaction: typeof transactionExternalTable.$inferSelect;
+  transaction: TransactionRow;
 } & PropsWithChildren) => {
   const {
     card_purchase_method,
@@ -44,6 +46,7 @@ const TransactionItemDetails = ({
     description,
     foreign_currency_code,
     foreign_value_in_base_units,
+    is_categorizable,
     message,
     note,
     raw_text,
@@ -311,12 +314,19 @@ const TransactionItemDetails = ({
             </div>
           </div>
         </ScrollableContent>
-        <DrawerFooter className="grid grid-cols-2">
-          <TransactionEditCategory
-            initialCategory={categoryInfo.category_id}
-            transaction={transaction}
-            onCategoryUpdated={setCategoryInfo}
-          />
+        <DrawerFooter
+          className={cn(
+            'grid',
+            is_categorizable ? 'grid-cols-2' : 'grid-cols-1'
+          )}
+        >
+          {is_categorizable && (
+            <TransactionEditCategory
+              initialCategory={categoryInfo.category_id}
+              transaction={transaction}
+              onCategoryUpdated={setCategoryInfo}
+            />
+          )}
           {deep_link_url && (
             <div
               className="rounded-lg transition"

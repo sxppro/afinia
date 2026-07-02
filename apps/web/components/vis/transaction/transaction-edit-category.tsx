@@ -19,18 +19,18 @@ import {
 } from '@/components/ui/field';
 import { RadioGroup, RadioGroupItemTick } from '@/components/ui/radio-group';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TransactionRow } from '@/lib/actions/transaction';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import { cn, colours } from '@/lib/ui';
 import { useTRPC } from '@/trpc/client';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { transactionExternalTable } from 'afinia-common/schema';
 import { Loader2, PencilIcon, X } from 'lucide-react';
 import { Fragment, useState } from 'react';
 import { toast } from 'sonner';
 
 interface TransactionItemCategoryProps {
   initialCategory: string | null;
-  transaction: typeof transactionExternalTable.$inferSelect;
+  transaction: TransactionRow;
   onCategoryUpdated: (info: {
     category_id: string;
     category: string;

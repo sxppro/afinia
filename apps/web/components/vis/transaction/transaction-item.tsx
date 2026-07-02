@@ -1,18 +1,14 @@
 import CategoryIconOrInitial from '@/components/category-icon-or-initial';
+import { TransactionRow } from '@/lib/actions/transaction';
 import { TZ } from '@/lib/constants';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours, formatCurrency } from '@/lib/ui';
 import { TZDateMini } from '@date-fns/tz';
-import { transactionExternalTable } from 'afinia-common/schema';
 import { format, isThisYear } from 'date-fns';
 import Link from 'next/link';
 import TransactionItemDetails from './transaction-item-details';
 
-const TransactionItem = ({
-  transaction,
-}: {
-  transaction: typeof transactionExternalTable.$inferSelect;
-}) => {
+const TransactionItem = ({ transaction }: { transaction: TransactionRow }) => {
   const {
     description,
     card_number_suffix,

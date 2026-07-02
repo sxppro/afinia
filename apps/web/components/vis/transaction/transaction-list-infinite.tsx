@@ -6,9 +6,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   getTransactionsPaginated,
   TransactionCursor,
+  TransactionRow,
 } from '@/lib/actions/transaction';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
-import { transactionExternalTable } from 'afinia-common/schema';
 import {
   Fragment,
   useCallback,
@@ -21,7 +21,7 @@ import { useInView } from 'react-intersection-observer';
 import TransactionItem from './transaction-item';
 
 type TransactionListInfiniteProps = {
-  initialTransactions: (typeof transactionExternalTable.$inferSelect)[];
+  initialTransactions: TransactionRow[];
   initialCursor: TransactionCursor | null;
   initialHasMore: boolean;
   options: Parameters<typeof getTransactionsPaginated>[0];

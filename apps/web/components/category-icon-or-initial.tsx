@@ -1,14 +1,11 @@
-import { transactionExternalTable } from 'afinia-common/schema';
+import { TransactionRow } from '@/lib/actions/transaction';
 import CategoryIcon from './category-icon';
 
 const CategoryIconOrInitial = ({
   category_id,
   description,
   className,
-}: Pick<
-  typeof transactionExternalTable.$inferSelect,
-  'category_id' | 'description'
-> & {
+}: Pick<TransactionRow, 'category_id' | 'description'> & {
   className?: string;
 }) => {
   if (category_id) {
