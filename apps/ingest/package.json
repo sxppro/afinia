@@ -12,6 +12,7 @@
     "sso": "aws sso login --sso-session=soppro"
   },
   "dependencies": {
+    "@aws-sdk/client-sqs": "^3.1077.0",
     "afinia-common": "workspace:*",
     "date-fns": "catalog:",
     "drizzle-orm": "^0.44.6",

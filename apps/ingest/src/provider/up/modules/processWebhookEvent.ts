@@ -1,28 +1,14 @@
+import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
 import { components, WebhookEventTypeEnum } from 'afinia-common/providers/up';
 import { APIGatewayProxyHandlerV2 } from 'aws-lambda';
 import { Resource } from 'sst';
 import { ALERT_LEVEL, AUTHENTICITY_HEADER } from '../utils/constants';
 import { signData } from '../utils/fetch';
 import { notify } from '../utils/notify';
-import { processAccounts } from './processAccounts';
-import { processTags } from './processTags';
-import { processTransaction } from './processTransactions';
-import {
-  sendPushNotifications,
-  sendTestPushNotification,
-} from './sendPushNotifications';
+import { sendTestPushNotification } from './sendPushNotifications';
 
 const PROCESS_NAME = 'processWebhookEvent';
-
-export const processWebhookEvent = async (
-  event: components['schemas']['WebhookEventCallback']
-) => {
-  const { data } = event;
-
-  if (!data) {
-    await notify(ALERT_LEVEL.ERROR, 'No webhook data found');
-  }
-};
+const sqs = new SQSClient();
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   if (!Resource.UP_API_KEY.value || !Resource.UP_WEBHOOK_SECRET.value) {
@@ -69,7 +55,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       };
     }
 
-    const { attributes, relationships } = data;
+    const { attributes, relationships, id } = data;
     const { eventType } = attributes;
 
     if (eventType === WebhookEventTypeEnum.PING) {
@@ -89,32 +75,14 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       };
     }
 
-    /**
-     * Sync accounts before processing
-     * transaction
-     */
-    await processAccounts();
-    await processTags();
-
-    /**
-     * Process transaction events
-     * @see https://developer.up.com.au/#callback_post_webhookURL
-     */
-    if (
-      eventType === WebhookEventTypeEnum.TRANSACTION_CREATED ||
-      eventType === WebhookEventTypeEnum.TRANSACTION_SETTLED
-    ) {
-      await processTransaction('insert', relationships.transaction.data.id);
-
-      /**
-       * Push notifications only on created
-       */
-      if (eventType === WebhookEventTypeEnum.TRANSACTION_CREATED) {
-        await sendPushNotifications(relationships.transaction.data.id);
-      }
-    } else if (eventType === WebhookEventTypeEnum.TRANSACTION_DELETED) {
-      await processTransaction('delete', relationships.transaction.data.id);
-    }
+    await sqs.send(
+      new SendMessageCommand({
+        QueueUrl: Resource.AfiniaWebhookQueue.url,
+        MessageBody: event.body,
+        MessageGroupId: relationships.transaction.data.id,
+        MessageDeduplicationId: id,
+      })
+    );
 
     return {
       statusCode: 200,
