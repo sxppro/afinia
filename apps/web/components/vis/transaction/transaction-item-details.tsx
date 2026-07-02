@@ -120,6 +120,7 @@ const TransactionItemDetails = ({
                 <CategoryIconOrInitial
                   category_id={categoryInfo.category_id}
                   description={description}
+                  type={type}
                   className="size-8"
                 />
               </span>

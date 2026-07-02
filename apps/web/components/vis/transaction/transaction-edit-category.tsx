@@ -153,6 +153,7 @@ const TransactionEditCategory = ({
                                 <CategoryIconOrInitial
                                   category_id={category.category_id}
                                   description={category.category_name}
+                                  type={transaction.type}
                                 />
                                 <FieldTitle>
                                   {category.category_name}

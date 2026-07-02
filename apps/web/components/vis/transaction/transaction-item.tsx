@@ -41,6 +41,7 @@ const TransactionItem = ({ transaction }: { transaction: TransactionRow }) => {
           <CategoryIconOrInitial
             category_id={category_id}
             description={description}
+            type={type}
           />
         </span>
       </Link>
