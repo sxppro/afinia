@@ -3,12 +3,12 @@ import { siteConfig } from '@/lib/siteConfig';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-const AccountPageHeader = () => {
+const AccountPageHeader = ({ accountName }: { accountName: string }) => {
   return (
     <div className="flex justify-between">
-      <div className="flex items-center gap-4">
+      <div className="flex min-w-0 items-center gap-4">
         <Button
-          className="rounded-full"
+          className="shrink-0 rounded-full"
           variant="outline"
           size="icon-xl"
           nativeButton={false}
@@ -18,7 +18,9 @@ const AccountPageHeader = () => {
             </Link>
           }
         />
-        <h1 className="text-2xl font-semibold">Account</h1>
+        <h1 className="min-w-0 truncate text-2xl/tight font-bold">
+          {accountName}
+        </h1>
       </div>
     </div>
   );

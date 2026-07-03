@@ -3,13 +3,7 @@ import TransactionList from '@/components/vis/transaction/transaction-list';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import { Suspense } from 'react';
 
-const AccountTransactions = async ({
-  params,
-}: {
-  params: Promise<{ accountId: string }>;
-}) => {
-  const { accountId } = await params;
-
+const AccountTransactions = async ({ accountId }: { accountId: number }) => {
   return (
     <Suspense
       fallback={
