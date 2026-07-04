@@ -3,21 +3,42 @@ import AccountTypeIcon from '@/components/icons/account-type-icon';
 import { Card, CardContent } from '@/components/ui/card';
 import { db } from '@/lib/db/client';
 import { siteConfig } from '@/lib/siteConfig';
-import { accountTable } from 'afinia-common/schema';
-import { desc, isNull } from 'drizzle-orm';
+import { accountTable, transactionTable } from 'afinia-common/schema';
+import { and, desc, eq, isNull, max, sql } from 'drizzle-orm';
 import Link from 'next/link';
 
 const AccountsList = async () => {
+  /**
+   * Get accounts sorted by latest activity
+   */
   const accounts = await db
     .select({
       id: accountTable.account_id,
       name: accountTable.display_name,
       value: accountTable.value_in_base_units,
       type: accountTable.type,
+      latestActivity: max(transactionTable.created_at),
     })
     .from(accountTable)
+    .leftJoin(
+      transactionTable,
+      and(
+        eq(transactionTable.account_id, accountTable.account_id),
+        isNull(transactionTable.deleted_at)
+      )
+    )
     .where(isNull(accountTable.deleted_at))
-    .orderBy(accountTable.display_name, desc(accountTable.value_in_base_units));
+    .groupBy(
+      accountTable.account_id,
+      accountTable.display_name,
+      accountTable.value_in_base_units,
+      accountTable.type
+    )
+    .orderBy(
+      sql`max(${transactionTable.created_at}) desc nulls last`,
+      accountTable.display_name,
+      desc(accountTable.value_in_base_units)
+    );
 
   if (accounts.length === 0) {
     return (
