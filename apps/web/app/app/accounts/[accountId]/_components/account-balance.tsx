@@ -6,7 +6,7 @@ const AccountBalance = async ({ accountId }: { accountId: number }) => {
 
   return (
     <CurrencyFlow
-      className="text-4xl/tight font-semibold"
+      className="-mt-1 text-3xl/tight font-semibold"
       value={balance?.value ?? 0}
       signDisplay="auto"
     />
