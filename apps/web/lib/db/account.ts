@@ -20,7 +20,11 @@ export const getTotalAccountBalance = () =>
     .where(isNull(accountTable.deleted_at));
 
 export const getAccount = (accountId: number) =>
-  db.select().from(accountTable).where(eq(accountTable.account_id, accountId));
+  db
+    .select()
+    .from(accountTable)
+    .where(eq(accountTable.account_id, accountId))
+    .limit(1);
 
 /**
  * Get the current account balance for an account
