@@ -35,13 +35,13 @@ const CategorySpendingPage = async ({
     return redirect(siteConfig.baseLinks.appHome);
   }
 
-  const categoryDetails = await getCategoryById(categoryId);
+  const [categoryDetails] = await getCategoryById(categoryId);
 
-  if (!categoryDetails[0]) {
+  if (!categoryDetails) {
     return redirect(siteConfig.baseLinks.appHome);
   }
 
-  const { category, category_parent } = categoryDetails[0];
+  const { category, category_parent } = categoryDetails;
   const range = {
     start: startOfMonth(getStartOfDay()),
     end: endOfMonth(getStartOfDay()),
@@ -91,7 +91,7 @@ const CategorySpendingPage = async ({
           }
         />
         <h1 className="text-2xl font-semibold">
-          {categoryDetails.at(0)?.category.category_name}
+          {categoryDetails.category.category_name}
         </h1>
       </div>
 
