@@ -18,7 +18,7 @@ const TransactionsPageHeader = () => {
             </Link>
           }
         />
-        <h1 className="text-2xl font-semibold">Transactions</h1>
+        <h1 className="text-2xl/tight font-bold">Transactions</h1>
       </div>
       <div>
         <Button className="rounded-full" variant="outline" size="icon-xl">

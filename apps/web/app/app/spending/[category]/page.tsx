@@ -90,7 +90,7 @@ const CategorySpendingPage = async ({
             </Link>
           }
         />
-        <h1 className="text-2xl font-semibold">
+        <h1 className="text-2xl/tight font-bold">
           {categoryDetails.category.category_name}
         </h1>
       </div>

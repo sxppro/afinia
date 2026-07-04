@@ -99,7 +99,7 @@ const SpendingPage = async ({
               </Link>
             }
           />
-          <h1 className="text-2xl font-semibold">Spending</h1>
+          <h1 className="text-2xl/tight font-bold">Spending</h1>
         </div>
         <div>
           <Button className="rounded-full" variant="outline" size="icon-xl">
