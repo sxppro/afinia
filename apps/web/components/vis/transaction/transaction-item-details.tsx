@@ -1,8 +1,8 @@
 'use client';
 
-import CategoryIconOrInitial from '@/components/category-icon-or-initial';
 import CurrencyFlow from '@/components/currency-flow';
 import CurrencySwitch from '@/components/currency-switch';
+import CategoryIconOrInitial from '@/components/icons/category-icon-or-initial';
 import ScrollableContent from '@/components/misc/scrollable-content';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';

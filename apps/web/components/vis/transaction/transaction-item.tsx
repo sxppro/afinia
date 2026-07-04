@@ -1,4 +1,4 @@
-import CategoryIconOrInitial from '@/components/category-icon-or-initial';
+import CategoryIconOrInitial from '@/components/icons/category-icon-or-initial';
 import { TZ } from '@/lib/constants';
 import { siteConfig } from '@/lib/siteConfig';
 import { TransactionRow } from '@/lib/types';

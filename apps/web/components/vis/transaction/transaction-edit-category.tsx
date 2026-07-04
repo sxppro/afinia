@@ -1,6 +1,6 @@
 'use client';
 
-import CategoryIconOrInitial from '@/components/category-icon-or-initial';
+import CategoryIconOrInitial from '@/components/icons/category-icon-or-initial';
 import ScrollableContent from '@/components/misc/scrollable-content';
 import { Button } from '@/components/ui/button';
 import {

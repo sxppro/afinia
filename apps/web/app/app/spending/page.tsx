@@ -1,5 +1,5 @@
-import CategoryIcon from '@/components/category-icon';
 import CurrencyFlow from '@/components/currency-flow';
+import CategoryIcon from '@/components/icons/category-icon';
 import { Button } from '@/components/ui/button';
 import { CategoryBar } from '@/components/ui/category-bar';
 import { Separator } from '@/components/ui/separator';
