@@ -22,7 +22,7 @@ const SpendingAverage = async ({ category }: { category: string }) => {
     .limit(1);
 
   if (!account) {
-    <p className="text-3xl/tight font-semibold">{formatCurrency(0)}</p>;
+    return <p className="text-3xl/tight font-semibold">{formatCurrency(0)}</p>;
   }
 
   // Check we have at least 3 months of data to calculate an average

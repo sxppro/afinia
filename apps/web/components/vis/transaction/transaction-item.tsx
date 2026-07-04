@@ -16,6 +16,7 @@ const TransactionItem = ({ transaction }: { transaction: TransactionRow }) => {
     category_parent_id,
     created_at,
     currency_code,
+    is_categorizable,
     type,
     value_in_base_units,
   } = transaction;
@@ -33,9 +34,11 @@ const TransactionItem = ({ transaction }: { transaction: TransactionRow }) => {
         <span
           className={cn(
             'flex aspect-square size-12 items-center justify-center rounded-xl text-xl font-semibold text-white',
-            category_parent_id
-              ? colours[category_parent_id].background
-              : 'bg-up-uncategorised'
+            is_categorizable
+              ? category_parent_id
+                ? colours[category_parent_id].background
+                : 'bg-up-uncategorised'
+              : 'bg-sky-600/60'
           )}
         >
           <CategoryIconOrInitial
