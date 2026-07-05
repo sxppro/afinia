@@ -56,7 +56,7 @@ const AccountsList = async () => {
         <Link href={`${siteConfig.baseLinks.accounts}/${id}`} key={id}>
           <Card className="w-44 shrink-0 rounded-3xl p-4">
             <CardContent className="flex flex-col items-start justify-start p-0 font-medium">
-              <div className="mb-6 rounded-lg bg-fuchsia-400/40 p-2">
+              <div className="mb-6 rounded-lg bg-fuchsia-400 p-2 text-white shadow">
                 <AccountTypeIcon type={type} />
               </div>
               <p className="w-full min-w-0 truncate">{name}</p>
