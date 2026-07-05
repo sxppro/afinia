@@ -12,9 +12,6 @@ catalogs:
     date-fns:
       specifier: ^4.1.0
       version: 4.1.0
-    openapi-fetch:
-      specifier: ^0.17.0
-      version: 0.17.0
 
 importers:
 
@@ -4393,7 +4390,7 @@ snapshots:
       '@babel/types': 7.28.4
       '@jridgewell/remapping': 2.3.5
       convert-source-map: 2.0.0
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3
       gensync: 1.0.0-beta.2
       json5: 2.2.3
       semver: 6.3.1
@@ -4465,7 +4462,7 @@ snapshots:
       '@babel/parser': 7.28.4
       '@babel/template': 7.27.2
       '@babel/types': 7.28.4
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
 
@@ -4708,7 +4705,7 @@ snapshots:
   '@eslint/config-array@0.21.0':
     dependencies:
       '@eslint/object-schema': 2.1.6
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3
       minimatch: 3.1.2
     transitivePeerDependencies:
       - supports-color
@@ -4724,7 +4721,7 @@ snapshots:
   '@eslint/eslintrc@3.3.1':
     dependencies:
       ajv: 6.12.6
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3
       espree: 10.4.0
       globals: 14.0.0
       ignore: 5.3.2
@@ -6067,7 +6064,7 @@ snapshots:
       '@typescript-eslint/types': 8.48.0
       '@typescript-eslint/typescript-estree': 8.48.0(typescript@5.9.3)
       '@typescript-eslint/visitor-keys': 8.48.0
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3
       eslint: 9.37.0(jiti@2.6.1)
       typescript: 5.9.3
     transitivePeerDependencies:
@@ -6077,7 +6074,7 @@ snapshots:
     dependencies:
       '@typescript-eslint/tsconfig-utils': 8.48.0(typescript@5.9.3)
       '@typescript-eslint/types': 8.48.0
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3
       typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
@@ -6096,7 +6093,7 @@ snapshots:
       '@typescript-eslint/types': 8.48.0
       '@typescript-eslint/typescript-estree': 8.48.0(typescript@5.9.3)
       '@typescript-eslint/utils': 8.48.0(eslint@9.37.0(jiti@2.6.1))(typescript@5.9.3)
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3
       eslint: 9.37.0(jiti@2.6.1)
       ts-api-utils: 2.1.0(typescript@5.9.3)
       typescript: 5.9.3
@@ -6111,7 +6108,7 @@ snapshots:
       '@typescript-eslint/tsconfig-utils': 8.48.0(typescript@5.9.3)
       '@typescript-eslint/types': 8.48.0
       '@typescript-eslint/visitor-keys': 8.48.0
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3
       minimatch: 9.0.5
       semver: 7.7.3
       tinyglobby: 0.2.15
@@ -6555,6 +6552,10 @@ snapshots:
     dependencies:
       ms: 2.1.3
 
+  debug@4.4.3:
+    dependencies:
+      ms: 2.1.3
+
   debug@4.4.3(supports-color@10.2.2):
     dependencies:
       ms: 2.1.3
@@ -6827,7 +6828,7 @@ snapshots:
   eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0)(eslint@9.37.0(jiti@2.6.1)):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3
       eslint: 9.37.0(jiti@2.6.1)
       get-tsconfig: 4.12.0
       is-bun-module: 2.0.0
@@ -6962,7 +6963,7 @@ snapshots:
       ajv: 6.12.6
       chalk: 4.1.2
       cross-spawn: 7.0.6
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3
       escape-string-regexp: 4.0.0
       eslint-scope: 8.4.0
       eslint-visitor-keys: 4.2.1
@@ -7228,6 +7229,13 @@ snapshots:
       toidentifier: 1.0.1
 
   http_ece@1.2.0: {}
+
+  https-proxy-agent@7.0.6:
+    dependencies:
+      agent-base: 7.1.4
+      debug: 4.4.3
+    transitivePeerDependencies:
+      - supports-color
 
   https-proxy-agent@7.0.6(supports-color@10.2.2):
     dependencies:
@@ -8560,7 +8568,7 @@ snapshots:
     dependencies:
       asn1.js: 5.4.1
       http_ece: 1.2.0
-      https-proxy-agent: 7.0.6(supports-color@10.2.2)
+      https-proxy-agent: 7.0.6
       jws: 4.0.1
       minimist: 1.2.8
     transitivePeerDependencies:
