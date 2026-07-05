@@ -44,8 +44,8 @@ const DateRangePicker = () => {
         <Button
           key={option.value}
           size="sm"
-          variant={range === option.value ? 'secondary' : 'ghost'}
-          className={cn('px-2.5', range === option.value && 'font-medium')}
+          variant="outline"
+          className={cn('px-4', range === option.value && 'bg-accent')}
           onClick={() => setRange(option.value)}
         >
           {option.label}

@@ -52,7 +52,7 @@ const AccountPage = async ({
         </div>
       </div>
       <Separator />
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center gap-1">
         <Suspense fallback={<Skeleton className="h-48 w-full" />}>
           <AccountBalanceByDay dataFetch={accountBalanceFetch} />
         </Suspense>
