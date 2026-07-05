@@ -3,7 +3,6 @@
 import { AreaChart, TooltipProps } from '@/components/ui/area-chart';
 import { getColorClassName } from '@/lib/chart';
 import { DEFAULT_CURRENCY } from '@/lib/constants';
-import { getAccountBalanceByDay } from '@/lib/db/account';
 import { cn, formatCurrency, formatValueInBaseUnits } from '@/lib/ui';
 import { use } from 'react';
 
@@ -42,7 +41,12 @@ const Tooltip = ({ active, payload }: TooltipProps) => {
 const AccountBalanceByDay = ({
   dataFetch,
 }: {
-  dataFetch: ReturnType<typeof getAccountBalanceByDay>;
+  dataFetch: Promise<
+    {
+      timestamp: string;
+      value: number;
+    }[]
+  >;
 }) => {
   const data = use(dataFetch);
 

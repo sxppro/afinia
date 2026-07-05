@@ -2,7 +2,6 @@
 
 import { getColorClassName } from '@/lib/chart';
 import { DEFAULT_CURRENCY } from '@/lib/constants';
-import { getCategorySpendingByTimestamp } from '@/lib/db/spending';
 import { cn, formatCurrency, formatValueInBaseUnits } from '@/lib/ui';
 import { use } from 'react';
 import { AreaChart, TooltipProps } from '../../ui/area-chart';
@@ -42,7 +41,12 @@ const Tooltip = ({ active, payload }: TooltipProps) => {
 const SpendingByDay = ({
   dataFetch,
 }: {
-  dataFetch: ReturnType<typeof getCategorySpendingByTimestamp>;
+  dataFetch: Promise<
+    {
+      timestamp: string;
+      value: number;
+    }[]
+  >;
 }) => {
   const data = use(dataFetch);
 

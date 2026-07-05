@@ -2,7 +2,6 @@
 
 import { BarChart, TooltipProps } from '@/components/ui/bar-chart';
 import { getColorClassName } from '@/lib/chart';
-import { getCategorySpendingByTimestamp } from '@/lib/db/spending';
 import { cn, colours, formatCurrency } from '@/lib/ui';
 import { use } from 'react';
 
@@ -49,7 +48,12 @@ const SpendingByMonth = ({
   dataFetch,
 }: {
   category: string;
-  dataFetch: ReturnType<typeof getCategorySpendingByTimestamp>;
+  dataFetch: Promise<
+    {
+      timestamp: string;
+      value: number;
+    }[]
+  >;
 }) => {
   const data = use(dataFetch);
 
