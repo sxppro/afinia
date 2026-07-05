@@ -5,7 +5,7 @@ import {
   transactionTable,
 } from 'afinia-common/schema';
 import { differenceInCalendarYears, format, Interval } from 'date-fns';
-import { and, eq, isNull, lt, sql, sum } from 'drizzle-orm';
+import { and, eq, isNull, lt, min, sql, sum } from 'drizzle-orm';
 import { TZ } from '../constants';
 import { db } from './client';
 
@@ -72,11 +72,11 @@ export const getAccountBalance = (accountId: number) =>
  * @returns
  */
 export const getAccountBalanceByDay = ({
-  accountId,
   range,
+  accountId,
 }: {
-  accountId: number;
   range: Interval<Date, Date>;
+  accountId?: number;
 }) => {
   const { start, end } = range;
   const formattedStart = format(start, 'yyyy-MM-dd');
@@ -126,7 +126,9 @@ export const getAccountBalanceByDay = ({
       .where(
         and(
           isNull(transactionTable.deleted_at),
-          eq(transactionTable.account_id, accountId)
+          accountId !== undefined
+            ? eq(transactionTable.account_id, accountId)
+            : undefined
         )
       )
       // Group by first column (timestamp)
@@ -158,8 +160,10 @@ export const getAccountBalanceByDay = ({
       .where(
         and(
           isNull(transactionTable.deleted_at),
-          eq(transactionTable.account_id, accountId),
-          lt(transactionTable.created_at, start)
+          lt(transactionTable.created_at, start),
+          accountId !== undefined
+            ? eq(transactionTable.account_id, accountId)
+            : undefined
         )
       )
   );
@@ -183,4 +187,17 @@ export const getAccountBalanceByDay = ({
       eq(sql<Date>`time_series.interval_start`, deltaBalances.timestamp)
     )
     .orderBy(sql<Date>`time_series.interval_start`);
+};
+
+/**
+ * Get the earliest account creation date
+ * @returns
+ */
+export const getEarliestAccountCreatedAt = async () => {
+  const [result] = await db
+    .select({ date: min(accountTable.created_at).as('date') })
+    .from(accountTable)
+    .where(isNull(accountTable.deleted_at));
+
+  return result;
 };

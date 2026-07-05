@@ -9,19 +9,29 @@ import { format } from 'date-fns';
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import AccountBalanceTimeline from './_components/account-balance-timeline';
 import AccountBalanceTotal from './_components/account-balance-total';
 import AccountsList from './_components/accounts-list';
 import AppHomePageHeader from './_components/page-header';
 import QuickActions, { QuickActionsLoading } from './_components/quick-actions';
 
-const AppHome = () => {
+const AppHome = ({
+  searchParams,
+}: {
+  searchParams: Promise<{ range?: string }>;
+}) => {
   return (
     <div className="flex flex-col gap-4">
       <AppHomePageHeader />
-      <div>
-        <p className="text-muted-foreground text-lg font-medium">Balance</p>
-        <Suspense fallback={<Skeleton className="h-14 w-full" />}>
-          <AccountBalanceTotal />
+      <div className="flex flex-col gap-2">
+        <div>
+          <p className="text-muted-foreground text-lg font-medium">Balance</p>
+          <Suspense fallback={<Skeleton className="h-14 w-full" />}>
+            <AccountBalanceTotal />
+          </Suspense>
+        </div>
+        <Suspense fallback={<Skeleton className="h-56 w-full" />}>
+          <AccountBalanceTimeline searchParams={searchParams} />
         </Suspense>
       </div>
       <Separator />

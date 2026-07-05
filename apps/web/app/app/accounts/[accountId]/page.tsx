@@ -1,4 +1,5 @@
 import AccountTypeIcon from '@/components/icons/account-type-icon';
+import DateRangePicker from '@/components/misc/date-range-picker';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import AccountBalanceByDay from '@/components/vis/account/account-balance-by-day';
@@ -10,7 +11,6 @@ import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import AccountBalance from './_components/account-balance';
 import AccountTransactions from './_components/account-transactions';
-import DateRangePicker from './_components/date-range-picker';
 import AccountPageHeader from './_components/page-header';
 
 const AccountPage = async ({
@@ -28,13 +28,10 @@ const AccountPage = async ({
   }
 
   const { range = '1m' } = await searchParams;
-  const { start, end } = getDateRange(range, account.created_at);
+  const dateRange = getDateRange(range, account.created_at);
   const accountBalanceFetch = getAccountBalanceByDay({
     accountId: account.account_id,
-    range: {
-      start,
-      end,
-    },
+    range: dateRange,
   });
 
   return (
