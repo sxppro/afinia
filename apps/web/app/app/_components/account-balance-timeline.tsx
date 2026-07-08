@@ -35,7 +35,7 @@ const AccountBalanceTimeline = async ({
       <Suspense fallback={<Skeleton className="h-48 w-full" />}>
         <AccountBalanceByDay dataFetch={totalBalanceFetch} />
       </Suspense>
-      <DateRangePicker />
+      <DateRangePicker lowerBound={earliestAccountCreatedAt} />
     </div>
   );
 };

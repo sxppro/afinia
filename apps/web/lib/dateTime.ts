@@ -44,6 +44,16 @@ export const getDateRange = (
         start: max([subYears(start, 1), all]),
         end,
       };
+    case '2y':
+      return {
+        start: max([subYears(start, 2), all]),
+        end,
+      };
+    case '5y':
+      return {
+        start: max([subYears(start, 5), all]),
+        end,
+      };
     case 'ytd':
       return {
         start: max([startOfYear(start), all]),
