@@ -46,18 +46,16 @@ const LoginForm = ({ className, ...props }: React.ComponentProps<'div'>) => {
             <FieldGroup>
               <Field>
                 <Button
-                  className="transition"
                   type="button"
+                  className="border-none shadow-xs transition"
                   onClick={signInWithGoogle}
                   disabled={isLoading}
                 >
-                  Sign in with Google
-                  <LoaderCircle
-                    className={cn(
-                      'hidden size-4 animate-spin',
-                      isLoading && 'block'
-                    )}
-                  />
+                  {isLoading ? (
+                    <LoaderCircle className="size-4 animate-spin" />
+                  ) : (
+                    'Sign in with Google'
+                  )}
                 </Button>
               </Field>
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
