@@ -3,7 +3,12 @@ import AccountTypeIcon from '@/components/icons/account-type-icon';
 import { Card, CardContent } from '@/components/ui/card';
 import { db } from '@/lib/db/client';
 import { siteConfig } from '@/lib/siteConfig';
-import { accountTable, transactionTable } from 'afinia-common/schema';
+import {
+  accountTable,
+  transactionCashbackTable,
+  transactionRoundUpTable,
+  transactionTable,
+} from 'afinia-common/schema';
 import { and, desc, eq, isNull, max, sql } from 'drizzle-orm';
 import Link from 'next/link';
 
@@ -15,8 +20,15 @@ const AccountsList = async () => {
     .select({
       id: accountTable.account_id,
       name: accountTable.display_name,
-      value: accountTable.value_in_base_units,
       type: accountTable.type,
+      /**
+       * Sum all transaction values, round ups and cashbacks
+       * Note: cast to int as Postgres returns bigint
+       */
+      value:
+        sql<number>`sum(${transactionTable.value_in_base_units} + coalesce(${transactionRoundUpTable.value_in_base_units}, 0) + coalesce(${transactionCashbackTable.value_in_base_units}, 0))`
+          .mapWith(Number)
+          .as('value'),
       latestActivity: max(transactionTable.created_at),
     })
     .from(accountTable)
@@ -27,17 +39,32 @@ const AccountsList = async () => {
         isNull(transactionTable.deleted_at)
       )
     )
+    .leftJoin(
+      transactionRoundUpTable,
+      eq(
+        transactionTable.transaction_id,
+        transactionRoundUpTable.transaction_id
+      )
+    )
+    .leftJoin(
+      transactionCashbackTable,
+      eq(
+        transactionTable.transaction_id,
+        transactionCashbackTable.transaction_id
+      )
+    )
     .where(isNull(accountTable.deleted_at))
     .groupBy(
       accountTable.account_id,
       accountTable.display_name,
-      accountTable.value_in_base_units,
       accountTable.type
     )
     .orderBy(
       sql`max(${transactionTable.created_at}) desc nulls last`,
       accountTable.display_name,
-      desc(accountTable.value_in_base_units)
+      desc(
+        sql<number>`sum(${transactionTable.value_in_base_units} + coalesce(${transactionRoundUpTable.value_in_base_units}, 0) + coalesce(${transactionCashbackTable.value_in_base_units}, 0))`
+      )
     );
 
   if (accounts.length === 0) {
@@ -62,7 +89,7 @@ const AccountsList = async () => {
               <p className="w-full min-w-0 truncate">{name}</p>
               <CurrencyFlow
                 className="text-xl font-bold"
-                value={value}
+                value={value ?? 0}
                 signDisplay="auto"
               />
             </CardContent>

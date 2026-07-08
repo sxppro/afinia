@@ -5,7 +5,7 @@ import {
   transactionTable,
 } from 'afinia-common/schema';
 import { differenceInCalendarYears, format, Interval } from 'date-fns';
-import { and, eq, isNull, lt, min, sql, sum } from 'drizzle-orm';
+import { and, eq, isNull, lt, min, sql } from 'drizzle-orm';
 import { TZ } from '../constants';
 import { db } from './client';
 
@@ -16,10 +16,31 @@ import { db } from './client';
 export const getTotalAccountBalance = () =>
   db
     .select({
-      value: sum(accountTable.value_in_base_units).mapWith(Number).as('value'),
+      /**
+       * Sum all transaction values, round ups and cashbacks
+       * Note: cast to int as Postgres returns bigint
+       */
+      value:
+        sql<number>`sum(${transactionTable.value_in_base_units} + coalesce(${transactionRoundUpTable.value_in_base_units}, 0) + coalesce(${transactionCashbackTable.value_in_base_units}, 0))`
+          .mapWith(Number)
+          .as('value'),
     })
-    .from(accountTable)
-    .where(isNull(accountTable.deleted_at));
+    .from(transactionTable)
+    .leftJoin(
+      transactionRoundUpTable,
+      eq(
+        transactionTable.transaction_id,
+        transactionRoundUpTable.transaction_id
+      )
+    )
+    .leftJoin(
+      transactionCashbackTable,
+      eq(
+        transactionTable.transaction_id,
+        transactionCashbackTable.transaction_id
+      )
+    )
+    .where(isNull(transactionTable.deleted_at));
 
 export const getAccount = (accountId: number) =>
   db
