@@ -1,5 +1,10 @@
 import AccountTypeIcon from '@/components/icons/account-type-icon';
 import DateRangePicker from '@/components/misc/date-range-picker';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import AccountBalanceByDay from '@/components/vis/account/account-balance-by-day';
@@ -7,6 +12,7 @@ import { getDateRange } from '@/lib/dateTime';
 import { getAccount, getAccountBalanceByDay } from '@/lib/db/account';
 import { capitalise } from '@/lib/string';
 import { format, formatDistanceToNowStrict } from 'date-fns';
+import { InfoIcon } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import AccountBalance from './_components/account-balance';
@@ -53,15 +59,26 @@ const AccountPage = async ({
         <Suspense fallback={<Skeleton className="h-48 w-full" />}>
           <AccountBalanceByDay dataFetch={accountBalanceFetch} />
         </Suspense>
-        <DateRangePicker />
+        <DateRangePicker lowerBound={account.created_at} />
       </div>
       <div className="flex flex-col gap-2">
         <div className="flex justify-between">
           <p className="text-muted-foreground">Account created</p>
-          <p className="text-end">
-            {format(account.created_at, "do MMM yyyy 'at' h:mm aaa")}
-            <br />({formatDistanceToNowStrict(account.created_at)} ago)
-          </p>
+          <Popover>
+            <PopoverTrigger
+              render={
+                <div className="flex items-center gap-2">
+                  <p className="text-end">
+                    {formatDistanceToNowStrict(account.created_at)} ago
+                  </p>
+                  <InfoIcon className="size-4" />
+                </div>
+              }
+            />
+            <PopoverContent className="w-auto p-2 font-sans" align="end">
+              {format(account.created_at, "do MMM yyyy 'at' h:mm aaa")}
+            </PopoverContent>
+          </Popover>
         </div>
         <div className="flex justify-between">
           <p className="text-muted-foreground">Ownership type</p>
