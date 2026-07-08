@@ -112,9 +112,11 @@ const TransactionItemDetails = ({
               <span
                 className={cn(
                   'flex aspect-square size-16 items-center justify-center rounded-2xl text-2xl font-semibold text-white',
-                  categoryInfo.category_parent_id
-                    ? colours[categoryInfo.category_parent_id].background
-                    : 'bg-up-uncategorised'
+                  is_categorizable
+                    ? categoryInfo.category_parent_id
+                      ? colours[categoryInfo.category_parent_id].background
+                      : 'bg-up-uncategorised'
+                    : 'bg-up-transfer/40'
                 )}
               >
                 <CategoryIconOrInitial
@@ -160,29 +162,32 @@ const TransactionItemDetails = ({
             </DrawerDescription>
           </div>
         </DrawerHeader>
-        <div className="mb-4 flex shrink-0 flex-col px-4">
-          <div className="flex max-w-full items-center self-center rounded-full border">
-            <span
-              className={cn(
-                'rounded-full px-4 py-1 font-medium',
-                categoryInfo.category_parent_id
-                  ? colours[categoryInfo.category_parent_id].background
-                  : 'bg-up-uncategorised',
-                // Invert text colour for all categories except for Good Life
-                categoryInfo.category_parent_id !== 'good-life'
-                  ? 'text-primary-foreground'
-                  : 'text-secondary-foreground'
-              )}
-            >
-              {categoryInfo.category_parent || 'Uncategorised'}
-            </span>
-            {categoryInfo.category && (
-              <span className="truncate px-4 py-1 font-medium">
-                {categoryInfo.category}
+        {/* Hide transaction category for transfers */}
+        {is_categorizable && (
+          <div className="mb-4 flex shrink-0 flex-col px-4">
+            <div className="flex max-w-full items-center self-center rounded-full border">
+              <span
+                className={cn(
+                  'rounded-full px-4 py-1 font-medium',
+                  categoryInfo.category_parent_id
+                    ? colours[categoryInfo.category_parent_id].background
+                    : 'bg-up-uncategorised',
+                  // Invert text colour for all categories except for Good Life
+                  categoryInfo.category_parent_id !== 'good-life'
+                    ? 'text-primary-foreground'
+                    : 'text-secondary-foreground'
+                )}
+              >
+                {categoryInfo.category_parent || 'Uncategorised'}
               </span>
-            )}
+              {categoryInfo.category && (
+                <span className="truncate px-4 py-1 font-medium">
+                  {categoryInfo.category}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
+        )}
         <ScrollableContent className="px-4" hideScrollbar>
           <div className="flex flex-col gap-4">
             {note ? (

@@ -38,7 +38,7 @@ const TransactionItem = ({ transaction }: { transaction: TransactionRow }) => {
               ? category_parent_id
                 ? colours[category_parent_id].background
                 : 'bg-up-uncategorised'
-              : 'bg-teal-600/40'
+              : 'bg-up-transfer/40'
           )}
         >
           <CategoryIconOrInitial

@@ -97,9 +97,9 @@ const DateRangePicker = ({ lowerBound }: { lowerBound?: Date }) => {
   // Compute options based on lower bound, if provided
   const years = lowerBound ? differenceInYears(now(), lowerBound) : null;
   const rangeOptions = years
-    ? years > 5
+    ? years >= 5
       ? LONG_RANGE_OPTIONS
-      : years > 2
+      : years >= 2
         ? EXTENDED_RANGE_OPTIONS
         : RANGE_OPTIONS
     : RANGE_OPTIONS;
