@@ -1,11 +1,13 @@
 import DateRangePicker from '@/components/misc/date-range-picker';
 import { Skeleton } from '@/components/ui/skeleton';
 import AccountBalanceByDay from '@/components/vis/account/account-balance-by-day';
+import AccountBalanceTrend from '@/components/vis/account/account-balance-trend';
 import { getDateRange } from '@/lib/dateTime';
 import {
   getAccountBalanceByDay,
   getEarliestAccountCreatedAt,
 } from '@/lib/db/account';
+import { formatDistanceStrict } from 'date-fns';
 import { Suspense } from 'react';
 
 const AccountBalanceTimeline = async ({
@@ -32,6 +34,12 @@ const AccountBalanceTimeline = async ({
 
   return (
     <div className="flex flex-col items-center gap-1">
+      <Suspense fallback={<Skeleton className="h-6 w-full" />}>
+        <AccountBalanceTrend
+          dataFetch={totalBalanceFetch}
+          label={formatDistanceStrict(dateRange.start, dateRange.end)}
+        />
+      </Suspense>
       <Suspense fallback={<Skeleton className="h-48 w-full" />}>
         <AccountBalanceByDay dataFetch={totalBalanceFetch} />
       </Suspense>

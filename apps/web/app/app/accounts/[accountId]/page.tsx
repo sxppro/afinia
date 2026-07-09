@@ -8,10 +8,15 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import AccountBalanceByDay from '@/components/vis/account/account-balance-by-day';
+import AccountBalanceTrend from '@/components/vis/account/account-balance-trend';
 import { getDateRange } from '@/lib/dateTime';
 import { getAccount, getAccountBalanceByDay } from '@/lib/db/account';
 import { capitalise } from '@/lib/string';
-import { format, formatDistanceToNowStrict } from 'date-fns';
+import {
+  format,
+  formatDistanceStrict,
+  formatDistanceToNowStrict,
+} from 'date-fns';
 import { InfoIcon } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
@@ -54,8 +59,13 @@ const AccountPage = async ({
           </Suspense>
         </div>
       </div>
-      <Separator />
       <div className="flex flex-col items-center gap-1">
+        <Suspense fallback={<Skeleton className="h-6 w-full" />}>
+          <AccountBalanceTrend
+            dataFetch={accountBalanceFetch}
+            label={formatDistanceStrict(dateRange.start, dateRange.end)}
+          />
+        </Suspense>
         <Suspense fallback={<Skeleton className="h-48 w-full" />}>
           <AccountBalanceByDay dataFetch={accountBalanceFetch} />
         </Suspense>
