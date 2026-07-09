@@ -200,6 +200,9 @@ export const getAccountBalanceByDay = ({
         sql<number>`${openingBalance.value} + sum(coalesce(${deltaBalances.delta}, 0)) over (order by time_series.interval_start)`
           .mapWith(Number)
           .as('value'),
+      openingBalance: sql<number>`${openingBalance.value}`
+        .mapWith(Number)
+        .as('openingBalance'),
     })
     .from(timeSeries)
     .crossJoin(openingBalance)

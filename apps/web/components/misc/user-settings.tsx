@@ -113,7 +113,7 @@ const UserSettings = (props: React.ComponentProps<typeof Dialog>) => {
 
   return (
     <Dialog {...props}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="font-sans sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
         </DialogHeader>
