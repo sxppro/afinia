@@ -37,12 +37,10 @@ export const transactionRouter = router({
         if (error) throw error;
 
         // Return category info
-        const categoryInfoFetch = getCategoryById(category).then(
-          (res) => res[0]
-        );
+        const categoryInfoFetch = getCategoryById(category);
 
         // Update db if successful
-        const [_, categoryInfo] = await Promise.all([
+        const [_, [categoryInfo]] = await Promise.all([
           updateTransactionCategory(transactionId, category),
           categoryInfoFetch,
         ]);

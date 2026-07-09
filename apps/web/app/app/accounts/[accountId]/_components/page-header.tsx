@@ -1,14 +1,14 @@
 import { Button } from '@/components/ui/button';
 import { siteConfig } from '@/lib/siteConfig';
-import { ArrowLeft, Ellipsis } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-const TransactionsPageHeader = () => {
+const AccountPageHeader = ({ accountName }: { accountName: string }) => {
   return (
     <div className="flex justify-between">
-      <div className="flex items-center gap-4">
+      <div className="flex min-w-0 items-center gap-4">
         <Button
-          className="rounded-full"
+          className="shrink-0 rounded-full"
           variant="outline"
           size="icon-xl"
           nativeButton={false}
@@ -18,15 +18,12 @@ const TransactionsPageHeader = () => {
             </Link>
           }
         />
-        <h1 className="text-2xl/tight font-bold">Transactions</h1>
-      </div>
-      <div>
-        <Button className="rounded-full" variant="outline" size="icon-xl">
-          <Ellipsis className="size-5" />
-        </Button>
+        <h1 className="min-w-0 truncate text-2xl/tight font-bold">
+          {accountName}
+        </h1>
       </div>
     </div>
   );
 };
 
-export default TransactionsPageHeader;
+export default AccountPageHeader;

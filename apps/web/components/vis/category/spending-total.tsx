@@ -10,7 +10,7 @@ const SpendingTotal = async ({ category }: { category?: string }) => {
     start: startOfMonth(getStartOfDay()),
     end: endOfMonth(getStartOfDay()),
   };
-  const spending = await getCategorySpending({
+  const [spending] = await getCategorySpending({
     select: {
       id: transactionExternalTable.category_parent_id,
       name: transactionExternalTable.category_parent,
@@ -22,7 +22,7 @@ const SpendingTotal = async ({ category }: { category?: string }) => {
     transactionExternalTable.category_parent_id,
     transactionExternalTable.category_parent
   );
-  const value = spending[0]?.value ?? 0;
+  const value = spending?.value ?? 0;
 
   return (
     <>

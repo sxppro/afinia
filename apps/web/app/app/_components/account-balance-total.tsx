@@ -1,13 +1,13 @@
 import CurrencyFlow from '@/components/currency-flow';
-import { getAccountBalance } from '@/lib/db/account';
+import { getTotalAccountBalance } from '@/lib/db/account';
 
 const AccountBalanceTotal = async () => {
-  const balance = await getAccountBalance();
+  const [balance] = await getTotalAccountBalance();
 
   return (
     <CurrencyFlow
       className="text-4xl/tight font-semibold"
-      value={balance[0]?.value}
+      value={balance?.value ?? 0}
       signDisplay="auto"
     />
   );

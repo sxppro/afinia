@@ -8,7 +8,7 @@ import {
   TransactionCursor,
 } from '@/lib/actions/transaction';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
-import { transactionExternalTable } from 'afinia-common/schema';
+import { TransactionRow } from '@/lib/types';
 import {
   Fragment,
   useCallback,
@@ -21,7 +21,7 @@ import { useInView } from 'react-intersection-observer';
 import TransactionItem from './transaction-item';
 
 type TransactionListInfiniteProps = {
-  initialTransactions: (typeof transactionExternalTable.$inferSelect)[];
+  initialTransactions: TransactionRow[];
   initialCursor: TransactionCursor | null;
   initialHasMore: boolean;
   options: Parameters<typeof getTransactionsPaginated>[0];

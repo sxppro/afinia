@@ -1,18 +1,14 @@
-import CategoryIconOrInitial from '@/components/category-icon-or-initial';
+import CategoryIconOrInitial from '@/components/icons/category-icon-or-initial';
 import { TZ } from '@/lib/constants';
 import { siteConfig } from '@/lib/siteConfig';
+import { TransactionRow } from '@/lib/types';
 import { cn, colours, formatCurrency } from '@/lib/ui';
 import { TZDateMini } from '@date-fns/tz';
-import { transactionExternalTable } from 'afinia-common/schema';
 import { format, isThisYear } from 'date-fns';
 import Link from 'next/link';
 import TransactionItemDetails from './transaction-item-details';
 
-const TransactionItem = ({
-  transaction,
-}: {
-  transaction: typeof transactionExternalTable.$inferSelect;
-}) => {
+const TransactionItem = ({ transaction }: { transaction: TransactionRow }) => {
   const {
     description,
     card_number_suffix,
@@ -20,6 +16,7 @@ const TransactionItem = ({
     category_parent_id,
     created_at,
     currency_code,
+    is_categorizable,
     type,
     value_in_base_units,
   } = transaction;
@@ -37,14 +34,17 @@ const TransactionItem = ({
         <span
           className={cn(
             'flex aspect-square size-12 items-center justify-center rounded-xl text-xl font-semibold text-white',
-            category_parent_id
-              ? colours[category_parent_id].background
-              : 'bg-up-uncategorised'
+            is_categorizable
+              ? category_parent_id
+                ? colours[category_parent_id].background
+                : 'bg-up-uncategorised'
+              : 'bg-up-transfer/40'
           )}
         >
           <CategoryIconOrInitial
             category_id={category_id}
             description={description}
+            type={type}
           />
         </span>
       </Link>

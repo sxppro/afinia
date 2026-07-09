@@ -1,8 +1,8 @@
 'use client';
 
-import CategoryIconOrInitial from '@/components/category-icon-or-initial';
 import CurrencyFlow from '@/components/currency-flow';
 import CurrencySwitch from '@/components/currency-switch';
+import CategoryIconOrInitial from '@/components/icons/category-icon-or-initial';
 import ScrollableContent from '@/components/misc/scrollable-content';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -21,8 +21,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getTransactionDetailById } from '@/lib/actions/transaction';
 import { siteConfig } from '@/lib/siteConfig';
 import { capitalise } from '@/lib/string';
+import { TransactionRow } from '@/lib/types';
 import { cn, colours, formatCurrency } from '@/lib/ui';
-import { transactionExternalTable } from 'afinia-common/schema';
 import { format } from 'date-fns';
 import { ExternalLink, SquarePen } from 'lucide-react';
 import Link from 'next/link';
@@ -33,7 +33,7 @@ const TransactionItemDetails = ({
   children,
   transaction,
 }: {
-  transaction: typeof transactionExternalTable.$inferSelect;
+  transaction: TransactionRow;
 } & PropsWithChildren) => {
   const {
     card_purchase_method,
@@ -44,6 +44,7 @@ const TransactionItemDetails = ({
     description,
     foreign_currency_code,
     foreign_value_in_base_units,
+    is_categorizable,
     message,
     note,
     raw_text,
@@ -111,14 +112,17 @@ const TransactionItemDetails = ({
               <span
                 className={cn(
                   'flex aspect-square size-16 items-center justify-center rounded-2xl text-2xl font-semibold text-white',
-                  categoryInfo.category_parent_id
-                    ? colours[categoryInfo.category_parent_id].background
-                    : 'bg-up-uncategorised'
+                  is_categorizable
+                    ? categoryInfo.category_parent_id
+                      ? colours[categoryInfo.category_parent_id].background
+                      : 'bg-up-uncategorised'
+                    : 'bg-up-transfer/40'
                 )}
               >
                 <CategoryIconOrInitial
                   category_id={categoryInfo.category_id}
                   description={description}
+                  type={type}
                   className="size-8"
                 />
               </span>
@@ -158,29 +162,32 @@ const TransactionItemDetails = ({
             </DrawerDescription>
           </div>
         </DrawerHeader>
-        <div className="mb-4 flex shrink-0 flex-col px-4">
-          <div className="flex max-w-full items-center self-center rounded-full border">
-            <span
-              className={cn(
-                'rounded-full px-4 py-1 font-medium',
-                categoryInfo.category_parent_id
-                  ? colours[categoryInfo.category_parent_id].background
-                  : 'bg-up-uncategorised',
-                // Invert text colour for all categories except for Good Life
-                categoryInfo.category_parent_id !== 'good-life'
-                  ? 'text-primary-foreground'
-                  : 'text-secondary-foreground'
-              )}
-            >
-              {categoryInfo.category_parent || 'Uncategorised'}
-            </span>
-            {categoryInfo.category && (
-              <span className="truncate px-4 py-1 font-medium">
-                {categoryInfo.category}
+        {/* Hide transaction category for transfers */}
+        {is_categorizable && (
+          <div className="mb-4 flex shrink-0 flex-col px-4">
+            <div className="flex max-w-full items-center self-center rounded-full border">
+              <span
+                className={cn(
+                  'rounded-full px-4 py-1 font-medium',
+                  categoryInfo.category_parent_id
+                    ? colours[categoryInfo.category_parent_id].background
+                    : 'bg-up-uncategorised',
+                  // Invert text colour for all categories except for Good Life
+                  categoryInfo.category_parent_id !== 'good-life'
+                    ? 'text-primary-foreground'
+                    : 'text-secondary-foreground'
+                )}
+              >
+                {categoryInfo.category_parent || 'Uncategorised'}
               </span>
-            )}
+              {categoryInfo.category && (
+                <span className="truncate px-4 py-1 font-medium">
+                  {categoryInfo.category}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
+        )}
         <ScrollableContent className="px-4" hideScrollbar>
           <div className="flex flex-col gap-4">
             {note ? (
@@ -311,22 +318,30 @@ const TransactionItemDetails = ({
             </div>
           </div>
         </ScrollableContent>
-        <DrawerFooter className="grid grid-cols-2">
-          <TransactionEditCategory
-            initialCategory={categoryInfo.category_id}
-            transaction={transaction}
-            onCategoryUpdated={setCategoryInfo}
-          />
-          {deep_link_url && (
-            <div
-              className="rounded-lg transition"
-              style={
-                {
-                  // A purplish colour
-                  '--highlight': 'oklch(0.69 0.3 329.98)',
-                  '--bg-color':
-                    'linear-gradient(var(--background), var(--background))',
-                  '--border-color': `conic-gradient(
+        {(is_categorizable || deep_link_url) && (
+          <DrawerFooter
+            className={cn(
+              'grid',
+              is_categorizable ? 'grid-cols-2' : 'grid-cols-1'
+            )}
+          >
+            {is_categorizable && (
+              <TransactionEditCategory
+                initialCategory={categoryInfo.category_id}
+                transaction={transaction}
+                onCategoryUpdated={setCategoryInfo}
+              />
+            )}
+            {deep_link_url && (
+              <div
+                className="rounded-lg transition"
+                style={
+                  {
+                    // A purplish colour
+                    '--highlight': 'oklch(0.69 0.3 329.98)',
+                    '--bg-color':
+                      'linear-gradient(var(--background), var(--background))',
+                    '--border-color': `conic-gradient(
                       from var(--border-angle),
                       var(--highlight) 0%,
                       color-mix(in oklch, var(--highlight) 20%, transparent) 25%,
@@ -334,33 +349,34 @@ const TransactionItemDetails = ({
                       color-mix(in oklch, var(--highlight) 20%, transparent) 75%,
                       var(--highlight) 100%
                     )`,
-                  animation: 'border-rotate 10s linear infinite',
-                  backgroundImage:
-                    'linear-gradient(var(--background), var(--background)), var(--border-color)',
-                  backgroundOrigin: 'padding-box, border-box',
-                  backgroundClip: 'padding-box, border-box',
-                  borderColor: 'transparent',
-                  borderWidth: '2px',
-                } as CSSProperties
-              }
-            >
-              <Button
-                variant="secondary"
-                nativeButton={false}
-                render={
-                  <Link href={deep_link_url} className="w-full">
-                    Open in app
-                    <ExternalLink
-                      aria-hidden="true"
-                      className="size-4"
-                      data-icon="inline-end"
-                    />
-                  </Link>
+                    animation: 'border-rotate 10s linear infinite',
+                    backgroundImage:
+                      'linear-gradient(var(--background), var(--background)), var(--border-color)',
+                    backgroundOrigin: 'padding-box, border-box',
+                    backgroundClip: 'padding-box, border-box',
+                    borderColor: 'transparent',
+                    borderWidth: '2px',
+                  } as CSSProperties
                 }
-              />
-            </div>
-          )}
-        </DrawerFooter>
+              >
+                <Button
+                  variant="secondary"
+                  nativeButton={false}
+                  render={
+                    <Link href={deep_link_url} className="w-full">
+                      Open in app
+                      <ExternalLink
+                        aria-hidden="true"
+                        className="size-4"
+                        data-icon="inline-end"
+                      />
+                    </Link>
+                  }
+                />
+              </div>
+            )}
+          </DrawerFooter>
+        )}
       </DrawerContent>
     </Drawer>
   );

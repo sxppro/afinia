@@ -1,22 +1,71 @@
 import CurrencyFlow from '@/components/currency-flow';
+import AccountTypeIcon from '@/components/icons/account-type-icon';
 import { Card, CardContent } from '@/components/ui/card';
 import { db } from '@/lib/db/client';
-import { AccountTypeEnum } from 'afinia-common/providers/up';
-import { accountTable } from 'afinia-common/schema';
-import { desc, isNull } from 'drizzle-orm';
-import { CircleQuestionMark, Landmark, PiggyBank, Wallet } from 'lucide-react';
+import { siteConfig } from '@/lib/siteConfig';
+import {
+  accountTable,
+  transactionCashbackTable,
+  transactionRoundUpTable,
+  transactionTable,
+} from 'afinia-common/schema';
+import { and, desc, eq, isNull, max, sql } from 'drizzle-orm';
+import Link from 'next/link';
 
 const AccountsList = async () => {
+  /**
+   * Get accounts sorted by latest activity
+   */
   const accounts = await db
     .select({
       id: accountTable.account_id,
       name: accountTable.display_name,
-      value: accountTable.value_in_base_units,
       type: accountTable.type,
+      /**
+       * Sum all transaction values, round ups and cashbacks
+       * Note: cast to int as Postgres returns bigint
+       */
+      value:
+        sql<number>`sum(${transactionTable.value_in_base_units} + coalesce(${transactionRoundUpTable.value_in_base_units}, 0) + coalesce(${transactionCashbackTable.value_in_base_units}, 0))`
+          .mapWith(Number)
+          .as('value'),
+      latestActivity: max(transactionTable.created_at),
     })
     .from(accountTable)
+    .leftJoin(
+      transactionTable,
+      and(
+        eq(transactionTable.account_id, accountTable.account_id),
+        isNull(transactionTable.deleted_at)
+      )
+    )
+    .leftJoin(
+      transactionRoundUpTable,
+      eq(
+        transactionTable.transaction_id,
+        transactionRoundUpTable.transaction_id
+      )
+    )
+    .leftJoin(
+      transactionCashbackTable,
+      eq(
+        transactionTable.transaction_id,
+        transactionCashbackTable.transaction_id
+      )
+    )
     .where(isNull(accountTable.deleted_at))
-    .orderBy(accountTable.display_name, desc(accountTable.value_in_base_units));
+    .groupBy(
+      accountTable.account_id,
+      accountTable.display_name,
+      accountTable.type
+    )
+    .orderBy(
+      sql`max(${transactionTable.created_at}) desc nulls last`,
+      accountTable.display_name,
+      desc(
+        sql<number>`sum(${transactionTable.value_in_base_units} + coalesce(${transactionRoundUpTable.value_in_base_units}, 0) + coalesce(${transactionCashbackTable.value_in_base_units}, 0))`
+      )
+    );
 
   if (accounts.length === 0) {
     return (
@@ -31,27 +80,21 @@ const AccountsList = async () => {
   return (
     <div className="-mx-3 flex gap-3 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {accounts.map(({ id, name, value, type }) => (
-        <Card className="w-44 shrink-0 rounded-3xl p-4" key={id}>
-          <CardContent className="flex flex-col items-start justify-start p-0 font-medium">
-            <div className="mb-6 rounded-lg bg-fuchsia-400/40 p-2">
-              {type === AccountTypeEnum.SAVER ? (
-                <PiggyBank className="size-6" />
-              ) : type === AccountTypeEnum.TRANSACTIONAL ? (
-                <Wallet className="size-6" />
-              ) : type === AccountTypeEnum.HOME_LOAN ? (
-                <Landmark className="size-6" />
-              ) : (
-                <CircleQuestionMark className="size-6" />
-              )}
-            </div>
-            <p className="w-full min-w-0 truncate">{name}</p>
-            <CurrencyFlow
-              className="text-xl font-bold"
-              value={value}
-              signDisplay="auto"
-            />
-          </CardContent>
-        </Card>
+        <Link href={`${siteConfig.baseLinks.accounts}/${id}`} key={id}>
+          <Card className="w-44 shrink-0 rounded-3xl p-4">
+            <CardContent className="flex flex-col items-start justify-start p-0 font-medium">
+              <div className="mb-6 rounded-lg bg-fuchsia-400 p-2 text-white shadow">
+                <AccountTypeIcon type={type} />
+              </div>
+              <p className="w-full min-w-0 truncate">{name}</p>
+              <CurrencyFlow
+                className="text-xl font-bold"
+                value={value ?? 0}
+                signDisplay="auto"
+              />
+            </CardContent>
+          </Card>
+        </Link>
       ))}
     </div>
   );

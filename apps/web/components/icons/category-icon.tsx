@@ -46,7 +46,7 @@ import {
 } from 'lucide-react';
 import { createElement } from 'react';
 
-export const getCategoryIcon = (category: string) => {
+const getCategoryIcon = (category: string) => {
   switch (category) {
     case 'good-life':
       return PartyPopper;

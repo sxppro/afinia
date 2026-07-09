@@ -1,55 +1,37 @@
-import OptionsDropdown from '@/components/misc/options-dropdown';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import TransactionList from '@/components/vis/transaction/transaction-list';
-import { getServerSession } from '@/lib/auth/session';
 import { SMALL_PAGE_SIZE } from '@/lib/constants';
 import { now } from '@/lib/dateTime';
 import { siteConfig } from '@/lib/siteConfig';
-import { getGreeting, getInitials } from '@/lib/ui';
 import { format } from 'date-fns';
-import { ChevronRight, Search } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import AccountBalanceTimeline from './_components/account-balance-timeline';
 import AccountBalanceTotal from './_components/account-balance-total';
 import AccountsList from './_components/accounts-list';
+import AppHomePageHeader from './_components/page-header';
 import QuickActions, { QuickActionsLoading } from './_components/quick-actions';
 
-const AppHome = async () => {
-  const session = await getServerSession();
-
+const AppHome = ({
+  searchParams,
+}: {
+  searchParams: Promise<{ range?: string }>;
+}) => {
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Avatar className="size-12 rounded-full">
-            <AvatarImage
-              src={session?.user?.image ?? undefined}
-              alt={session?.user?.name}
-            />
-            <AvatarFallback>
-              {getInitials(session?.user?.name) || 'HI'}
-            </AvatarFallback>
-          </Avatar>
-          <p className="max-w-32 text-sm wrap-normal">
-            {`${getGreeting()}, `}
-            <span className="text-lg font-semibold">{session?.user?.name}</span>
-          </p>
+      <AppHomePageHeader />
+      <div className="flex flex-col gap-2">
+        <div>
+          <p className="text-muted-foreground text-lg font-medium">Balance</p>
+          <Suspense fallback={<Skeleton className="h-14 w-full" />}>
+            <AccountBalanceTotal />
+          </Suspense>
         </div>
-        <div className="flex gap-2">
-          <Button className="rounded-full" variant="outline" size="icon-xl">
-            <Search className="size-5" />
-          </Button>
-          <OptionsDropdown />
-        </div>
-      </div>
-
-      <div>
-        <p className="text-muted-foreground text-lg font-medium">Balance</p>
-        <Suspense fallback={<Skeleton className="h-14 w-full" />}>
-          <AccountBalanceTotal />
+        <Suspense fallback={<Skeleton className="h-56 w-full" />}>
+          <AccountBalanceTimeline searchParams={searchParams} />
         </Suspense>
       </div>
       <Separator />

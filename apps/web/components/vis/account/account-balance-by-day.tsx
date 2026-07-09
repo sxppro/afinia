@@ -1,10 +1,10 @@
 'use client';
 
+import { AreaChart, TooltipProps } from '@/components/ui/area-chart';
 import { getColorClassName } from '@/lib/chart';
 import { DEFAULT_CURRENCY } from '@/lib/constants';
 import { cn, formatCurrency, formatValueInBaseUnits } from '@/lib/ui';
 import { use } from 'react';
-import { AreaChart, TooltipProps } from '../../ui/area-chart';
 
 const Tooltip = ({ active, payload }: TooltipProps) => {
   if (!active || !payload || payload.length === 0) return null;
@@ -38,7 +38,7 @@ const Tooltip = ({ active, payload }: TooltipProps) => {
   );
 };
 
-const SpendingByDay = ({
+const AccountBalanceByDay = ({
   dataFetch,
 }: {
   dataFetch: Promise<
@@ -67,4 +67,4 @@ const SpendingByDay = ({
   );
 };
 
-export default SpendingByDay;
+export default AccountBalanceByDay;

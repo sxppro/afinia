@@ -1,5 +1,5 @@
-import CategoryIcon from '@/components/category-icon';
 import CurrencyFlow from '@/components/currency-flow';
+import CategoryIcon from '@/components/icons/category-icon';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getStartOfDay } from '@/lib/dateTime';

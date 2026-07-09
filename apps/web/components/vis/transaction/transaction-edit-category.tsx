@@ -1,6 +1,6 @@
 'use client';
 
-import CategoryIconOrInitial from '@/components/category-icon-or-initial';
+import CategoryIconOrInitial from '@/components/icons/category-icon-or-initial';
 import ScrollableContent from '@/components/misc/scrollable-content';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,17 +20,17 @@ import {
 import { RadioGroup, RadioGroupItemTick } from '@/components/ui/radio-group';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
+import { TransactionRow } from '@/lib/types';
 import { cn, colours } from '@/lib/ui';
 import { useTRPC } from '@/trpc/client';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { transactionExternalTable } from 'afinia-common/schema';
 import { Loader2, PencilIcon, X } from 'lucide-react';
 import { Fragment, useState } from 'react';
 import { toast } from 'sonner';
 
 interface TransactionItemCategoryProps {
   initialCategory: string | null;
-  transaction: typeof transactionExternalTable.$inferSelect;
+  transaction: TransactionRow;
   onCategoryUpdated: (info: {
     category_id: string;
     category: string;
@@ -153,6 +153,7 @@ const TransactionEditCategory = ({
                                 <CategoryIconOrInitial
                                   category_id={category.category_id}
                                   description={category.category_name}
+                                  type={transaction.type}
                                 />
                                 <FieldTitle>
                                   {category.category_name}
