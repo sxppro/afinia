@@ -1,4 +1,4 @@
-import CurrencyFlow from '@/components/currency-flow';
+import CurrencyFlow from '@/components/vis/currency-flow';
 import { getTotalAccountBalance } from '@/lib/db/account';
 
 const AccountBalanceTotal = async () => {

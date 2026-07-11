@@ -1,10 +1,10 @@
 'use client';
 
-import CurrencyFlow from '@/components/currency-flow';
 import { cn } from '@/lib/ui';
 import NumberFlow from '@number-flow/react';
 import { TrendingDown, TrendingUp } from 'lucide-react';
 import { use } from 'react';
+import CurrencyFlow from '../currency-flow';
 
 const AccountBalanceTrend = ({
   dataFetch,
@@ -75,7 +75,7 @@ const AccountBalanceTrend = ({
       <span
         className={cn('inline-flex items-center gap-1 transition', textColour)}
       >
-        <Icon className="size-5" />
+        {totalChange && <Icon className="size-5" />}
         <CurrencyFlow
           value={totalChange}
           signDisplay="negative"

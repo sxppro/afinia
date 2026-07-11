@@ -1,6 +1,6 @@
-import CurrencyFlow from '@/components/currency-flow';
 import AccountTypeIcon from '@/components/icons/account-type-icon';
 import { Card, CardContent } from '@/components/ui/card';
+import CurrencyFlow from '@/components/vis/currency-flow';
 import { db } from '@/lib/db/client';
 import { siteConfig } from '@/lib/siteConfig';
 import {
