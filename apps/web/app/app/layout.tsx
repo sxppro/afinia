@@ -1,3 +1,4 @@
+import { BalanceVisibilityProvider } from '@/components/balance-visibility';
 import { Toaster } from '@/components/ui/sonner';
 import { getServerSession } from '@/lib/auth/session';
 import { siteConfig } from '@/lib/siteConfig';
@@ -21,8 +22,10 @@ const AppLayout = async ({
     <TRPCReactProvider>
       <ViewTransition>
         <NuqsAdapter>
-          <div className="min-h-screen overscroll-none p-3">{children}</div>
-          <Toaster />
+          <BalanceVisibilityProvider>
+            <div className="min-h-screen overscroll-none p-3">{children}</div>
+            <Toaster />
+          </BalanceVisibilityProvider>
         </NuqsAdapter>
       </ViewTransition>
     </TRPCReactProvider>

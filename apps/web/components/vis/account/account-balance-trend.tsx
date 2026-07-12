@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/ui';
-import NumberFlow from '@number-flow/react';
+import NumberFlow, { NumberFlowGroup } from '@number-flow/react';
 import { TrendingDown, TrendingUp } from 'lucide-react';
 import { use } from 'react';
 import CurrencyFlow from '../currency-flow';
@@ -29,6 +29,7 @@ const AccountBalanceTrend = ({
             value={0}
             signDisplay="negative"
             className="text-base font-semibold"
+            hideable
           />
         </span>
         <NumberFlow
@@ -72,28 +73,34 @@ const AccountBalanceTrend = ({
 
   return (
     <p className="flex items-center gap-1.5 self-start font-medium">
-      <span
-        className={cn('inline-flex items-center gap-1 transition', textColour)}
-      >
-        {totalChange && <Icon className="size-5" />}
-        <CurrencyFlow
-          value={totalChange}
-          signDisplay="negative"
-          className="text-base font-semibold"
+      <NumberFlowGroup>
+        <span
+          className={cn(
+            'inline-flex items-center gap-1 transition',
+            textColour
+          )}
+        >
+          {totalChange && <Icon className="size-5" />}
+          <CurrencyFlow
+            value={totalChange}
+            signDisplay="negative"
+            className="text-base font-semibold"
+            hideable
+          />
+        </span>
+        <NumberFlow
+          className={cn('font-semibold', textColour)}
+          value={totalChangeDecimal}
+          format={{
+            style: 'percent',
+            maximumFractionDigits: 1,
+            signDisplay: 'never',
+          }}
+          prefix="("
+          suffix=")"
         />
-      </span>
-      <NumberFlow
-        className={cn('font-semibold', textColour)}
-        value={totalChangeDecimal}
-        format={{
-          style: 'percent',
-          maximumFractionDigits: 1,
-          signDisplay: 'never',
-        }}
-        prefix="("
-        suffix=")"
-      />
-      <span>over {label}</span>
+        <span>over {label}</span>
+      </NumberFlowGroup>
     </p>
   );
 };

@@ -9,6 +9,7 @@ const AccountBalanceTotal = async () => {
       className="text-4xl/tight font-semibold"
       value={balance?.value ?? 0}
       signDisplay="auto"
+      hideable
     />
   );
 };

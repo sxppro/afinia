@@ -14,6 +14,7 @@ import AccountBalanceTotal from './_components/account-balance-total';
 import AccountsList from './_components/accounts-list';
 import AppHomePageHeader from './_components/page-header';
 import QuickActions, { QuickActionsLoading } from './_components/quick-actions';
+import ToggleBalanceVisibility from './_components/toggle-balance-visibility';
 
 const AppHome = ({
   searchParams,
@@ -26,9 +27,12 @@ const AppHome = ({
       <div className="flex flex-col gap-2">
         <div>
           <p className="text-muted-foreground text-lg font-medium">Balance</p>
-          <Suspense fallback={<Skeleton className="h-14 w-full" />}>
-            <AccountBalanceTotal />
-          </Suspense>
+          <div className="flex items-center justify-between gap-4">
+            <Suspense fallback={<Skeleton className="h-14 w-full" />}>
+              <AccountBalanceTotal />
+            </Suspense>
+            <ToggleBalanceVisibility />
+          </div>
         </div>
         <Suspense fallback={<Skeleton className="h-56 w-full" />}>
           <AccountBalanceTimeline searchParams={searchParams} />
