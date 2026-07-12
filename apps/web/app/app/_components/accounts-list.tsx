@@ -91,6 +91,7 @@ const AccountsList = async () => {
                 className="text-xl font-bold"
                 value={value ?? 0}
                 signDisplay="auto"
+                hideable
               />
             </CardContent>
           </Card>

@@ -1,17 +1,22 @@
 'use client';
 
 import { useBalanceVisibility } from '@/components/balance-visibility';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { VariantProps } from 'class-variance-authority';
 import { Eye, EyeOff } from 'lucide-react';
 
-const ToggleBalanceVisibility = () => {
+const ToggleBalanceVisibility = ({
+  size,
+}: {
+  size: VariantProps<typeof buttonVariants>['size'];
+}) => {
   const { isVisible, toggle } = useBalanceVisibility();
 
   return (
     <Button
       className="rounded-full"
       variant="outline"
-      size="icon-xl"
+      size={size}
       aria-label={isVisible ? 'Hide balances' : 'Show balances'}
       onClick={toggle}
     >

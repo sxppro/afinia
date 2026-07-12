@@ -1,5 +1,6 @@
 import AccountTypeIcon from '@/components/icons/account-type-icon';
 import DateRangePicker from '@/components/misc/date-range-picker';
+import ToggleBalanceVisibility from '@/components/misc/toggle-balance-visibility';
 import {
   Popover,
   PopoverContent,
@@ -54,9 +55,12 @@ const AccountPage = async ({
         </span>
         <div className="flex-1">
           <h2 className="text-muted-foreground font-medium">Balance</h2>
-          <Suspense fallback={<Skeleton className="h-9 w-32" />}>
-            <AccountBalance accountId={account.account_id} />
-          </Suspense>
+          <div className="flex items-center justify-between gap-4">
+            <Suspense fallback={<Skeleton className="h-9 w-32" />}>
+              <AccountBalance accountId={account.account_id} />
+            </Suspense>
+            <ToggleBalanceVisibility size="icon-lg" />
+          </div>
         </div>
       </div>
       <div className="flex flex-col items-center gap-1">

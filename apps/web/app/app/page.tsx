@@ -1,3 +1,4 @@
+import ToggleBalanceVisibility from '@/components/misc/toggle-balance-visibility';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,7 +15,6 @@ import AccountBalanceTotal from './_components/account-balance-total';
 import AccountsList from './_components/accounts-list';
 import AppHomePageHeader from './_components/page-header';
 import QuickActions, { QuickActionsLoading } from './_components/quick-actions';
-import ToggleBalanceVisibility from './_components/toggle-balance-visibility';
 
 const AppHome = ({
   searchParams,
@@ -31,7 +31,7 @@ const AppHome = ({
             <Suspense fallback={<Skeleton className="h-14 w-full" />}>
               <AccountBalanceTotal />
             </Suspense>
-            <ToggleBalanceVisibility />
+            <ToggleBalanceVisibility size="icon-xl" />
           </div>
         </div>
         <Suspense fallback={<Skeleton className="h-56 w-full" />}>
