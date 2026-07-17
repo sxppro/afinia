@@ -1,4 +1,4 @@
-import CurrencyFlow from '@/components/currency-flow';
+import CurrencyFlow from '@/components/vis/currency-flow';
 import { getAccountBalance } from '@/lib/db/account';
 
 const AccountBalance = async ({ accountId }: { accountId: number }) => {
@@ -9,6 +9,7 @@ const AccountBalance = async ({ accountId }: { accountId: number }) => {
       className="-mt-1 text-3xl/tight font-semibold"
       value={balance?.value ?? 0}
       signDisplay="auto"
+      hideable
     />
   );
 };

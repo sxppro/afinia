@@ -1,4 +1,3 @@
-import CurrencyFlow from '@/components/currency-flow';
 import CategoryIcon from '@/components/icons/category-icon';
 import { Button } from '@/components/ui/button';
 import { CategoryBar } from '@/components/ui/category-bar';
@@ -6,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import SpendingByCategory from '@/components/vis/category/spending-by-category';
 import SpendingByMonth from '@/components/vis/category/spending-by-month';
+import CurrencyFlow from '@/components/vis/currency-flow';
 import { getStartOfDay } from '@/lib/dateTime';
 import {
   getCategorySpending,

@@ -1,9 +1,9 @@
-import CurrencyFlow from '@/components/currency-flow';
 import { getStartOfDay } from '@/lib/dateTime';
 import { getCategorySpending } from '@/lib/db/spending';
 import { transactionExternalTable } from 'afinia-common/schema';
 import { endOfMonth, startOfMonth } from 'date-fns';
 import { sum } from 'drizzle-orm';
+import CurrencyFlow from '../currency-flow';
 
 const SpendingTotal = async ({ category }: { category?: string }) => {
   const range = {

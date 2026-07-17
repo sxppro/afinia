@@ -1,7 +1,7 @@
-import CurrencyFlow from '@/components/currency-flow';
 import CategoryIcon from '@/components/icons/category-icon';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import CurrencyFlow from '@/components/vis/currency-flow';
 import { getStartOfDay } from '@/lib/dateTime';
 import { getParentCategories } from '@/lib/db/category';
 import { getCategorySpending } from '@/lib/db/spending';
