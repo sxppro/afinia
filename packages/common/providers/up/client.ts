@@ -3,6 +3,7 @@ import { paths } from './types';
 
 /**
  * Create Up client with credentials
+ * @param getApiKey - function to retrieve Up access token
  */
 export const createUpClient = (
   getApiKey: () => string
