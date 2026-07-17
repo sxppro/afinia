@@ -34,22 +34,37 @@ export default $config({
     });
     api.deploy();
 
-    new sst.aws.Cron('AfiniaSyncHourly', {
+    const cronSecrets = [
+      secrets.upApiKey,
+      secrets.databaseUrl,
+      secrets.discordWebhookUrl,
+      secrets.discordUserId,
+    ];
+
+    new sst.aws.Cron('AfiniaSyncRecent', {
       function: {
-        handler: 'src/provider/up/modules/syncData.handler',
+        handler: 'src/provider/up/modules/syncRecent.handler',
         timeout: '600 seconds',
         runtime: 'nodejs22.x',
-        link: [
-          secrets.upApiKey,
-          secrets.databaseUrl,
-          secrets.discordWebhookUrl,
-          secrets.discordUserId,
-        ],
+        link: cronSecrets,
         logging: {
           retention: '1 month',
         },
       },
-      schedule: 'rate(1 hour)',
+      schedule: 'rate(15 minutes)',
+    });
+
+    new sst.aws.Cron('AfiniaSyncDaily', {
+      function: {
+        handler: 'src/provider/up/modules/syncData.handler',
+        timeout: '600 seconds',
+        runtime: 'nodejs22.x',
+        link: cronSecrets,
+        logging: {
+          retention: '3 months',
+        },
+      },
+      schedule: 'cron(30 14 * * ? *)',
     });
 
     new sst.aws.Cron('AfiniaSyncSixHourly', {
@@ -57,17 +72,12 @@ export default $config({
         handler: 'src/provider/up/modules/syncTransactions.handler',
         timeout: '600 seconds',
         runtime: 'nodejs22.x',
-        link: [
-          secrets.upApiKey,
-          secrets.databaseUrl,
-          secrets.discordWebhookUrl,
-          secrets.discordUserId,
-        ],
+        link: cronSecrets,
         logging: {
-          retention: '1 month',
+          retention: '3 months',
         },
       },
-      schedule: 'rate(6 hours)',
+      schedule: 'cron(10 3/6 * * ? *)',
     });
   },
 });

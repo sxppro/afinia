@@ -4,8 +4,6 @@ import { Resource } from 'sst';
 import { ALERT_LEVEL, AUTHENTICITY_HEADER } from '../utils/constants';
 import { signData } from '../utils/fetch';
 import { notify } from '../utils/notify';
-import { processAccounts } from './processAccounts';
-import { processTags } from './processTags';
 import { processTransaction } from './processTransactions';
 import {
   sendPushNotifications,
@@ -90,13 +88,6 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     }
 
     /**
-     * Sync accounts before processing
-     * transaction
-     */
-    await processAccounts();
-    await processTags();
-
-    /**
      * Process transaction events
      * @see https://developer.up.com.au/#callback_post_webhookURL
      */
@@ -104,7 +95,53 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       eventType === WebhookEventTypeEnum.TRANSACTION_CREATED ||
       eventType === WebhookEventTypeEnum.TRANSACTION_SETTLED
     ) {
-      await processTransaction('insert', relationships.transaction.data.id);
+      const metrics = await processTransaction(
+        'insert',
+        relationships.transaction.data.id
+      );
+
+      /**
+       * If transaction was not processed due to missing account
+       * or failed fetch, notify and return 500
+       */
+      if (metrics.transactions.processed === 0) {
+        console.error(
+          `[${PROCESS_NAME}] Failed to process transaction: ${relationships.transaction.data.id}, possibly due to missing account or failed to retrieve transaction details from provider`,
+          {
+            missingAccounts: Array.from(metrics.errors.missingAccounts),
+            missingCategories: Array.from(metrics.errors.missingCategories),
+            missingTags: Array.from(metrics.errors.missingTags),
+          }
+        );
+        await notify(
+          ALERT_LEVEL.ERROR,
+          `[${PROCESS_NAME}] Failed to process transaction: ${relationships.transaction.data.id}`
+        );
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ message: 'Failed to process transaction' }),
+        };
+      }
+
+      /**
+       * Warn if missing categories or tags
+       */
+      if (
+        metrics.errors.missingCategories.size > 0 ||
+        metrics.errors.missingTags.size > 0
+      ) {
+        console.warn(
+          `[${PROCESS_NAME}] Transaction processed with incomplete data: ${relationships.transaction.data.id}`,
+          {
+            missingCategories: Array.from(metrics.errors.missingCategories),
+            missingTags: Array.from(metrics.errors.missingTags),
+          }
+        );
+        await notify(
+          ALERT_LEVEL.WARN,
+          `[${PROCESS_NAME}] Transaction processed with incomplete data: ${relationships.transaction.data.id}`
+        );
+      }
 
       /**
        * Push notifications only on created
