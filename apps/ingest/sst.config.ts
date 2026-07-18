@@ -7,6 +7,11 @@ export default $config({
       removal: input?.stage === 'prod' ? 'retain' : 'remove',
       protect: ['prod'].includes(input?.stage),
       home: 'aws',
+      providers: {
+        aws: {
+          profile: input?.stage === 'prod' ? 'soppro-prod' : 'soppro-dev',
+        },
+      },
     };
   },
   async run() {
@@ -34,22 +39,40 @@ export default $config({
     });
     api.deploy();
 
-    new sst.aws.Cron('AfiniaSyncHourly', {
+    const cronSecrets = [
+      secrets.upApiKey,
+      secrets.databaseUrl,
+      secrets.discordWebhookUrl,
+      secrets.discordUserId,
+    ];
+
+    new sst.aws.Cron('AfiniaSyncRecent', {
       function: {
-        handler: 'src/provider/up/modules/syncData.handler',
+        handler: 'src/provider/up/modules/syncRecent.handler',
         timeout: '600 seconds',
         runtime: 'nodejs22.x',
-        link: [
-          secrets.upApiKey,
-          secrets.databaseUrl,
-          secrets.discordWebhookUrl,
-          secrets.discordUserId,
-        ],
+        link: cronSecrets,
         logging: {
           retention: '1 month',
         },
       },
-      schedule: 'rate(1 hour)',
+      schedule: 'rate(15 minutes)',
+    });
+
+    new sst.aws.Cron('AfiniaSyncDaily', {
+      function: {
+        handler: 'src/provider/up/modules/syncData.handler',
+        timeout: '600 seconds',
+        runtime: 'nodejs22.x',
+        link: cronSecrets,
+        logging: {
+          retention: '3 months',
+        },
+      },
+      /**
+       * Every day at 14:30 UTC, 00:30 UTC+10
+       */
+      schedule: 'cron(30 14 * * ? *)',
     });
 
     new sst.aws.Cron('AfiniaSyncSixHourly', {
@@ -57,17 +80,17 @@ export default $config({
         handler: 'src/provider/up/modules/syncTransactions.handler',
         timeout: '600 seconds',
         runtime: 'nodejs22.x',
-        link: [
-          secrets.upApiKey,
-          secrets.databaseUrl,
-          secrets.discordWebhookUrl,
-          secrets.discordUserId,
-        ],
+        link: cronSecrets,
         logging: {
-          retention: '1 month',
+          retention: '3 months',
         },
       },
-      schedule: 'rate(6 hours)',
+      /**
+       * Every 6 hours
+       * 03:10, 09:10, 15:10, 21:10 UTC
+       * 01:10, 07:10, 13:10, 19:10 UTC+10
+       */
+      schedule: 'cron(10 3/6 * * ? *)',
     });
   },
 });

@@ -3,6 +3,8 @@ import { components } from 'afinia-common/providers/up';
 import { categoryTable } from 'afinia-common/schema';
 import { and, eq, InferInsertModel, isNull, ne, or, sql } from 'drizzle-orm';
 import { upClient } from '../utils/clients';
+import { ALERT_LEVEL } from '../utils/constants';
+import { notify } from '../utils/notify';
 
 const PROCESS_NAME = 'processCategories';
 
@@ -58,14 +60,33 @@ const upsertCategories = async (
   console.log('Finished processing category relationships');
 };
 
-export const processCategories = async () => {
+/**
+ * Syncs categories from Up to database
+ * @returns whether the sync was completed
+ */
+export const processCategories = async (): Promise<boolean> => {
   try {
-    const { data } = await upClient.GET('/categories');
+    const { data, error } = await upClient.GET('/categories');
+    if (error) {
+      console.error(error);
+      await notify(
+        ALERT_LEVEL.ERROR,
+        `[Up] Failed to fetch categories: ${JSON.stringify(error)}`
+      );
+      return false;
+    }
+    if (!data) {
+      return false;
+    }
 
-    if (data?.data) {
+    // Process data
+    if (data.data) {
       await upsertCategories(data.data);
     }
+
+    return true;
   } catch (error) {
     console.error(`Error in ${PROCESS_NAME}: `, error);
+    return false;
   }
 };

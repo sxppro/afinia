@@ -10,7 +10,7 @@ import {
   transactionTable,
   transactionTagTable,
 } from 'afinia-common/schema';
-import { eq, InferInsertModel } from 'drizzle-orm';
+import { and, eq, InferInsertModel, notInArray } from 'drizzle-orm';
 import { ALERT_LEVEL } from '../utils/constants';
 import { notify } from '../utils/notify';
 import { buildConflictUpdateColumns } from '../utils/upsert';
@@ -28,10 +28,43 @@ export interface ProcessTransactionsMetrics {
   errors: {
     missingAccounts: Set<string>;
     missingCategories: Set<string>;
+    missingTags: Set<string>;
   };
   startTime: number;
   endTime?: number;
 }
+
+/**
+ * Checks if metrics contains missing data errors
+ * @param metrics
+ * @returns
+ */
+export const hasMissingData = (metrics: ProcessTransactionsMetrics) =>
+  metrics.errors.missingAccounts.size > 0 ||
+  metrics.errors.missingCategories.size > 0 ||
+  metrics.errors.missingTags.size > 0;
+
+/**
+ * Generates empty metrics object
+ * @returns
+ */
+export const emptyMetrics = (): ProcessTransactionsMetrics => ({
+  pages: {
+    processed: 0,
+    timings: [],
+  },
+  transactions: {
+    total: 0,
+    processed: 0,
+    skipped: 0,
+  },
+  errors: {
+    missingAccounts: new Set<string>(),
+    missingCategories: new Set<string>(),
+    missingTags: new Set<string>(),
+  },
+  startTime: Date.now(),
+});
 
 /**
  * Upsert transactions into database
@@ -178,6 +211,9 @@ export const upsertTransactions = async (
 
   try {
     await db.transaction(async (tx) => {
+      /**
+       * Insert transactions
+       */
       const insertedTx = await tx
         .insert(transactionTable)
         .values(transformedTx)
@@ -215,6 +251,9 @@ export const upsertTransactions = async (
           provider_id: transactionTable.provider_id,
         });
 
+      /**
+       * Related transaction records to insert/update at the same time
+       */
       const txTag: InferInsertModel<typeof transactionTagTable>[] = [];
       const txHoldInfo: InferInsertModel<typeof transactionHoldInfoTable>[] =
         [];
@@ -226,18 +265,40 @@ export const upsertTransactions = async (
         const transaction = transactionMap.get(provider_id);
         if (transaction) {
           const { attributes, relationships } = transaction;
-          // Transaction tag relationships
-          if (relationships.tags.data?.length > 0) {
-            for (const { id: tagId } of relationships.tags.data) {
-              if (tagsMap.has(tagId)) {
-                txTag.push({
-                  transaction_id: id,
-                  tag_id: tagId,
-                });
-              }
+          /**
+           * Tags
+           */
+          const providerTagIds =
+            relationships.tags.data?.map(({ id: tagId }) => tagId) ?? [];
+          // Check if we have each tag in the database
+          for (const tagId of providerTagIds) {
+            if (tagsMap.has(tagId)) {
+              txTag.push({
+                transaction_id: id,
+                tag_id: tagId,
+              });
+            } else {
+              metrics.errors.missingTags.add(tagId);
             }
           }
-          // Hold info
+          // Update linked tags for the transaction
+          if (providerTagIds.length > 0) {
+            await tx
+              .delete(transactionTagTable)
+              .where(
+                and(
+                  eq(transactionTagTable.transaction_id, id),
+                  notInArray(transactionTagTable.tag_id, providerTagIds)
+                )
+              );
+          } else {
+            await tx
+              .delete(transactionTagTable)
+              .where(eq(transactionTagTable.transaction_id, id));
+          }
+          /**
+           * Hold info
+           */
           if (attributes.holdInfo) {
             const { holdInfo } = attributes;
             txHoldInfo.push({
@@ -251,7 +312,9 @@ export const upsertTransactions = async (
                 holdInfo.foreignAmount?.valueInBaseUnits,
             });
           }
-          // Round up
+          /**
+           * Round up
+           */
           if (attributes.roundUp) {
             const { roundUp } = attributes;
             txRoundUp.push({
@@ -264,7 +327,9 @@ export const upsertTransactions = async (
               boost_value_in_base_units: roundUp.boostPortion?.valueInBaseUnits,
             });
           }
-          // Cashback
+          /**
+           * Cashback
+           */
           if (attributes.cashback) {
             const { cashback } = attributes;
             txCashback.push({

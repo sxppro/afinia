@@ -4,37 +4,35 @@ import { Resource } from 'sst';
 import { RATE_LIMIT_HEADER } from './constants';
 
 /**
- * Fetch from URL using Up API key
- * @param url
- * @returns
+ * Check if rate limit is reached.
+ * Up's rate limit header denotes number of requests remaining
  */
-export const fetchFromUp = async (url: string) =>
-  await fetch(url, {
-    headers: { Authorization: `Bearer ${Resource.UP_API_KEY.value}` },
-  });
+export const isRateLimitReached = (headers: Headers): boolean => {
+  const remaining = headers.get(RATE_LIMIT_HEADER);
+  return remaining !== null && parseInt(remaining, 10) === 0;
+};
 
 /**
  * Retrieves next page according to Up API pagination
- * and passes data to provided callback function
+ * and passes data to provided callback function.
+
+ * Returns `{ complete: false }` when more pages were
+ * available, but not fetched.
+ * 
  * @see https://developer.up.com.au/#accounts
- * @param link next page link
- * @param onNextPage callback to do something with next page of data
- * @param page current page number
+ * @param link - next page link
+ * @param onNextPage - callback to do something with next page of data
+ * @param page - current page number
+ * @returns boolean indicating if all available pages were fetched
  */
 export const getNextPage = async <T>(
   link: string,
   onNextPage: (data: T[], page: number) => Promise<unknown>,
   page: number = 1
-) => {
-  const res = await fetchFromUp(link);
-
-  /**
-   * Track rate limit remaining (number of pages)
-   */
-  const rateLimitRemaining = res.headers.get(RATE_LIMIT_HEADER);
-  if (rateLimitRemaining && parseInt(rateLimitRemaining, 10) === 0) {
-    throw new Error('Rate limit exceeded');
-  }
+): Promise<{ complete: boolean }> => {
+  const res = await fetch(link, {
+    headers: { Authorization: `Bearer ${Resource.UP_API_KEY.value}` },
+  });
 
   if (!res.ok) {
     throw new Error(
@@ -57,9 +55,16 @@ export const getNextPage = async <T>(
     await onNextPage(data.data, page);
   }
 
-  if (data?.links?.next) {
-    await getNextPage(data.links.next, onNextPage, page + 1);
+  const hasNext = Boolean(data?.links?.next);
+  if (isRateLimitReached(res.headers) && hasNext) {
+    console.warn(`Rate limit reached after page ${page}`);
+    return { complete: false };
   }
+  if (hasNext && data.links?.next) {
+    return getNextPage(data.links.next, onNextPage, page + 1);
+  }
+
+  return { complete: true };
 };
 
 /**

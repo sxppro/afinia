@@ -22,16 +22,18 @@ import { eq } from 'drizzle-orm';
 import pLimit from 'p-limit';
 import {
   deleteTransaction,
+  emptyMetrics,
   ProcessTransactionsMetrics,
   upsertTransactions,
 } from '../common/transaction';
 import { upClient } from '../utils/clients';
 import {
   ALERT_LEVEL,
+  DEFAULT_PAGE_SIZE,
   MAX_CONCURRENCY,
   RATE_LIMIT_HEADER,
 } from '../utils/constants';
-import { getNextPage } from '../utils/fetch';
+import { getNextPage, isRateLimitReached } from '../utils/fetch';
 import { notify } from '../utils/notify';
 import { processAccounts } from './processAccounts';
 import { processCategories } from './processCategories';
@@ -39,6 +41,7 @@ import { processTags } from './processTags';
 
 const PROCESS_NAME = 'syncTransactions';
 const CURSOR_KEY = 'syncTransactions.cursor';
+const MONTHS_TO_SYNC = 2;
 
 /**
  * Reads saved timestamp of last synced month
@@ -108,7 +111,7 @@ const getMonthToSync = async (currentMonth: Date): Promise<Date | null> => {
   } else if (isBefore(subMonths(storedCursor, 1), lowerBound)) {
     // Wrap around to previous month if subtracting a month would be before earliest account creation
     console.log(
-      `${PROCESS_NAME}: Account creation month reached. Wrapping around to previous month`
+      `[${PROCESS_NAME}] Account creation month reached: wrapping around to previous month`
     );
     return startOfMonth(subMonths(currentMonth, 1));
   } else {
@@ -177,40 +180,32 @@ const checkTransactionAttributes = async (
 
 /**
  * Sync transactions from Up between start and end dates
- * @param startDate - ISO timestamp
- * @param endDate - ISO timestamp
- * @param metrics - `ProcessTransactionsMetrics`
- * @returns
+ * @returns whether the sync was completed in full
  */
 const syncTransactionsByDateRange = async (
   start: Date,
   end: Date,
   metrics: ProcessTransactionsMetrics
-) => {
+): Promise<boolean> => {
   const startDate = start.toISOString();
   const endDate = end.toISOString();
   const providerTxns = new Map<string, TransactionResource>();
   const syncStartTime = new Date();
+  const CURRENT_PAGE = 1;
+  let paginationComplete = false;
 
   console.log(`[Up] Fetching transactions from ${startDate} to ${endDate}`);
 
+  // Fetch transactions from Up API
   const { data, response, error } = await upClient.GET('/transactions', {
     params: {
       query: {
         'filter[since]': startDate,
         'filter[until]': endDate,
+        'page[size]': DEFAULT_PAGE_SIZE,
       },
     },
   });
-
-  const rateLimitRemaining = response.headers.get(RATE_LIMIT_HEADER);
-  if (rateLimitRemaining && parseInt(rateLimitRemaining, 10) === 0) {
-    await notify(
-      ALERT_LEVEL.WARN,
-      'Skipping sync transactions from Up: Rate limit exceeded'
-    );
-    return;
-  }
 
   if (error) {
     console.error(error);
@@ -218,19 +213,24 @@ const syncTransactionsByDateRange = async (
       ALERT_LEVEL.ERROR,
       `[Up] Failed to fetch transactions for ${startDate} - ${endDate}: ${JSON.stringify(error)}`
     );
-    return;
+    return false;
+  }
+  if (!data) {
+    return false;
   }
 
-  // Upsert transactions from Up
-  if (data) {
-    const CURRENT_PAGE = 1;
-
-    if (data.data) {
-      await upsertTransactions(data.data, CURRENT_PAGE, metrics, PROCESS_NAME);
-      data.data.forEach((t) => providerTxns.set(t.id, t));
-    }
-    if (data.links?.next) {
-      await getNextPage<TransactionResource>(
+  // Process data
+  paginationComplete = data.links?.next === null;
+  if (data.data) {
+    await upsertTransactions(data.data, CURRENT_PAGE, metrics, PROCESS_NAME);
+    data.data.forEach((t) => providerTxns.set(t.id, t));
+  }
+  // Process subsequent pages if available
+  if (data.links?.next) {
+    if (isRateLimitReached(response.headers)) {
+      console.warn(`[${PROCESS_NAME}] Rate limit reached after page 1`);
+    } else {
+      const result = await getNextPage<TransactionResource>(
         data.links.next,
         async (txns, page) => {
           await upsertTransactions(txns, page, metrics, PROCESS_NAME);
@@ -238,11 +238,23 @@ const syncTransactionsByDateRange = async (
         },
         CURRENT_PAGE + 1
       );
+      paginationComplete = result.complete;
     }
-
-    // Check db transactions
-    await checkTransactionsByDateRange(start, end, syncStartTime, providerTxns);
   }
+
+  /**
+   * Only audit transactions in database against provider if
+   * all transactions were retrieved from provider
+   */
+  if (paginationComplete) {
+    await checkTransactionsByDateRange(start, end, syncStartTime, providerTxns);
+  } else {
+    console.warn(
+      `[${PROCESS_NAME}] Failed to retrieve all transactions between ${startDate}-${endDate}: transaction sync incomplete`
+    );
+  }
+
+  return paginationComplete;
 };
 
 /**
@@ -304,6 +316,10 @@ const checkTransactionsByDateRange = async (
         return;
       }
 
+      /**
+       * Audit and deletes any transactions in database
+       * that are not present in provider data
+       */
       await Promise.all(
         transactions.map(async (txn) => {
           const providerTxn = providerData.get(txn.transaction.provider_id);
@@ -327,6 +343,7 @@ const checkTransactionsByDateRange = async (
         })
       );
     } else {
+      // Ping Up API to check remaining requests
       const { response, error } = await upClient.GET('/util/ping');
 
       if (error) {
@@ -419,15 +436,7 @@ const checkTransactionsByDateRange = async (
 };
 
 export const handler = async () => {
-  const metrics: ProcessTransactionsMetrics = {
-    pages: { processed: 0, timings: [] },
-    transactions: { total: 0, processed: 0, skipped: 0 },
-    errors: {
-      missingAccounts: new Set<string>(),
-      missingCategories: new Set<string>(),
-    },
-    startTime: Date.now(),
-  };
+  const metrics = emptyMetrics();
 
   try {
     // Check database connection
@@ -435,41 +444,86 @@ export const handler = async () => {
     if (!isConnected) {
       await notify(
         ALERT_LEVEL.ERROR,
-        `Failed to connect to database. Skipping ${PROCESS_NAME}`
+        `[${PROCESS_NAME}] Failed to connect to database: skipping transaction sync`
       );
       return;
     }
 
     // Sync all accounts, categories and tags
-    await processAccounts();
-    await processCategories();
-    await processTags();
+    const accountsSynced = await processAccounts();
+    const categoriesSynced = await processCategories();
+    const tagsSynced = await processTags();
+
+    if (
+      ![accountsSynced, categoriesSynced, tagsSynced].every(
+        (success) => success
+      )
+    ) {
+      await notify(
+        ALERT_LEVEL.WARN,
+        `[${PROCESS_NAME}] Failed to sync all accounts, categories and tags: transaction sync may encounter errors`
+      );
+    }
+
+    console.info(`[${PROCESS_NAME}] Sync Status: 
+      Accounts: ${accountsSynced ? 'Success' : 'Incomplete'}
+      Categories: ${categoriesSynced ? 'Success' : 'Incomplete'}
+      Tags: ${tagsSynced ? 'Success' : 'Incomplete'}
+    `);
 
     const now = new Date();
     const currentMonth = startOfMonth(now);
 
     // Sync current month
-    await syncTransactionsByDateRange(
+    const currentMonthComplete = await syncTransactionsByDateRange(
       currentMonth,
       addMonths(currentMonth, 1),
       metrics
     );
-
-    // Retrieve last synced month
-    const cursorMonth = await getMonthToSync(currentMonth);
-    if (!cursorMonth) {
+    if (!currentMonthComplete) {
+      await notify(
+        ALERT_LEVEL.WARN,
+        `[${PROCESS_NAME}] Failed to sync current month: transaction sync incomplete`
+      );
       return;
     }
 
-    // Sync cursor month
-    await syncTransactionsByDateRange(
-      cursorMonth,
-      addMonths(cursorMonth, 1),
-      metrics
-    );
+    // Sync historical cursor months
+    const syncedMonths: Date[] = [];
+    for (let i = 0; i < MONTHS_TO_SYNC; i++) {
+      const cursorMonth = await getMonthToSync(currentMonth);
+      if (!cursorMonth) {
+        break;
+      }
+      /**
+       * Stop if we've reached a month that has just been synced
+       */
+      if (syncedMonths.some((m) => isEqual(m, cursorMonth))) {
+        console.log(
+          `[${PROCESS_NAME}] Cursor wrapped to month already synced - ${cursorMonth.toISOString()}: stopping transaction sync`
+        );
+        break;
+      }
 
-    // Write month synced and wrap if needed
-    await writeCursor(cursorMonth);
+      const complete = await syncTransactionsByDateRange(
+        cursorMonth,
+        addMonths(cursorMonth, 1),
+        metrics
+      );
+      /**
+       * Stop if sync was incomplete
+       */
+      if (!complete) {
+        await notify(
+          ALERT_LEVEL.WARN,
+          `[${PROCESS_NAME}] Failed to sync month of ${cursorMonth.toISOString()}: not advancing cursor`
+        );
+        break;
+      }
+
+      await writeCursor(cursorMonth);
+      syncedMonths.push(cursorMonth);
+    }
 
     metrics.endTime = Date.now();
     const totalTime = metrics.endTime - metrics.startTime;
@@ -484,7 +538,7 @@ export const handler = async () => {
     console.log(`Finished ${PROCESS_NAME}: `, {
       months: {
         current: currentMonth.toISOString(),
-        cursor: cursorMonth.toISOString(),
+        cursors: syncedMonths.map((m) => m.toISOString()),
       },
       pages: metrics.pages.processed,
       transactions: {
@@ -495,6 +549,7 @@ export const handler = async () => {
       errors: {
         missingAccounts: Array.from(metrics.errors.missingAccounts),
         missingCategories: Array.from(metrics.errors.missingCategories),
+        missingTags: Array.from(metrics.errors.missingTags),
       },
       stats: {
         total: `${totalTime}ms`,
@@ -519,6 +574,7 @@ export const handler = async () => {
         transactions: metrics.transactions,
         missingAccounts: Array.from(metrics.errors.missingAccounts),
         missingCategories: Array.from(metrics.errors.missingCategories),
+        missingTags: Array.from(metrics.errors.missingTags),
       },
     });
 

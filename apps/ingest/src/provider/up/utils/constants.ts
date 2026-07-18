@@ -1,4 +1,4 @@
-export const RATE_LIMIT_HEADER = 'x-rate-limit-remaining';
+export const RATE_LIMIT_HEADER = 'x-ratelimit-remaining';
 export const AUTHENTICITY_HEADER = 'X-Up-Authenticity-Signature';
 
 export enum ALERT_LEVEL {
@@ -7,3 +7,5 @@ export enum ALERT_LEVEL {
 }
 
 export const MAX_CONCURRENCY = 32;
+
+export const DEFAULT_PAGE_SIZE = 100;

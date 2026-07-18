@@ -11,14 +11,17 @@ import {
 } from '@/src/db/queries/transaction';
 import { TransactionResource } from 'afinia-common/providers/up';
 import { fileURLToPath } from 'node:url';
+import pLimit from 'p-limit';
 import { upClient } from '../utils/clients';
 import { compareProviderAndDb } from '../utils/compare';
-import { ALERT_LEVEL } from '../utils/constants';
-import { getNextPage } from '../utils/fetch';
+import { ALERT_LEVEL, DEFAULT_PAGE_SIZE } from '../utils/constants';
+import { getNextPage, isRateLimitReached } from '../utils/fetch';
 import { notify } from '../utils/notify';
 import { processTags } from './processTags';
 
 const PROCESS_NAME = 'syncData';
+
+const MAX_CONCURRENCY = 8;
 
 const updateTransaction = async (
   providerId: string,
@@ -37,216 +40,342 @@ const updateTransaction = async (
   await updateFn(transactionId);
 };
 
-const syncCategorisedTransactions = async () => {
-  const { data, error } = await upClient.GET('/categories');
-  if (error) {
-    console.error(error);
-    await notify(ALERT_LEVEL.WARN, `[Up] Failed to fetch categories`);
-    return;
-  }
-  if (!data || !data.data.length) {
-    return;
-  }
-
-  // Filter out parent categories
-  const categories = data?.data.filter(
-    (category) => category.relationships.parent.data !== null
-  );
-
-  const compareCategorisedTransactions = categories?.map(
-    async ({ type, id: categoryId }) => {
-      try {
-        console.log(`Syncing transactions for category: ${categoryId}`);
-        const externalTransactionIds: string[] = [];
-        if (type !== 'categories') {
-          await notify(
-            ALERT_LEVEL.ERROR,
-            `Unexpected type "${type}" for category: ${categoryId}`
-          );
-          return;
-        }
-
-        // Check category exists in db
-        const category = await getCategoryById(categoryId);
-        if (!category || category.length !== 1) {
-          await notify(
-            ALERT_LEVEL.ERROR,
-            `Category does not exist in database: ${categoryId}`
-          );
-          return;
-        }
-
-        // Retrieve transactions by category from provider
-        const { data, error } = await upClient.GET('/transactions', {
-          params: {
-            query: {
-              'filter[category]': categoryId,
-            },
-          },
-        });
-        if (error) {
-          await notify(
-            ALERT_LEVEL.WARN,
-            `[Up] Failed to fetch transactions for category ${categoryId}: ${JSON.stringify(error)}`
-          );
-          return;
-        }
-        if (data?.data) {
-          externalTransactionIds.push(...data.data.map((t) => t.id));
-        }
-        if (data?.links.next) {
-          await getNextPage<TransactionResource>(
-            data.links.next,
-            (transactions) =>
-              Promise.resolve(
-                externalTransactionIds.push(...transactions.map((t) => t.id))
-              ),
-            // Next page of data, page 2
-            2
-          );
-        }
-
-        const transactionsByCategory =
-          await getTransactionsByCategory(categoryId);
-        const { inserted, deleted } = await compareProviderAndDb({
-          providerData: externalTransactionIds,
-          dbData: transactionsByCategory.map((t) => t.providerId),
-          insertToDb: (providerId) =>
-            updateTransaction(providerId, (transactionId) =>
-              updateTransactionCategory(transactionId, categoryId, PROCESS_NAME)
-            ),
-          deleteFromDb: (providerId) =>
-            updateTransaction(providerId, (transactionId) =>
-              updateTransactionCategory(transactionId, null, PROCESS_NAME)
-            ),
-        });
-        if (inserted > 0) {
-          console.log(
-            `Categorised ${inserted} transactions under "${categoryId}"`
-          );
-        }
-        if (deleted > 0) {
-          console.log(
-            `Uncategorised ${deleted} transactions from "${categoryId}"`
-          );
-        }
-        console.log(
-          `Finished syncing transactions for category: ${categoryId}`
-        );
-      } catch (error) {
-        console.error(error);
-        await notify(
-          ALERT_LEVEL.ERROR,
-          `Failed to sync transactions for category ${categoryId}: ${
-            error instanceof Error ? error.message : error
-          }`
-        );
-      }
+/**
+ * Syncs categorised transactions from Up to database
+ * @returns whether the sync was completed in full
+ */
+const syncCategorisedTransactions = async (): Promise<boolean> => {
+  try {
+    // Fetch categories from Up API
+    // No pagination required - all categories are returned in a single response
+    const { data, error } = await upClient.GET('/categories');
+    if (error) {
+      console.error(error);
+      await notify(ALERT_LEVEL.WARN, `[Up] Failed to fetch categories`);
+      return false;
     }
-  );
+    if (!data) {
+      return false;
+    }
 
-  await Promise.all(compareCategorisedTransactions);
+    // No categories to sync
+    if (!data.data.length) {
+      return true;
+    }
+
+    // Sync only child categories - filter out parent categories
+    const categories = data.data.filter(
+      (category) => category.relationships.parent.data !== null
+    );
+
+    // Sync transactions for each category concurrently
+    const limit = pLimit(MAX_CONCURRENCY);
+    const compareCategorisedTransactions = categories.map(
+      ({ type, id: categoryId }) =>
+        limit(async () => {
+          try {
+            console.log(`Syncing transactions for category: ${categoryId}`);
+            const externalTransactionIds: string[] = [];
+            const CURRENT_PAGE = 1;
+            let paginationComplete = false;
+
+            if (type !== 'categories') {
+              await notify(
+                ALERT_LEVEL.ERROR,
+                `Unexpected type "${type}" for category: ${categoryId}`
+              );
+              return false;
+            }
+
+            // Check category exists in db
+            const category = await getCategoryById(categoryId);
+            if (!category || category.length !== 1) {
+              await notify(
+                ALERT_LEVEL.ERROR,
+                `Category does not exist in database: ${categoryId}`
+              );
+              return false;
+            }
+
+            // Retrieve transactions by category from provider
+            const { data, response, error } = await upClient.GET(
+              '/transactions',
+              {
+                params: {
+                  query: {
+                    'filter[category]': categoryId,
+                    'page[size]': DEFAULT_PAGE_SIZE,
+                  },
+                },
+              }
+            );
+            if (error) {
+              await notify(
+                ALERT_LEVEL.WARN,
+                `[Up] Failed to fetch transactions for category ${categoryId}: ${JSON.stringify(error)}`
+              );
+              return false;
+            }
+
+            // Process data
+            paginationComplete = data?.links?.next === null;
+            if (data?.data) {
+              externalTransactionIds.push(...data.data.map((t) => t.id));
+            }
+            // Process subsequent pages if available
+            if (data?.links?.next && !isRateLimitReached(response.headers)) {
+              const result = await getNextPage<TransactionResource>(
+                data.links.next,
+                (transactions) =>
+                  Promise.resolve(
+                    externalTransactionIds.push(
+                      ...transactions.map((t) => t.id)
+                    )
+                  ),
+                // Next page of data, page 2
+                CURRENT_PAGE + 1
+              );
+              paginationComplete = result.complete;
+            }
+            if (!paginationComplete) {
+              console.warn(
+                `[${PROCESS_NAME}] Failed to retrieve all transactions for category ${categoryId}: categorised transaction sync incomplete`
+              );
+              return false;
+            }
+
+            const transactionsByCategory =
+              await getTransactionsByCategory(categoryId);
+            const { inserted, deleted } = await compareProviderAndDb({
+              providerData: externalTransactionIds,
+              dbData: transactionsByCategory.map((t) => t.providerId),
+              insertToDb: (providerId) =>
+                updateTransaction(providerId, (transactionId) =>
+                  updateTransactionCategory(
+                    transactionId,
+                    categoryId,
+                    PROCESS_NAME
+                  )
+                ),
+              deleteFromDb: (providerId) =>
+                updateTransaction(providerId, (transactionId) =>
+                  updateTransactionCategory(transactionId, null, PROCESS_NAME)
+                ),
+            });
+            if (inserted > 0) {
+              console.log(
+                `Categorised ${inserted} transactions under "${categoryId}"`
+              );
+            }
+            if (deleted > 0) {
+              console.log(
+                `Uncategorised ${deleted} transactions from "${categoryId}"`
+              );
+            }
+            console.log(
+              `Finished syncing transactions for category: ${categoryId}`
+            );
+
+            return paginationComplete;
+          } catch (error) {
+            console.error(error);
+            await notify(
+              ALERT_LEVEL.ERROR,
+              `Failed to sync transactions for category ${categoryId}: ${
+                error instanceof Error ? error.message : error
+              }`
+            );
+            return false;
+          }
+        })
+    );
+
+    const results = await Promise.all(compareCategorisedTransactions);
+    // Return success if all categorised transactions were synced successfully
+    return results.every((success) => success);
+  } catch (error) {
+    console.error(error);
+    await notify(ALERT_LEVEL.ERROR, `Failed to sync categorised transactions`);
+    return false;
+  }
 };
 
-const syncTaggedTransactions = async () => {
-  const { data: tags, error } = await upClient.GET('/tags');
+/**
+ * Syncs tagged transactions from Up to database
+ * @returns whether the sync was completed in full
+ */
+const syncTaggedTransactions = async (): Promise<boolean> => {
+  try {
+    const allTags: { type: string; id: string }[] = [];
+    const CURRENT_PAGE = 1;
+    let paginationComplete = false;
+    // Fetch tags from Up API
+    const { data: tagsPage, response, error } = await upClient.GET('/tags');
 
-  if (error) {
-    console.error(error);
-    await notify(ALERT_LEVEL.WARN, `[Up] Failed to fetch tags`);
-    return;
-  }
-  if (!tags || !tags.data.length) {
-    return;
-  }
+    if (error) {
+      console.error(error);
+      await notify(
+        ALERT_LEVEL.ERROR,
+        `[Up] Failed to fetch tags: ${JSON.stringify(error)}`
+      );
+      return false;
+    }
+    if (!tagsPage) {
+      return false;
+    }
 
-  const compareTaggedTransactions = tags.data.map(
-    async ({ type, id: tagId }) => {
-      try {
-        console.log(`Syncing transactions for tag: ${tagId}`);
-        const externalTransactionIds: string[] = [];
-        if (type !== 'tags') {
-          await notify(
-            ALERT_LEVEL.ERROR,
-            `Unexpected type "${type}" for tag: ${tagId}`
-          );
-          return;
-        }
-
-        // Check tag exists in db
-        const tag = await getTag(tagId);
-        if (!tag || tag.length !== 1) {
-          await notify(
-            ALERT_LEVEL.ERROR,
-            `Tag does not exist in database: ${tagId}`
-          );
-          return;
-        }
-
-        // Retrieve transactions by tag from provider
-        const { data, error } = await upClient.GET('/transactions', {
-          params: {
-            query: {
-              'filter[tag]': tagId,
-            },
+    // Process data
+    paginationComplete = tagsPage.links?.next === null;
+    if (tagsPage.data?.length) {
+      allTags.push(...tagsPage.data);
+    }
+    // Process subsequent pages if available
+    if (tagsPage.links?.next) {
+      if (isRateLimitReached(response.headers)) {
+        console.warn(`[${PROCESS_NAME}] Rate limit reached after page 1`);
+      } else {
+        const result = await getNextPage<{ type: string; id: string }>(
+          tagsPage.links.next,
+          async (tags) => {
+            allTags.push(...tags);
           },
-        });
-        if (error) {
-          console.error(error);
-          await notify(
-            ALERT_LEVEL.WARN,
-            `[Up] Failed to fetch transactions for tag ${tagId}`
-          );
-          return;
-        }
-        if (data?.data) {
-          externalTransactionIds.push(...data.data.map((t) => t.id));
-        }
-        if (data?.links.next) {
-          await getNextPage<TransactionResource>(
-            data.links.next,
-            (transactions) =>
-              Promise.resolve(
-                externalTransactionIds.push(...transactions.map((t) => t.id))
-              ),
-            // Next page of data, page 2
-            2
-          );
-        }
-        // Retrieve transactions by tag from db
-        const transactionsByTag = await getTransactionsByTag(tagId);
-
-        // Insert or delete relationship between tags and transactions
-        const { inserted, deleted } = await compareProviderAndDb({
-          providerData: externalTransactionIds,
-          dbData: transactionsByTag.map((t) => t.providerId),
-          insertToDb: (providerId) =>
-            updateTransaction(providerId, (transactionId) =>
-              updateTransactionTag(transactionId, tagId)
-            ),
-          deleteFromDb: (providerId) =>
-            updateTransaction(providerId, (transactionId) =>
-              deleteTransactionTag(transactionId, tagId)
-            ),
-        });
-        if (inserted > 0) {
-          console.log(`Tagged ${inserted} transactions with "${tagId}"`);
-        }
-        if (deleted > 0) {
-          console.log(`Untagged ${deleted} transactions from "${tagId}"`);
-        }
-        console.log(`Finished syncing transactions for tag: ${tagId}`);
-      } catch (error) {
-        console.error(error);
-        await notify(
-          ALERT_LEVEL.ERROR,
-          `Failed to sync transactions for tag ${tagId}`
+          CURRENT_PAGE + 1
         );
+        paginationComplete = result.complete;
       }
     }
-  );
+    if (!paginationComplete) {
+      console.warn(
+        `[${PROCESS_NAME}] Failed to retrieve all tags: tagged transaction sync incomplete`
+      );
+      return false;
+    }
 
-  await Promise.all(compareTaggedTransactions);
+    // No tags to sync
+    if (!allTags.length) {
+      return true;
+    }
+
+    // Sync transactions for each tag concurrently
+    const limit = pLimit(MAX_CONCURRENCY);
+    const compareTaggedTransactions = allTags.map(({ type, id: tagId }) =>
+      limit(async () => {
+        try {
+          console.log(`Syncing transactions for tag: ${tagId}`);
+          const externalTransactionIds: string[] = [];
+          const CURRENT_PAGE = 1;
+          let paginationComplete = false;
+
+          if (type !== 'tags') {
+            await notify(
+              ALERT_LEVEL.ERROR,
+              `Unexpected type "${type}" for tag: ${tagId}`
+            );
+            return false;
+          }
+
+          // Check tag exists in db
+          const tag = await getTag(tagId);
+          if (!tag || tag.length !== 1) {
+            await notify(
+              ALERT_LEVEL.ERROR,
+              `Tag does not exist in database: ${tagId}`
+            );
+            return false;
+          }
+
+          // Retrieve transactions by tag from provider
+          const { data, response, error } = await upClient.GET(
+            '/transactions',
+            {
+              params: {
+                query: {
+                  'filter[tag]': tagId,
+                  'page[size]': DEFAULT_PAGE_SIZE,
+                },
+              },
+            }
+          );
+          if (error) {
+            console.error(error);
+            await notify(
+              ALERT_LEVEL.WARN,
+              `[Up] Failed to fetch transactions for tag ${tagId}`
+            );
+            return false;
+          }
+
+          // Process data
+          paginationComplete = data?.links?.next === null;
+          if (data?.data) {
+            externalTransactionIds.push(...data.data.map((t) => t.id));
+          }
+          // Process subsequent pages if available
+          if (data?.links?.next && !isRateLimitReached(response.headers)) {
+            const result = await getNextPage<TransactionResource>(
+              data.links.next,
+              (transactions) =>
+                Promise.resolve(
+                  externalTransactionIds.push(...transactions.map((t) => t.id))
+                ),
+              // Next page of data, page 2
+              CURRENT_PAGE + 1
+            );
+            paginationComplete = result.complete;
+          }
+
+          if (!paginationComplete) {
+            console.warn(
+              `[${PROCESS_NAME}] Failed to retrieve all transactions for tag ${tagId}: tagged transaction sync incomplete`
+            );
+            return false;
+          }
+
+          // Retrieve transactions by tag from db
+          const transactionsByTag = await getTransactionsByTag(tagId);
+
+          // Insert or delete relationship between tags and transactions
+          const { inserted, deleted } = await compareProviderAndDb({
+            providerData: externalTransactionIds,
+            dbData: transactionsByTag.map((t) => t.providerId),
+            insertToDb: (providerId) =>
+              updateTransaction(providerId, (transactionId) =>
+                updateTransactionTag(transactionId, tagId)
+              ),
+            deleteFromDb: (providerId) =>
+              updateTransaction(providerId, (transactionId) =>
+                deleteTransactionTag(transactionId, tagId)
+              ),
+          });
+          if (inserted > 0) {
+            console.log(`Tagged ${inserted} transactions with "${tagId}"`);
+          }
+          if (deleted > 0) {
+            console.log(`Untagged ${deleted} transactions from "${tagId}"`);
+          }
+          console.log(`Finished syncing transactions for tag: ${tagId}`);
+
+          return paginationComplete;
+        } catch (error) {
+          console.error(error);
+          await notify(
+            ALERT_LEVEL.ERROR,
+            `Failed to sync transactions for tag ${tagId}`
+          );
+          return false;
+        }
+      })
+    );
+
+    const results = await Promise.all(compareTaggedTransactions);
+
+    // Return success if all tagged transactions were synced successfully
+    return results.every((success) => success);
+  } catch (error) {
+    console.error(error);
+    await notify(ALERT_LEVEL.ERROR, `Failed to sync tagged transactions`);
+    return false;
+  }
 };
 
 export const handler = async () => {
@@ -262,14 +391,30 @@ export const handler = async () => {
     }
 
     // Sync tags
-    await processTags();
+    const tagsSynced = await processTags();
     // Sync tagged transactions
-    await syncTaggedTransactions();
+    const taggedTransactionsSynced = await syncTaggedTransactions();
     // Sync categorised transactions
-    await syncCategorisedTransactions();
+    const categorisedTransactionsSynced = await syncCategorisedTransactions();
+
+    if (
+      ![
+        tagsSynced,
+        taggedTransactionsSynced,
+        categorisedTransactionsSynced,
+      ].every((success) => success)
+    ) {
+      await notify(ALERT_LEVEL.WARN, `[${PROCESS_NAME}] Failed sync`);
+    }
+
+    console.info(`[${PROCESS_NAME}] Sync Status: 
+      Tags: ${tagsSynced ? 'Success' : 'Incomplete'}
+      Tagged Transactions: ${taggedTransactionsSynced ? 'Success' : 'Incomplete'}
+      Categorised Transactions: ${categorisedTransactionsSynced ? 'Success' : 'Incomplete'}
+    `);
   } catch (error) {
     console.error(error);
-    await notify(ALERT_LEVEL.ERROR, `${PROCESS_NAME} failed`);
+    await notify(ALERT_LEVEL.ERROR, `[${PROCESS_NAME}] Failed sync`);
   }
 };
 
