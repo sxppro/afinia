@@ -9,6 +9,7 @@
     "deploy:prod": "sst deploy --stage prod --verbose",
     "dev": "sst secret load ./.env --stage dev && sst dev --stage dev",
     "load-env": "sst secret load ./.env --stage prod",
+    "plan:prod": "sst diff --stage prod",
     "sso": "aws sso login --sso-session=soppro"
   },
   "dependencies": {

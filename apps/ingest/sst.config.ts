@@ -7,6 +7,11 @@ export default $config({
       removal: input?.stage === 'prod' ? 'retain' : 'remove',
       protect: ['prod'].includes(input?.stage),
       home: 'aws',
+      providers: {
+        aws: {
+          profile: input?.stage === 'prod' ? 'soppro-prod' : 'soppro-dev',
+        },
+      },
     };
   },
   async run() {
@@ -64,6 +69,9 @@ export default $config({
           retention: '3 months',
         },
       },
+      /**
+       * Every day at 14:30 UTC, 00:30 UTC+10
+       */
       schedule: 'cron(30 14 * * ? *)',
     });
 
@@ -77,6 +85,11 @@ export default $config({
           retention: '3 months',
         },
       },
+      /**
+       * Every 6 hours
+       * 03:10, 09:10, 15:10, 21:10 UTC
+       * 01:10, 07:10, 13:10, 19:10 UTC+10
+       */
       schedule: 'cron(10 3/6 * * ? *)',
     });
   },
