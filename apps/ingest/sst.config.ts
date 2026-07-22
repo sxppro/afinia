@@ -34,7 +34,7 @@ export default $config({
       logging: {
         retention: '3 months',
       },
-      runtime: 'nodejs22.x',
+      runtime: 'nodejs24.x',
       timeout: '30 seconds',
     });
     api.deploy();
@@ -46,11 +46,11 @@ export default $config({
       secrets.discordUserId,
     ];
 
-    new sst.aws.Cron('AfiniaSyncRecent', {
+    new sst.aws.CronV2('AfiniaSyncRecent', {
       function: {
         handler: 'src/provider/up/modules/syncRecent.handler',
         timeout: '600 seconds',
-        runtime: 'nodejs22.x',
+        runtime: 'nodejs24.x',
         link: cronSecrets,
         logging: {
           retention: '1 month',
@@ -59,11 +59,11 @@ export default $config({
       schedule: 'rate(15 minutes)',
     });
 
-    new sst.aws.Cron('AfiniaSyncDaily', {
+    new sst.aws.CronV2('AfiniaSyncDaily', {
       function: {
         handler: 'src/provider/up/modules/syncData.handler',
         timeout: '600 seconds',
-        runtime: 'nodejs22.x',
+        runtime: 'nodejs24.x',
         link: cronSecrets,
         logging: {
           retention: '3 months',
@@ -75,11 +75,11 @@ export default $config({
       schedule: 'cron(30 14 * * ? *)',
     });
 
-    new sst.aws.Cron('AfiniaSyncSixHourly', {
+    new sst.aws.CronV2('AfiniaSyncSixHourly', {
       function: {
         handler: 'src/provider/up/modules/syncTransactions.handler',
         timeout: '600 seconds',
-        runtime: 'nodejs22.x',
+        runtime: 'nodejs24.x',
         link: cronSecrets,
         logging: {
           retention: '3 months',
