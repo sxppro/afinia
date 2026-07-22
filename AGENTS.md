@@ -12,7 +12,7 @@ Standard commands live in each `package.json` (`dev`, `build`, `lint`, `typechec
 
 ### Environment / Runtime
 
-- Node 22 is what runs here; `apps/ingest` declares `engines.node >=24`, so `pnpm` prints an "Unsupported engine" **warning** for it — this is harmless for local web dev and installs/builds still succeed.
+- The dev VM runs Node 22, while `apps/ingest` targets Node 24 (its `engines.node >=24` plus the SST Node 24 Lambda runtime), so `pnpm` prints an "Unsupported engine" **warning** for it. This is expected and harmless for local web dev — installs/builds and the web dev server still succeed, so don't upgrade local Node to "fix" it.
 - `apps/web` reads env from `apps/web/.env.local` (gitignored). Several modules **throw at import** if their env vars are missing, so all of these must be set for the web app to boot: `DATABASE_URL`, `UP_API_KEY` (any non-empty value for UI-only work), `AUTH_SECRET`, `BASE_URL` (`http://localhost:3000`), `NEXT_PUBLIC_VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY`. Also set `AUTH_WHITELIST` (the single email allowed to sign in) and `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (may be dummy unless doing real Google login). Generate VAPID keys with `web-push`'s `generateVAPIDKeys()`.
 
 ### Database (required, not auto-provisioned)
