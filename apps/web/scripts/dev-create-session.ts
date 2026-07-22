@@ -9,12 +9,12 @@
  *
  * Usage (from apps/web, with apps/web/.env.local populated):
  *   set -a; . ./.env.local; set +a
- *   node <path-to>/tsx/dist/cli.mjs dev-create-session.ts
+ *   node <path-to>/tsx/dist/cli.mjs scripts/dev-create-session.ts
  */
-import { randomBytes } from 'crypto';
 import { authSchema } from 'afinia-common/schema';
-import { auth } from './lib/auth/config';
-import { db } from './lib/db/client';
+import { randomBytes } from 'crypto';
+import { auth } from '../lib/auth/config';
+import { db } from '../lib/db/client';
 
 async function makeSignature(value: string, secret: string) {
   const key = await crypto.subtle.importKey(

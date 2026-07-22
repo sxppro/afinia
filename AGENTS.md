@@ -28,7 +28,7 @@ Standard commands live in each `package.json` (`dev`, `build`, `lint`, `typechec
 
 ### Auth: logging in locally
 
-- The only login provider configured is **Google OAuth**, gated by an email whitelist (`AUTH_WHITELIST`), so normal login can't be completed headlessly. To reach the OAuth-gated `/app` routes locally, mint a session directly with `apps/web/dev-create-session.ts` — it inserts a whitelisted user + `session` row and prints a validly-signed `better-auth.session_token` cookie. Set that cookie in the browser (DevTools → Application → Cookies) or send it as a `Cookie:` header with curl. The session cookie is httpOnly.
+- The only login provider configured is **Google OAuth**, gated by an email whitelist (`AUTH_WHITELIST`), so normal login can't be completed headlessly. To reach the OAuth-gated `/app` routes locally, mint a session directly with `apps/web/scripts/dev-create-session.ts` — it inserts a whitelisted user + `session` row and prints a validly-signed `better-auth.session_token` cookie. Set that cookie in the browser (DevTools → Application → Cookies) or send it as a `Cookie:` header with curl. The session cookie is httpOnly.
 
 ### Known caveat: writes hit the Up Banking API
 
