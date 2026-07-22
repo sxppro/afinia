@@ -118,19 +118,21 @@ const UserSettings = (props: React.ComponentProps<typeof Dialog>) => {
           <DialogTitle>Settings</DialogTitle>
         </DialogHeader>
         <FieldGroup>
-          <Field orientation="horizontal">
-            <FieldContent>
-              <FieldLabel htmlFor="enable-notifications">
-                Enable notifications
-              </FieldLabel>
-            </FieldContent>
-            <Switch
-              id="enable-notifications"
-              checked={!!subscription}
-              onCheckedChange={(e) =>
-                e ? subscribeToPush() : unsubscribeFromPush()
-              }
-            />
+          <Field orientation="vertical">
+            <div className="flex items-center justify-between">
+              <FieldContent>
+                <FieldLabel htmlFor="enable-notifications">
+                  Enable notifications
+                </FieldLabel>
+              </FieldContent>
+              <Switch
+                id="enable-notifications"
+                checked={!!subscription}
+                onCheckedChange={(e) =>
+                  e ? subscribeToPush() : unsubscribeFromPush()
+                }
+              />
+            </div>
             {isPushSupported ? null : (
               <FieldDescription>
                 Push notifications are not supported in this browser.

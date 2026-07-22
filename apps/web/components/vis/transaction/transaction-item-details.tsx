@@ -1,6 +1,5 @@
 'use client';
 
-import CurrencyFlow from '@/components/currency-flow';
 import CurrencySwitch from '@/components/currency-switch';
 import CategoryIconOrInitial from '@/components/icons/category-icon-or-initial';
 import ScrollableContent from '@/components/misc/scrollable-content';
@@ -27,6 +26,7 @@ import { format } from 'date-fns';
 import { ExternalLink, SquarePen } from 'lucide-react';
 import Link from 'next/link';
 import { CSSProperties, PropsWithChildren, useState } from 'react';
+import CurrencyFlow from '../currency-flow';
 import TransactionEditCategory from './transaction-edit-category';
 
 const TransactionItemDetails = ({

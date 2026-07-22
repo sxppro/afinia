@@ -1,3 +1,4 @@
+import ToggleBalanceVisibility from '@/components/misc/toggle-balance-visibility';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -26,9 +27,12 @@ const AppHome = ({
       <div className="flex flex-col gap-2">
         <div>
           <p className="text-muted-foreground text-lg font-medium">Balance</p>
-          <Suspense fallback={<Skeleton className="h-14 w-full" />}>
-            <AccountBalanceTotal />
-          </Suspense>
+          <div className="flex items-center justify-between gap-4">
+            <Suspense fallback={<Skeleton className="h-14 w-full" />}>
+              <AccountBalanceTotal />
+            </Suspense>
+            <ToggleBalanceVisibility size="icon-xl" />
+          </div>
         </div>
         <Suspense fallback={<Skeleton className="h-56 w-full" />}>
           <AccountBalanceTimeline searchParams={searchParams} />
