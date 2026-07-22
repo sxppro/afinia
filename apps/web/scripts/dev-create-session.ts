@@ -1,5 +1,5 @@
 /**
- * Local development helper (NOT for production).
+ * Local development auth helper - not for deployed environments
  *
  * Afinia only configures a Google OAuth provider for login, which cannot be
  * completed in a local/headless dev environment. This script creates a user

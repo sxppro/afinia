@@ -1,8 +1,8 @@
 /**
- * Local development Drizzle config (NOT used in deploy).
+ * Local development Drizzle config - not for deployed environments
  *
  * The default `drizzle.config.ts` reads the database URL from SST
- * (`Resource.DATABASE_URL`), which requires AWS credentials. This variant reads
+ * (`Resource.DATABASE_URL`), which requires AWS credentials. This config reads
  * `DATABASE_URL` from the environment so schema can be applied to a local
  * Postgres without SST, e.g.:
  *   DATABASE_URL=postgres://... drizzle-kit push --config=drizzle.local.config.ts
