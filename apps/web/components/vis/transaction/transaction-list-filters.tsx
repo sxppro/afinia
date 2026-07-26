@@ -32,9 +32,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getEndOfDay, getStartOfDay } from '@/lib/dateTime';
-import { accountTable, categoryTable } from 'afinia-common/schema';
+import {
+  categoryTable,
+  tagTable,
+  transactionTable,
+} from 'afinia-common/schema';
 import { format, parse } from 'date-fns';
-import { Loader2, SlidersHorizontal } from 'lucide-react';
+import { Loader2, SlidersHorizontal, X } from 'lucide-react';
 import {
   parseAsBoolean,
   parseAsString,
@@ -72,8 +76,11 @@ const DatePickerFilter = ({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger
           render={
-            <Button variant="outline" className="justify-start font-normal">
-              {value ? format(value, 'dd/MM/yyyy') : 'Select date'}
+            <Button
+              variant="outline"
+              className="min-w-24 justify-center font-normal"
+            >
+              {value ? format(value, 'dd/MM/yyyy') : 'Any date'}
             </Button>
           }
         />
@@ -99,14 +106,21 @@ const DatePickerFilter = ({
 };
 
 interface TransactionListFiltersProps {
-  accountsFetch?: Promise<(typeof accountTable.$inferSelect)[]>;
   categoriesFetch: Promise<(typeof categoryTable.$inferSelect)[]>;
+  tagsFetch: Promise<(typeof tagTable.$inferSelect)[]>;
+  transactionTypesFetch: Promise<
+    Pick<typeof transactionTable.$inferSelect, 'type'>[]
+  >;
 }
 
 const TransactionListFilters = ({
   categoriesFetch,
+  tagsFetch,
+  transactionTypesFetch,
 }: TransactionListFiltersProps) => {
   const categories = use(categoriesFetch);
+  const tags = use(tagsFetch);
+  const transactionTypes = use(transactionTypesFetch);
   const [isLoading, startTransition] = useTransition();
 
   // State
@@ -134,9 +148,23 @@ const TransactionListFilters = ({
   const [drawer, setDrawer] = useState<HTMLDivElement | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  const hasFilters = Object.values(draftFilters).some(
+    (value) => value !== null
+  );
+
   const handleFilterChange = async () => {
     await setFilters(draftFilters);
     setFiltersOpen(false);
+  };
+  const handleReset = () => {
+    setDraftFilters({
+      from: null,
+      to: null,
+      tag: null,
+      type: null,
+      has_note: null,
+      has_attachment: null,
+    });
   };
 
   return (
@@ -185,10 +213,21 @@ const TransactionListFilters = ({
           </Button>
         </DrawerTrigger>
         <DrawerContent ref={setDrawer} className="font-sans">
-          <DrawerHeader>
-            <DrawerTitle className="text-start text-xl font-bold">
+          <DrawerHeader className="flex-row items-center justify-between">
+            <DrawerTitle className="min-h-8 text-start text-xl font-bold">
               Filters
             </DrawerTitle>
+            {hasFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleReset}
+                className="text-muted-foreground"
+              >
+                <X className="size-4" />
+                Clear filters
+              </Button>
+            )}
           </DrawerHeader>
           <div className="flex flex-col gap-4 px-4">
             <div className="flex flex-col gap-2">
@@ -223,6 +262,84 @@ const TransactionListFilters = ({
                 container={drawer}
               />
             </div>
+            <Field
+              orientation="horizontal"
+              className="has-[>[data-slot=field-content]]:items-center"
+            >
+              <FieldContent>
+                <FieldLabel
+                  htmlFor="tag"
+                  className="text-muted-foreground text-base"
+                >
+                  Tag
+                </FieldLabel>
+              </FieldContent>
+              <Select
+                value={draftFilters.tag ?? undefined}
+                onValueChange={(value) =>
+                  setDraftFilters((prev) => ({
+                    ...prev,
+                    tag: value ?? null,
+                  }))
+                }
+              >
+                <SelectTrigger id="tag" className="min-w-32">
+                  <SelectValue placeholder="Select a tag">
+                    {draftFilters.tag}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="font-sans">
+                  <SelectGroup>
+                    <SelectLabel>Tag</SelectLabel>
+                    {tags.map(({ tag_id }) => (
+                      <SelectItem key={tag_id} value={tag_id}>
+                        {tag_id}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field
+              orientation="horizontal"
+              className="has-[>[data-slot=field-content]]:items-center"
+            >
+              <FieldContent>
+                <FieldLabel
+                  htmlFor="type"
+                  className="text-muted-foreground text-base"
+                >
+                  Transaction Type
+                </FieldLabel>
+              </FieldContent>
+              <Select
+                value={draftFilters.type ?? undefined}
+                onValueChange={(value) =>
+                  setDraftFilters((prev) => ({
+                    ...prev,
+                    type: value ?? null,
+                  }))
+                }
+              >
+                <SelectTrigger id="type" className="min-w-32">
+                  <SelectValue placeholder="Select a type">
+                    {draftFilters.type}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="font-sans">
+                  <SelectGroup>
+                    <SelectLabel>Transaction Type</SelectLabel>
+                    {transactionTypes.map(({ type }) =>
+                      type ? (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ) : null
+                    )}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </Field>
             <Field orientation="horizontal">
               <FieldContent className="gap-1">
                 <FieldLabel htmlFor="has-note" className="text-base">

@@ -5,6 +5,8 @@ import TransactionListFilters from '@/components/vis/transaction/transaction-lis
 import { TransactionFilters } from '@/lib/actions/transaction';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import { getParentCategories } from '@/lib/db/category';
+import { getTags } from '@/lib/db/tag';
+import { getTransactionTypes } from '@/lib/db/transaction';
 import { booleanParam, stringParam } from '@/lib/params';
 import type { SearchParam } from '@/lib/types';
 import { Suspense } from 'react';
@@ -17,7 +19,6 @@ const TransactionsPage = async ({
 }) => {
   const { category, query, from, to, tag, type, has_note, has_attachment } =
     await searchParams;
-  const categoriesFetch = getParentCategories();
   const filters = {
     category_id: stringParam(category),
     search_term: stringParam(query),
@@ -32,6 +33,10 @@ const TransactionsPage = async ({
     (value) => value !== undefined
   );
 
+  const categoriesFetch = getParentCategories();
+  const tagsFetch = getTags();
+  const txnTypesFetch = getTransactionTypes();
+
   return (
     <div className="flex flex-col gap-2">
       <TransactionsPageHeader />
@@ -39,7 +44,11 @@ const TransactionsPage = async ({
       <div className="flex flex-col gap-2">
         <SearchInput placeholder="Search transactions ..." />
         <Suspense fallback={<Skeleton className="h-9 w-full" />}>
-          <TransactionListFilters categoriesFetch={categoriesFetch} />
+          <TransactionListFilters
+            categoriesFetch={categoriesFetch}
+            tagsFetch={tagsFetch}
+            transactionTypesFetch={txnTypesFetch}
+          />
         </Suspense>
         <Suspense
           fallback={
