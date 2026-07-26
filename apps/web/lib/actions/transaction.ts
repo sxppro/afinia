@@ -9,18 +9,24 @@ import {
   transactionTable,
   transactionTagTable,
 } from 'afinia-common/schema';
+import { addDays, isValid, parse } from 'date-fns';
 import {
   and,
   desc,
   eq,
+  exists,
   getTableColumns,
+  gte,
+  isNotNull,
   isNull,
+  lt,
   or,
   SQL,
   sql,
 } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { getServerSession } from '../auth/session';
+import { getStartOfDay } from '../dateTime';
 import { db } from '../db/client';
 import { Prettify } from '../types';
 
@@ -31,7 +37,16 @@ export type TransactionCursor = Prettify<
 export type TransactionFilters = Prettify<
   Partial<
     Pick<typeof transactionTable.$inferSelect, 'account_id' | 'category_id'>
-  > & { search_term?: string; include_transfers?: boolean }
+  > & {
+    from?: string;
+    to?: string;
+    tag_id?: string;
+    type?: string;
+    search_term?: string;
+    include_transfers?: boolean;
+    has_note?: boolean;
+    has_attachment?: boolean;
+  }
 >;
 
 /**
@@ -76,12 +91,63 @@ export const getTransactionsPaginated = async (
     // Filter mode
   } else if ('filters' in options) {
     const { filters } = options;
-    const accountId = filters?.account_id;
     const categoryId = filters?.category_id?.trim();
     const searchTerm = filters?.search_term?.trim();
 
-    if (accountId !== undefined) {
-      conditions.push(eq(transactionTable.account_id, accountId));
+    if (filters?.account_id !== undefined) {
+      conditions.push(eq(transactionTable.account_id, filters.account_id));
+    }
+
+    if (filters?.from) {
+      const fromTimestamp = parse(filters?.from, 'yyyy-MM-dd', getStartOfDay());
+      if (isValid(fromTimestamp)) {
+        conditions.push(gte(transactionTable.created_at, fromTimestamp));
+      } else {
+        console.error('Invalid from date: ', filters?.from);
+      }
+    }
+
+    if (filters?.to) {
+      const toTimestamp = parse(filters?.to, 'yyyy-MM-dd', getStartOfDay());
+      if (isValid(toTimestamp)) {
+        // Add 1 day for boundary condition
+        conditions.push(
+          lt(transactionTable.created_at, addDays(toTimestamp, 1))
+        );
+      } else {
+        console.error('Invalid to date: ', filters?.to);
+      }
+    }
+
+    if (filters?.type) {
+      conditions.push(eq(transactionTable.type, filters.type));
+    }
+
+    if (filters?.has_note) {
+      conditions.push(isNotNull(transactionTable.note));
+    }
+
+    if (filters?.has_attachment) {
+      conditions.push(isNotNull(transactionTable.attachment_id));
+    }
+
+    if (filters?.tag_id) {
+      conditions.push(
+        exists(
+          db
+            .select({ exists: sql`1` })
+            .from(transactionTagTable)
+            .where(
+              and(
+                eq(
+                  transactionTagTable.transaction_id,
+                  transactionTable.transaction_id
+                ),
+                eq(transactionTagTable.tag_id, filters.tag_id)
+              )
+            )
+        )
+      );
     }
 
     if (categoryId) {
