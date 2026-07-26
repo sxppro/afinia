@@ -2,21 +2,35 @@ import SearchInput from '@/components/misc/search-input';
 import { Skeleton } from '@/components/ui/skeleton';
 import TransactionList from '@/components/vis/transaction/transaction-list';
 import TransactionListFilters from '@/components/vis/transaction/transaction-list-filters';
+import { TransactionFilters } from '@/lib/actions/transaction';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import { getParentCategories } from '@/lib/db/category';
+import { booleanParam, stringParam } from '@/lib/params';
+import type { SearchParam } from '@/lib/types';
 import { Suspense } from 'react';
 import TransactionsPageHeader from './_components/page-header';
 
 const TransactionsPage = async ({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; query?: string }>;
+  searchParams: Promise<Record<string, SearchParam>>;
 }) => {
-  const { category: inputCategory, query: inputQuery } = await searchParams;
+  const { category, query, from, to, tag, type, has_note, has_attachment } =
+    await searchParams;
   const categoriesFetch = getParentCategories();
-  const category = inputCategory?.trim();
-  const query = inputQuery?.trim();
-  const hasFilters = category || query;
+  const filters = {
+    category_id: stringParam(category),
+    search_term: stringParam(query),
+    from: stringParam(from),
+    to: stringParam(to),
+    tag_id: stringParam(tag),
+    type: stringParam(type),
+    has_note: booleanParam(has_note),
+    has_attachment: booleanParam(has_attachment),
+  } satisfies TransactionFilters;
+  const hasFilters = Object.values(filters).some(
+    (value) => value !== undefined
+  );
 
   return (
     <div className="flex flex-col gap-2">
@@ -40,10 +54,7 @@ const TransactionsPage = async ({
             options={{
               limit: DEFAULT_PAGE_SIZE,
               ...(hasFilters && {
-                filters: {
-                  ...(category && { category_id: category }),
-                  ...(query && { search_term: query }),
-                },
+                filters,
               }),
             }}
             isInfinite

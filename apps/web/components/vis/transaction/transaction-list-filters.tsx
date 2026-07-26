@@ -1,5 +1,27 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldLabel,
+} from '@/components/ui/field';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -9,9 +31,72 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { getEndOfDay, getStartOfDay } from '@/lib/dateTime';
 import { accountTable, categoryTable } from 'afinia-common/schema';
-import { useQueryState } from 'nuqs';
-import { use } from 'react';
+import { format, parse } from 'date-fns';
+import { Loader2, SlidersHorizontal } from 'lucide-react';
+import {
+  parseAsBoolean,
+  parseAsString,
+  useQueryState,
+  useQueryStates,
+} from 'nuqs';
+import { use, useState, useTransition } from 'react';
+
+const DatePickerFilter = ({
+  label,
+  value,
+  onChange,
+  container,
+}: {
+  label: string;
+  value: Date | undefined;
+  onChange: (date: Date | undefined) => void;
+  container: HTMLDivElement | null;
+}) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Field
+      orientation="horizontal"
+      className="has-[>[data-slot=field-content]]:items-center"
+    >
+      <FieldContent>
+        <FieldLabel
+          htmlFor={`date-picker-${label.toLowerCase().replace(' ', '-')}`}
+          className="text-muted-foreground text-base"
+        >
+          {label}
+        </FieldLabel>
+      </FieldContent>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          render={
+            <Button variant="outline" className="justify-start font-normal">
+              {value ? format(value, 'dd/MM/yyyy') : 'Select date'}
+            </Button>
+          }
+        />
+        <PopoverContent
+          className="w-auto overflow-hidden p-0"
+          align="start"
+          container={container}
+        >
+          <Calendar
+            mode="single"
+            selected={value}
+            defaultMonth={value}
+            captionLayout="dropdown"
+            onSelect={(date) => {
+              onChange(date);
+              setOpen(false);
+            }}
+          />
+        </PopoverContent>
+      </Popover>
+    </Field>
+  );
+};
 
 interface TransactionListFiltersProps {
   accountsFetch?: Promise<(typeof accountTable.$inferSelect)[]>;
@@ -22,13 +107,40 @@ const TransactionListFilters = ({
   categoriesFetch,
 }: TransactionListFiltersProps) => {
   const categories = use(categoriesFetch);
+  const [isLoading, startTransition] = useTransition();
+
+  // State
   const [category, setCategory] = useQueryState('category', {
     defaultValue: 'all',
     shallow: false,
   });
+  // Filter state from query params
+  const [filters, setFilters] = useQueryStates(
+    {
+      from: parseAsString,
+      to: parseAsString,
+      tag: parseAsString,
+      type: parseAsString,
+      has_note: parseAsBoolean,
+      has_attachment: parseAsBoolean,
+    },
+    {
+      shallow: false,
+      startTransition,
+    }
+  );
+  // Filter state from unsubmitted inputs
+  const [draftFilters, setDraftFilters] = useState(filters);
+  const [drawer, setDrawer] = useState<HTMLDivElement | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const handleFilterChange = async () => {
+    await setFilters(draftFilters);
+    setFiltersOpen(false);
+  };
 
   return (
-    <div className="flex gap-1">
+    <div className="grid grid-cols-2 gap-1">
       <Select value={category ?? 'all'} onValueChange={setCategory}>
         <SelectTrigger className="w-full max-w-48 text-base">
           <SelectValue placeholder="Category">
@@ -61,6 +173,113 @@ const TransactionListFilters = ({
           </SelectGroup>
         </SelectContent>
       </Select>
+      <Drawer
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        repositionInputs={false}
+      >
+        <DrawerTrigger asChild>
+          <Button variant="outline" className="bg-transparent">
+            <SlidersHorizontal className="size-4" />
+            More filters
+          </Button>
+        </DrawerTrigger>
+        <DrawerContent ref={setDrawer} className="font-sans">
+          <DrawerHeader>
+            <DrawerTitle className="text-start text-xl font-bold">
+              Filters
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className="flex flex-col gap-4 px-4">
+            <div className="flex flex-col gap-2">
+              <DatePickerFilter
+                label="From"
+                value={
+                  draftFilters.from
+                    ? parse(draftFilters.from, 'yyyy-MM-dd', getStartOfDay())
+                    : undefined
+                }
+                onChange={(date) =>
+                  setDraftFilters((prev) => ({
+                    ...prev,
+                    from: date ? format(date, 'yyyy-MM-dd') : null,
+                  }))
+                }
+                container={drawer}
+              />
+              <DatePickerFilter
+                label="To"
+                value={
+                  draftFilters.to
+                    ? parse(draftFilters.to, 'yyyy-MM-dd', getEndOfDay())
+                    : undefined
+                }
+                onChange={(date) => {
+                  setDraftFilters((prev) => ({
+                    ...prev,
+                    to: date ? format(date, 'yyyy-MM-dd') : null,
+                  }));
+                }}
+                container={drawer}
+              />
+            </div>
+            <Field orientation="horizontal">
+              <FieldContent className="gap-1">
+                <FieldLabel htmlFor="has-note" className="text-base">
+                  Has note
+                </FieldLabel>
+                <FieldDescription>
+                  Show only transactions with a note.
+                </FieldDescription>
+              </FieldContent>
+              <Checkbox
+                id="has-note"
+                checked={draftFilters.has_note ?? false}
+                onCheckedChange={(checked) =>
+                  setDraftFilters((prev) => ({
+                    ...prev,
+                    has_note: checked ? checked : null,
+                  }))
+                }
+                className="size-5"
+              />
+            </Field>
+            <Field orientation="horizontal">
+              <FieldContent className="gap-1">
+                <FieldLabel htmlFor="has-attachment" className="text-base">
+                  Has attachment
+                </FieldLabel>
+                <FieldDescription>
+                  Show only transactions with an attachment.
+                </FieldDescription>
+              </FieldContent>
+              <Checkbox
+                id="has-attachment"
+                checked={draftFilters.has_attachment ?? false}
+                onCheckedChange={(checked) =>
+                  setDraftFilters((prev) => ({
+                    ...prev,
+                    has_attachment: checked ? checked : null,
+                  }))
+                }
+                className="size-5"
+              />
+            </Field>
+          </div>
+          <DrawerFooter className="grid">
+            <Button onClick={handleFilterChange} disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <span>Applying filters...</span>
+                  <Loader2 className="size-4 animate-spin" />
+                </div>
+              ) : (
+                'Apply filters'
+              )}
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };

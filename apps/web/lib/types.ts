@@ -24,3 +24,5 @@ export type DateRange = {
 export type TransactionRow = Awaited<
   ReturnType<typeof getTransactionsPaginated>
 >['transactions'][number];
+
+export type SearchParam = string | string[] | undefined;
