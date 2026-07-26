@@ -15,7 +15,7 @@
   "dependencies": {
     "afinia-common": "workspace:*",
     "date-fns": "catalog:",
-    "drizzle-orm": "^0.44.6",
+    "drizzle-orm": "catalog:",
     "p-limit": "^7.3.0",
     "postgres": "^3.4.7",
     "sst": "4.17.1",
