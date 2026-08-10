@@ -10,6 +10,7 @@ export const siteConfig = {
     appHome: '/app',
     accounts: '/app/accounts',
     spending: '/app/spending',
+    insights: '/app/insights',
     transactions: '/app/transactions',
   },
 } as const;
