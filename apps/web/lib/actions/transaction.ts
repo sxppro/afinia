@@ -31,7 +31,11 @@ export type TransactionCursor = Prettify<
 export type TransactionFilters = Prettify<
   Partial<
     Pick<typeof transactionTable.$inferSelect, 'account_id' | 'category_id'>
-  > & { search_term?: string; include_transfers?: boolean }
+  > & {
+    search_term?: string;
+    merchant?: string;
+    include_transfers?: boolean;
+  }
 >;
 
 /**
@@ -79,6 +83,7 @@ export const getTransactionsPaginated = async (
     const accountId = filters?.account_id;
     const categoryId = filters?.category_id?.trim();
     const searchTerm = filters?.search_term?.trim();
+    const merchant = filters?.merchant;
 
     if (accountId !== undefined) {
       conditions.push(eq(transactionTable.account_id, accountId));
@@ -101,6 +106,10 @@ export const getTransactionsPaginated = async (
       conditions.push(
         sql`${transactionTable.text_search} @@ websearch_to_tsquery('english', ${searchTerm})`
       );
+    }
+
+    if (merchant) {
+      conditions.push(eq(transactionTable.description, merchant));
     }
 
     if (options.offset) {

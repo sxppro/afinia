@@ -8,14 +8,14 @@ const SpendingByCategory = ({
   category,
   dataFetch,
 }: {
-  category: string;
+  category?: string;
   dataFetch: Promise<BarListProps['data']>;
 }) => {
   const data = use(dataFetch);
 
   if (data.length === 0) {
     return (
-      <p className="w-full p-4 rounded border border-dashed text-center text-sm text-muted-foreground">
+      <p className="text-muted-foreground w-full rounded border border-dashed p-4 text-center text-sm">
         No spending data
       </p>
     );

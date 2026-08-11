@@ -9,6 +9,7 @@ export const siteConfig = {
     loginError: '/login/error',
     appHome: '/app',
     accounts: '/app/accounts',
+    merchants: '/app/merchants',
     spending: '/app/spending',
     transactions: '/app/transactions',
   },

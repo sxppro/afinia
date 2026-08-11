@@ -221,6 +221,11 @@ export const transactionTable = schema
         desc(table.created_at),
         desc(table.transaction_id)
       ),
+      index('transaction_description_created_at_id_idx').on(
+        table.description,
+        desc(table.created_at),
+        desc(table.transaction_id)
+      ),
       index('transaction_text_search_idx').using('gin', table.text_search),
     ]
   )

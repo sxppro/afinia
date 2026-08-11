@@ -155,7 +155,16 @@ const TransactionItemDetails = ({
           </div>
           <div>
             <DrawerTitle className="text-start text-xl font-bold">
-              {description}
+              {description ? (
+                <Link
+                  href={`${siteConfig.baseLinks.merchants}/${encodeURIComponent(description)}`}
+                  className="hover:underline hover:underline-offset-2"
+                >
+                  {description}
+                </Link>
+              ) : (
+                description
+              )}
             </DrawerTitle>
             <DrawerDescription className="text-start font-mono">
               {raw_text}
