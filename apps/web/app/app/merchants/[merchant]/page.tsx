@@ -44,7 +44,7 @@ const MerchantInsightsPage = async ({
     return redirect(siteConfig.baseLinks.appHome);
   }
 
-  const [merchant] = await getMerchantByName(merchantName);
+  const [merchant] = await getMerchantByName(decodeURIComponent(merchantName));
 
   // #region agent log
   appendFileSync('/opt/cursor/logs/debug.log', `${JSON.stringify({ hypothesisId: 'C,D,E', location: 'apps/web/app/app/merchants/[merchant]/page.tsx:query-result', message: 'merchant lookup returned to route', data: { found: Boolean(merchant), nameType: typeof merchant?.name, nameLength: merchant?.name?.length }, timestamp: Date.now() })}\n`);
