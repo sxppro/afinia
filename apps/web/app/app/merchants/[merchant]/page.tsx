@@ -18,7 +18,6 @@ import { siteConfig } from '@/lib/siteConfig';
 import { transactionExternalTable } from 'afinia-common/schema';
 import { endOfMonth, format, startOfMonth } from 'date-fns';
 import { lt, sql, sum } from 'drizzle-orm';
-import { appendFileSync } from 'node:fs';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -29,36 +28,18 @@ const MerchantInsightsPage = async ({
 }: {
   params: Promise<{ merchant: string }>;
 }) => {
-  // #region agent log
-  appendFileSync('/opt/cursor/logs/debug.log', `${JSON.stringify({ hypothesisId: 'A,B,E', location: 'apps/web/app/app/merchants/[merchant]/page.tsx:entry', message: 'merchant route entered', data: {}, timestamp: Date.now() })}\n`);
-  // #endregion
   const { merchant: merchantName } = await params;
 
-  // #region agent log
-  appendFileSync('/opt/cursor/logs/debug.log', `${JSON.stringify({ hypothesisId: 'A,B,C', location: 'apps/web/app/app/merchants/[merchant]/page.tsx:params', message: 'resolved merchant route parameter signature', data: { type: typeof merchantName, length: merchantName?.length, codePoints: merchantName ? Array.from(merchantName, (character) => character.codePointAt(0)) : null, hasPercent: merchantName?.includes('%'), hasSlash: merchantName?.includes('/'), hasApostrophe: merchantName?.includes("'") }, timestamp: Date.now() })}\n`);
-  // #endregion
   if (!merchantName) {
-    // #region agent log
-    appendFileSync('/opt/cursor/logs/debug.log', `${JSON.stringify({ hypothesisId: 'A,E', location: 'apps/web/app/app/merchants/[merchant]/page.tsx:empty-redirect', message: 'redirecting because route parameter is empty', data: {}, timestamp: Date.now() })}\n`);
-    // #endregion
     return redirect(siteConfig.baseLinks.appHome);
   }
 
   const [merchant] = await getMerchantByName(decodeURIComponent(merchantName));
 
-  // #region agent log
-  appendFileSync('/opt/cursor/logs/debug.log', `${JSON.stringify({ hypothesisId: 'C,D,E', location: 'apps/web/app/app/merchants/[merchant]/page.tsx:query-result', message: 'merchant lookup returned to route', data: { found: Boolean(merchant), nameType: typeof merchant?.name, nameLength: merchant?.name?.length }, timestamp: Date.now() })}\n`);
-  // #endregion
   if (!merchant?.name) {
-    // #region agent log
-    appendFileSync('/opt/cursor/logs/debug.log', `${JSON.stringify({ hypothesisId: 'C,D,E', location: 'apps/web/app/app/merchants/[merchant]/page.tsx:not-found-redirect', message: 'redirecting because merchant lookup has no name', data: { found: Boolean(merchant) }, timestamp: Date.now() })}\n`);
-    // #endregion
     return redirect(siteConfig.baseLinks.appHome);
   }
 
-  // #region agent log
-  appendFileSync('/opt/cursor/logs/debug.log', `${JSON.stringify({ hypothesisId: 'D,E', location: 'apps/web/app/app/merchants/[merchant]/page.tsx:render', message: 'rendering merchant insights route', data: { nameLength: merchant.name.length }, timestamp: Date.now() })}\n`);
-  // #endregion
   const range = {
     start: startOfMonth(getStartOfDay()),
     end: endOfMonth(getStartOfDay()),
