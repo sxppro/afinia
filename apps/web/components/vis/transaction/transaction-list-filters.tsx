@@ -1,5 +1,6 @@
 'use client';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -148,6 +149,13 @@ const TransactionListFilters = ({
   const [drawer, setDrawer] = useState<HTMLDivElement | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  const activeFilterCount = [
+    filters.from || filters.to,
+    filters.tag,
+    filters.type,
+    filters.has_note !== null,
+    filters.has_attachment !== null,
+  ].filter(Boolean).length;
   const hasFilters = Object.values(draftFilters).some(
     (value) => value !== null
   );
@@ -210,9 +218,10 @@ const TransactionListFilters = ({
           <Button variant="outline" className="bg-transparent">
             <SlidersHorizontal className="size-4" />
             More filters
+            {activeFilterCount > 0 && <Badge>{activeFilterCount}</Badge>}
           </Button>
         </DrawerTrigger>
-        <DrawerContent ref={setDrawer} className="font-sans">
+        <DrawerContent ref={setDrawer} className="overflow-y-auto font-sans">
           <DrawerHeader className="flex-row items-center justify-between">
             <DrawerTitle className="min-h-8 text-start text-xl font-bold">
               Filters
