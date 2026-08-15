@@ -1,5 +1,5 @@
 import { transactionTable } from 'afinia-common/schema';
-import { eq, isNotNull } from 'drizzle-orm';
+import { and, eq, isNotNull, isNull } from 'drizzle-orm';
 import { db } from './client';
 
 export const updateTransactionCategory = (id: number, category: string) =>
@@ -21,5 +21,11 @@ export const getTransactionTypes = () =>
       type: transactionTable.type,
     })
     .from(transactionTable)
-    .where(isNotNull(transactionTable.type))
+    .where(
+      and(
+        isNotNull(transactionTable.type),
+        eq(transactionTable.is_categorizable, true),
+        isNull(transactionTable.deleted_at)
+      )
+    )
     .orderBy(transactionTable.type);

@@ -29,6 +29,7 @@ const TransactionList = async ({
         initialCursor={{
           created_at: transactions.at(-1)!.created_at,
           transaction_id: transactions.at(-1)!.transaction_id,
+          value_in_base_units: transactions.at(-1)!.value_in_base_units,
         }}
         initialHasMore={hasMore}
         options={options}
