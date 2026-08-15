@@ -6,7 +6,13 @@ import {
   transactionTable,
   transactionTagTable,
 } from 'afinia-common/schema';
-import { endOfMonth, startOfMonth, subMonths } from 'date-fns';
+import {
+  addDays,
+  differenceInCalendarDays,
+  endOfMonth,
+  startOfMonth,
+  subMonths,
+} from 'date-fns';
 import {
   and,
   avg,
@@ -16,7 +22,6 @@ import {
   isNotNull,
   isNull,
   lt,
-  lte,
   sql,
   sum,
 } from 'drizzle-orm';
@@ -32,15 +37,26 @@ export const getSpendingInsights = async () => {
   const monthStart = startOfMonth(today);
   const previousMonthStart = startOfMonth(subMonths(today, 1));
   const sixMonthsStart = startOfMonth(subMonths(today, 5));
-  const calendarStart = subMonths(today, 1);
+  const calendarStart = startOfMonth(today);
+  const previousComparableDay = addDays(
+    previousMonthStart,
+    differenceInCalendarDays(today, monthStart)
+  );
 
   const [
     dailySpend,
+    dailyCategorySpend,
     hourlySpend,
     merchantSpend,
     recurringSpend,
+    newMerchants,
+    merchantTotal,
     monthlyCashflow,
+    incomeSources,
+    pace,
     tagSpend,
+    categoryMixDrift,
+    categoryOutliers,
     accountSpend,
     payerSpend,
     channelSpend,
@@ -62,6 +78,20 @@ export const getSpendingInsights = async () => {
       .where(and(gte(transactionDate, calendarStart), spending))
       .groupBy(sql`date_trunc('day', ${transactionDate} AT TIME ZONE ${TZ})`)
       .orderBy(sql`date_trunc('day', ${transactionDate} AT TIME ZONE ${TZ})`),
+    db
+      .select({
+        day: sql<string>`to_char(${transactionDate} AT TIME ZONE ${TZ}, 'YYYY-MM-DD')`,
+        category: sql<string>`coalesce(${transactionExternalTable.category_parent_id}, 'uncategorised')`,
+        value: sql<number>`abs(${sum(transactionExternalTable.value_in_base_units)})`
+          .mapWith(Number)
+          .as('value'),
+      })
+      .from(transactionExternalTable)
+      .where(and(gte(transactionDate, calendarStart), spending))
+      .groupBy(
+        sql`date_trunc('day', ${transactionDate} AT TIME ZONE ${TZ})`,
+        transactionExternalTable.category_parent_id
+      ),
     db
       .select({
         weekday: sql<number>`extract(dow from ${transactionDate} AT TIME ZONE ${TZ})`
@@ -118,10 +148,32 @@ export const getSpendingInsights = async () => {
       )
       .groupBy(transactionExternalTable.description)
       .having(
-        sql`count(*) >= 2 AND max(${transactionDate}) - min(${transactionDate}) >= interval '20 days'`
+        sql`count(*) >= 2
+          AND max(${transactionDate}) - min(${transactionDate}) >= interval '20 days'
+          AND coalesce(stddev_samp(abs(${transactionExternalTable.value_in_base_units})), 0)
+            <= avg(abs(${transactionExternalTable.value_in_base_units})) * 0.2`
       )
       .orderBy(desc(sql`value`))
       .limit(5),
+    db
+      .select({
+        name: transactionExternalTable.description,
+        firstSeen: sql<string>`to_char(min(${transactionDate}) AT TIME ZONE ${TZ}, 'DD Mon')`,
+      })
+      .from(transactionExternalTable)
+      .where(and(spending, isNotNull(transactionExternalTable.description)))
+      .groupBy(transactionExternalTable.description)
+      .having(gte(sql`min(${transactionDate})`, monthStart))
+      .orderBy(desc(sql`min(${transactionDate})`))
+      .limit(5),
+    db
+      .select({
+        value: sql<number>`abs(coalesce(${sum(transactionExternalTable.value_in_base_units)}, 0))`
+          .mapWith(Number)
+          .as('value'),
+      })
+      .from(transactionExternalTable)
+      .where(and(gte(transactionDate, subMonths(today, 3)), spending)),
     db
       .select({
         month: sql<string>`to_char(date_trunc('month', ${transactionDate} AT TIME ZONE ${TZ}), 'Mon')`,
@@ -138,6 +190,37 @@ export const getSpendingInsights = async () => {
       .orderBy(sql`date_trunc('month', ${transactionDate} AT TIME ZONE ${TZ})`),
     db
       .select({
+        name: sql<string>`coalesce(${transactionExternalTable.description}, 'Other income')`,
+        value: sum(transactionExternalTable.value_in_base_units)
+          .mapWith(Number)
+          .as('value'),
+      })
+      .from(transactionExternalTable)
+      .where(
+        and(
+          gte(transactionDate, monthStart),
+          sql`${transactionExternalTable.value_in_base_units} > 0`
+        )
+      )
+      .groupBy(transactionExternalTable.description)
+      .orderBy(desc(sql`value`))
+      .limit(5),
+    db
+      .select({
+        current: sql<number>`abs(coalesce(sum(${transactionExternalTable.value_in_base_units})
+          filter (where ${transactionDate} >= ${monthStart}), 0))`
+          .mapWith(Number)
+          .as('current'),
+        previous: sql<number>`abs(coalesce(sum(${transactionExternalTable.value_in_base_units})
+          filter (where ${transactionDate} >= ${previousMonthStart}
+            and ${transactionDate} <= ${previousComparableDay}), 0))`
+          .mapWith(Number)
+          .as('previous'),
+      })
+      .from(transactionExternalTable)
+      .where(and(gte(transactionDate, previousMonthStart), spending)),
+    db
+      .select({
         name: transactionTagTable.tag_id,
         value: sql<number>`abs(${sum(transactionExternalTable.value_in_base_units)})`
           .mapWith(Number)
@@ -151,6 +234,42 @@ export const getSpendingInsights = async () => {
       .where(and(gte(transactionDate, monthStart), spending))
       .groupBy(transactionTagTable.tag_id)
       .orderBy(desc(sql`value`))
+      .limit(5),
+    db
+      .select({
+        name: sql<string>`coalesce(${transactionExternalTable.category_parent}, 'Uncategorised')`,
+        current: sql<number>`abs(coalesce(sum(${transactionExternalTable.value_in_base_units})
+          filter (where ${transactionDate} >= ${monthStart}), 0))`
+          .mapWith(Number)
+          .as('current'),
+        previous: sql<number>`abs(coalesce(sum(${transactionExternalTable.value_in_base_units})
+          filter (where ${transactionDate} >= ${previousMonthStart}
+            and ${transactionDate} < ${monthStart}), 0))`
+          .mapWith(Number)
+          .as('previous'),
+      })
+      .from(transactionExternalTable)
+      .where(and(gte(transactionDate, previousMonthStart), spending))
+      .groupBy(transactionExternalTable.category_parent)
+      .orderBy(desc(sql`current`))
+      .limit(5),
+    db
+      .select({
+        name: sql<string>`coalesce(${transactionExternalTable.category}, 'Uncategorised')`,
+        average: sql<number>`abs(avg(${transactionExternalTable.value_in_base_units}))`
+          .mapWith(Number)
+          .as('average'),
+        largest: sql<number>`abs(min(${transactionExternalTable.value_in_base_units}))`
+          .mapWith(Number)
+          .as('largest'),
+      })
+      .from(transactionExternalTable)
+      .where(and(gte(transactionDate, subMonths(today, 3)), spending))
+      .groupBy(transactionExternalTable.category)
+      .having(
+        sql`abs(min(${transactionExternalTable.value_in_base_units})) > abs(avg(${transactionExternalTable.value_in_base_units})) * 2`
+      )
+      .orderBy(desc(sql`largest`))
       .limit(5),
     db
       .select({
@@ -280,10 +399,15 @@ export const getSpendingInsights = async () => {
 
   return {
     dailySpend,
+    dailyCategorySpend,
     hourlySpend,
     merchantSpend: merchantSpend.filter((merchant) => merchant.name),
     recurringSpend: recurringSpend.filter((merchant) => merchant.name),
+    newMerchants: newMerchants.filter((merchant) => merchant.name),
+    merchantTotal: merchantTotal[0]?.value ?? 0,
     monthlyCashflow,
+    incomeSources,
+    pace: pace[0] ?? { current: 0, previous: 0 },
     tagSpend,
     accountSpend,
     payerSpend,
@@ -291,6 +415,8 @@ export const getSpendingInsights = async () => {
     foreignSpend: foreignSpend.filter((currency) => currency.name),
     uncategorised: uncategorised[0] ?? { value: 0, count: 0 },
     categoryMix,
+    categoryMixDrift,
+    categoryOutliers,
     roundUps: roundUps[0] ?? { value: 0, boost: 0 },
     cashback: cashback[0] ?? { value: 0 },
     settlement: settlement[0] ?? { held: 0, averageDays: null },

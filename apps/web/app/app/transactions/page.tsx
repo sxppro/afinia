@@ -4,19 +4,26 @@ import TransactionList from '@/components/vis/transaction/transaction-list';
 import TransactionListFilters from '@/components/vis/transaction/transaction-list-filters';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import { getParentCategories } from '@/lib/db/category';
+import { endOfDay, isValid, parseISO, startOfDay } from 'date-fns';
 import { Suspense } from 'react';
 import TransactionsPageHeader from './_components/page-header';
 
 const TransactionsPage = async ({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; query?: string }>;
+  searchParams: Promise<{ category?: string; date?: string; query?: string }>;
 }) => {
-  const { category: inputCategory, query: inputQuery } = await searchParams;
+  const {
+    category: inputCategory,
+    date: inputDate,
+    query: inputQuery,
+  } = await searchParams;
   const categoriesFetch = getParentCategories();
   const category = inputCategory?.trim();
   const query = inputQuery?.trim();
-  const hasFilters = category || query;
+  const date = inputDate ? parseISO(inputDate) : undefined;
+  const validDate = date && isValid(date) ? date : undefined;
+  const hasFilters = category || query || validDate;
 
   return (
     <div className="flex flex-col gap-2">
@@ -42,6 +49,10 @@ const TransactionsPage = async ({
               ...(hasFilters && {
                 filters: {
                   ...(category && { category_id: category }),
+                  ...(validDate && {
+                    end_at: endOfDay(validDate),
+                    start_at: startOfDay(validDate),
+                  }),
                   ...(query && { search_term: query }),
                 },
               }),

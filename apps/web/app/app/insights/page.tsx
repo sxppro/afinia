@@ -10,7 +10,14 @@ import { BarList } from '@/components/ui/bar-list';
 import { getSpendingInsights } from '@/lib/db/insights';
 import { siteConfig } from '@/lib/siteConfig';
 import { formatCurrency } from '@/lib/ui';
-import { addDays, format, subDays } from 'date-fns';
+import {
+  eachDayOfInterval,
+  endOfMonth,
+  endOfWeek,
+  format,
+  startOfMonth,
+  startOfWeek,
+} from 'date-fns';
 import { ArrowLeft, CalendarDays, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
@@ -27,18 +34,25 @@ const titleCase = (value: string) =>
 const InsightsPage = async () => {
   const insights = await getSpendingInsights();
   const today = insights.period.today;
-  const calendarStart = subDays(today, 34);
+  const calendarStart = startOfWeek(startOfMonth(today));
+  const calendarEnd = endOfWeek(endOfMonth(today));
   const dailyByDate = new Map(
     insights.dailySpend.map((item) => [item.day, item.value])
   );
-  const calendarDays = Array.from({ length: 35 }, (_, index) =>
-    addDays(calendarStart, index)
-  );
+  const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
   const maxDaySpend = Math.max(...insights.dailySpend.map(({ value }) => value), 1);
   const maxHourSpend = Math.max(...insights.hourlySpend.map(({ value }) => value), 1);
   const hourByBucket = new Map(
     insights.hourlySpend.map((item) => [`${item.weekday}-${item.hour}`, item.value])
   );
+  const dominantCategoryByDay = new Map<string, string>();
+  insights.dailyCategorySpend
+    .sort((a, b) => b.value - a.value)
+    .forEach((item) => {
+      if (!dominantCategoryByDay.has(item.day)) {
+        dominantCategoryByDay.set(item.day, item.category);
+      }
+    });
   const monthCashflow = insights.monthlyCashflow.at(-1);
   const previousCashflow = insights.monthlyCashflow.at(-2);
   const monthlySpend = monthCashflow?.spend ?? 0;
@@ -50,6 +64,24 @@ const InsightsPage = async () => {
     monthCashflow?.income && monthCashflow.income > 0
       ? ((monthCashflow.income - monthCashflow.spend) / monthCashflow.income) * 100
       : null;
+  const paceChange = insights.pace.previous
+    ? ((insights.pace.current - insights.pace.previous) / insights.pace.previous) * 100
+    : null;
+  const quietDays = calendarDays.filter((day) => {
+    const date = format(day, 'yyyy-MM-dd');
+    return day <= today && !dailyByDate.has(date);
+  }).length;
+  const topMerchantsValue = insights.merchantSpend.reduce(
+    (total, merchant) => total + merchant.value,
+    0
+  );
+  const categoryColours: Record<string, string> = {
+    'good-life': '227 196 17',
+    home: '175 92 175',
+    personal: '236 119 35',
+    transport: '68 123 189',
+    uncategorised: '145 161 182',
+  };
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
@@ -74,11 +106,11 @@ const InsightsPage = async () => {
             <CardTitle className="text-2xl">{baseCurrency(monthlySpend)}</CardTitle>
           </CardHeader>
           <CardContent className="px-4 text-sm">
-            <span className={change > 0 ? 'text-destructive' : 'text-emerald-600'}>
-              {change > 0 ? '+' : ''}
-              {change.toFixed(0)}%
+            <span className={paceChange && paceChange > 0 ? 'text-destructive' : 'text-emerald-600'}>
+              {paceChange && paceChange > 0 ? '+' : ''}
+              {paceChange === null ? '—' : `${paceChange.toFixed(0)}%`}
             </span>{' '}
-            versus last month
+            versus the same point last month
           </CardContent>
         </Card>
         <Card className="gap-2 py-4">
@@ -112,7 +144,8 @@ const InsightsPage = async () => {
             Spending calendar
           </CardTitle>
           <CardDescription>
-            Your daily spend over the last five weeks. Darker days mean more spend.
+            {format(today, 'MMMM yyyy')}. Darker days mean more spend; colour shows the
+            day&apos;s largest category.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -122,13 +155,15 @@ const InsightsPage = async () => {
               const value = dailyByDate.get(date) ?? 0;
               const intensity = value ? 0.15 + (value / maxDaySpend) * 0.85 : 0;
               return (
-                <div
-                  className="aspect-square rounded-md border border-border/50"
+                <Link
+                  className="aspect-square rounded-md border border-border/50 transition-transform hover:scale-110"
+                  href={`${siteConfig.baseLinks.transactions}?date=${date}`}
                   key={date}
                   style={{
                     backgroundColor: value
-                      ? `rgb(68 123 189 / ${intensity})`
+                      ? `rgb(${categoryColours[dominantCategoryByDay.get(date) ?? 'uncategorised']} / ${intensity})`
                       : undefined,
+                    opacity: day.getMonth() === today.getMonth() ? 1 : 0.35,
                   }}
                   title={`${format(day, 'EEE d MMM')}: ${baseCurrency(value)}`}
                 >
@@ -141,12 +176,13 @@ const InsightsPage = async () => {
                   >
                     {format(day, 'd')}
                   </span>
-                </div>
+                </Link>
               );
             })}
           </div>
           <p className="text-muted-foreground mt-3 text-xs">
-            Showing {format(calendarStart, 'd MMM')}–{format(today, 'd MMM')}.
+            {quietDays} quiet day{quietDays === 1 ? '' : 's'} so far. Select a day to
+            view its transactions.
           </p>
         </CardContent>
       </Card>
@@ -161,20 +197,18 @@ const InsightsPage = async () => {
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, weekday) => (
               <div className="space-y-1" key={day}>
                 <p className="text-center text-xs text-muted-foreground">{day}</p>
-                {Array.from({ length: 6 }, (_, bucket) => {
-                  const value = Array.from({ length: 4 }, (_, offset) =>
-                    hourByBucket.get(`${weekday}-${bucket * 4 + offset}`) ?? 0
-                  ).reduce((total, hourValue) => total + hourValue, 0);
+                {Array.from({ length: 24 }, (_, hour) => {
+                  const value = hourByBucket.get(`${weekday}-${hour}`) ?? 0;
                   return (
                     <div
-                      className="h-7 rounded-sm"
-                      key={bucket}
+                      className="h-2 rounded-sm sm:h-3"
+                      key={hour}
                       style={{
                         backgroundColor: value
                           ? `rgb(236 119 35 / ${0.15 + (value / maxHourSpend) * 0.85})`
                           : 'rgb(148 163 184 / 0.12)',
                       }}
-                      title={`${day}, ${String(bucket * 4).padStart(2, '0')}:00–${String(bucket * 4 + 3).padStart(2, '0')}:59: ${baseCurrency(value)}`}
+                      title={`${day}, ${String(hour).padStart(2, '0')}:00–${String(hour).padStart(2, '0')}:59: ${baseCurrency(value)}`}
                     />
                   );
                 })}
@@ -183,9 +217,9 @@ const InsightsPage = async () => {
           </div>
           <div className="mt-2 flex justify-between text-xs text-muted-foreground">
             <span>Midnight</span>
-            <span>Morning</span>
-            <span>Afternoon</span>
-            <span>Evening</span>
+            <span>06:00</span>
+            <span>12:00</span>
+            <span>18:00</span>
           </div>
         </CardContent>
       </Card>
@@ -212,6 +246,51 @@ const InsightsPage = async () => {
       <section className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
+            <CardTitle>Income sources</CardTitle>
+            <CardDescription>Positive transactions received this month.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <BarList
+              data={insights.incomeSources.map((item) => ({
+                name: item.name,
+                value: item.value,
+              }))}
+              valueFormatter={baseCurrency}
+            />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Category movement</CardTitle>
+            <CardDescription>How your top category totals changed month over month.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {insights.categoryMixDrift.map((item) => {
+              const percent = item.previous
+                ? ((item.current - item.previous) / item.previous) * 100
+                : null;
+              return (
+                <div className="flex items-baseline justify-between gap-4" key={item.name}>
+                  <p className="truncate text-sm">{item.name}</p>
+                  <p
+                    className={
+                      percent && percent > 0
+                        ? 'text-sm text-destructive'
+                        : 'text-sm text-emerald-600'
+                    }
+                  >
+                    {percent === null ? 'New' : `${percent > 0 ? '+' : ''}${percent.toFixed(0)}%`}
+                  </p>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
             <CardTitle>Top merchants</CardTitle>
             <CardDescription>Where your money went in the last three months.</CardDescription>
           </CardHeader>
@@ -220,6 +299,11 @@ const InsightsPage = async () => {
               name: item.name ?? 'Unknown merchant',
               value: item.value,
             }))} valueFormatter={baseCurrency} />
+            <p className="text-muted-foreground mt-4 text-sm">
+              {insights.merchantTotal
+                ? `${((topMerchantsValue / insights.merchantTotal) * 100).toFixed(0)}% of your recent spending is with these five merchants.`
+                : 'No merchant data yet.'}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -235,6 +319,22 @@ const InsightsPage = async () => {
           </CardContent>
         </Card>
       </section>
+
+      {insights.newMerchants.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>New this month</CardTitle>
+            <CardDescription>Merchants appearing in your history for the first time.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            {insights.newMerchants.map((merchant) => (
+              <span className="rounded-full bg-secondary px-3 py-1.5 text-sm" key={merchant.name}>
+                {merchant.name} · {merchant.firstSeen}
+              </span>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <section className="grid gap-4 md:grid-cols-2">
         <Card>
@@ -262,6 +362,26 @@ const InsightsPage = async () => {
           </CardContent>
         </Card>
       </section>
+
+      {insights.categoryOutliers.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Unusual category purchases</CardTitle>
+            <CardDescription>
+              The largest transaction in each category is at least twice its recent average.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <BarList
+              data={insights.categoryOutliers.map((item) => ({
+                name: `${item.name} · usual ${baseCurrency(item.average)}`,
+                value: item.largest,
+              }))}
+              valueFormatter={baseCurrency}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <section className="grid gap-4 md:grid-cols-2">
         <Card>
