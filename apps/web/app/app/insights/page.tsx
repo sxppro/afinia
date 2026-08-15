@@ -83,15 +83,20 @@ const InsightsPage = async () => {
     transport: '68 123 189',
     uncategorised: '145 161 182',
   };
-  let runningSpend = 0;
   const daysElapsed = today.getDate();
   const projectedMonthSpend =
     daysElapsed > 0 ? (insights.pace.current / daysElapsed) * endOfMonth(today).getDate() : 0;
   const paceSeries = eachDayOfInterval({
     start: startOfMonth(today),
     end: today,
-  }).map((day) => {
-    runningSpend += dailyByDate.get(format(day, 'yyyy-MM-dd')) ?? 0;
+  }).map((day, index, days) => {
+    const runningSpend = days
+      .slice(0, index + 1)
+      .reduce(
+        (total, currentDay) =>
+          total + (dailyByDate.get(format(currentDay, 'yyyy-MM-dd')) ?? 0),
+        0
+      );
     return {
       day: format(day, 'd MMM'),
       spend: runningSpend,
