@@ -53,9 +53,13 @@ const DatePickerFilter = ({
   value,
   onChange,
   container,
+  minDate,
+  maxDate,
 }: {
   label: string;
   value: Date | undefined;
+  minDate?: Date;
+  maxDate?: Date;
   onChange: (date: Date | undefined) => void;
   container: HTMLDivElement | null;
 }) => {
@@ -95,6 +99,22 @@ const DatePickerFilter = ({
             selected={value}
             defaultMonth={value}
             captionLayout="dropdown"
+            disabled={[
+              ...(minDate
+                ? [
+                    {
+                      before: minDate,
+                    },
+                  ]
+                : []),
+              ...(maxDate
+                ? [
+                    {
+                      after: maxDate,
+                    },
+                  ]
+                : []),
+            ]}
             onSelect={(date) => {
               onChange(date);
               setOpen(false);
@@ -149,6 +169,12 @@ const TransactionListFilters = ({
   const [drawer, setDrawer] = useState<HTMLDivElement | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  const fromDate = draftFilters.from
+    ? parse(draftFilters.from, 'yyyy-MM-dd', getStartOfDay())
+    : undefined;
+  const toDate = draftFilters.to
+    ? parse(draftFilters.to, 'yyyy-MM-dd', getEndOfDay())
+    : undefined;
   const activeFilterCount = [
     filters.from || filters.to,
     filters.tag,
@@ -242,11 +268,8 @@ const TransactionListFilters = ({
             <div className="flex flex-col gap-2">
               <DatePickerFilter
                 label="From"
-                value={
-                  draftFilters.from
-                    ? parse(draftFilters.from, 'yyyy-MM-dd', getStartOfDay())
-                    : undefined
-                }
+                value={fromDate}
+                maxDate={toDate}
                 onChange={(date) =>
                   setDraftFilters((prev) => ({
                     ...prev,
@@ -257,11 +280,8 @@ const TransactionListFilters = ({
               />
               <DatePickerFilter
                 label="To"
-                value={
-                  draftFilters.to
-                    ? parse(draftFilters.to, 'yyyy-MM-dd', getEndOfDay())
-                    : undefined
-                }
+                value={toDate}
+                minDate={fromDate}
                 onChange={(date) => {
                   setDraftFilters((prev) => ({
                     ...prev,
