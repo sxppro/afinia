@@ -35,6 +35,7 @@ export type TransactionFilters = Prettify<
     Pick<typeof transactionTable.$inferSelect, 'account_id' | 'category_id'>
   > & {
     search_term?: string;
+    tag_id?: string;
     include_transfers?: boolean;
     start_at?: Date;
     end_at?: Date;
@@ -86,6 +87,7 @@ export const getTransactionsPaginated = async (
     const accountId = filters?.account_id;
     const categoryId = filters?.category_id?.trim();
     const searchTerm = filters?.search_term?.trim();
+    const tagId = filters?.tag_id?.trim();
     const startAt = filters?.start_at;
     const endAt = filters?.end_at;
 
@@ -109,6 +111,16 @@ export const getTransactionsPaginated = async (
     if (searchTerm) {
       conditions.push(
         sql`${transactionTable.text_search} @@ websearch_to_tsquery('english', ${searchTerm})`
+      );
+    }
+
+    if (tagId) {
+      conditions.push(
+        sql`${transactionTable.transaction_id} IN (
+          SELECT ${transactionTagTable.transaction_id}
+          FROM ${transactionTagTable}
+          WHERE ${transactionTagTable.tag_id} = ${tagId}
+        )`
       );
     }
 

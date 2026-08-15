@@ -1,4 +1,5 @@
 import { BarChart } from '@/components/ui/bar-chart';
+import { AreaChart } from '@/components/ui/area-chart';
 import {
   Card,
   CardContent,
@@ -82,6 +83,21 @@ const InsightsPage = async () => {
     transport: '68 123 189',
     uncategorised: '145 161 182',
   };
+  let runningSpend = 0;
+  const daysElapsed = today.getDate();
+  const projectedMonthSpend =
+    daysElapsed > 0 ? (insights.pace.current / daysElapsed) * endOfMonth(today).getDate() : 0;
+  const paceSeries = eachDayOfInterval({
+    start: startOfMonth(today),
+    end: today,
+  }).map((day) => {
+    runningSpend += dailyByDate.get(format(day, 'yyyy-MM-dd')) ?? 0;
+    return {
+      day: format(day, 'd MMM'),
+      spend: runningSpend,
+      projection: (projectedMonthSpend / endOfMonth(today).getDate()) * day.getDate(),
+    };
+  });
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
@@ -243,6 +259,26 @@ const InsightsPage = async () => {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Month-end pace</CardTitle>
+          <CardDescription>
+            Your running spend against a straight-line projection of {baseCurrency(projectedMonthSpend)}.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AreaChart
+            className="h-56"
+            colors={['blue', 'gray']}
+            data={paceSeries}
+            index="day"
+            categories={['spend', 'projection']}
+            showYAxis={false}
+            valueFormatter={baseCurrency}
+          />
+        </CardContent>
+      </Card>
+
       <section className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
@@ -313,7 +349,7 @@ const InsightsPage = async () => {
           </CardHeader>
           <CardContent>
             <BarList data={insights.recurringSpend.map((item) => ({
-              name: `${item.name ?? 'Unknown merchant'} · ${item.visits}×`,
+              name: `${item.name ?? 'Unknown merchant'} · due around ${item.nextExpected}`,
               value: item.value,
             }))} valueFormatter={baseCurrency} />
           </CardContent>
@@ -356,6 +392,7 @@ const InsightsPage = async () => {
           </CardHeader>
           <CardContent>
             <BarList data={insights.tagSpend.map((item) => ({
+              href: `${siteConfig.baseLinks.transactions}?tag=${encodeURIComponent(item.name)}`,
               name: item.name,
               value: item.value,
             }))} valueFormatter={baseCurrency} />

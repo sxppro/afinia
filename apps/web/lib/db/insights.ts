@@ -137,6 +137,7 @@ export const getSpendingInsights = async () => {
           .as('value'),
         visits: sql<number>`count(*)`.mapWith(Number).as('visits'),
         lastSeen: sql<string>`to_char(max(${transactionDate}) AT TIME ZONE ${TZ}, 'DD Mon')`,
+        nextExpected: sql<string>`to_char((max(${transactionDate}) + interval '30 days') AT TIME ZONE ${TZ}, 'DD Mon')`,
       })
       .from(transactionExternalTable)
       .where(

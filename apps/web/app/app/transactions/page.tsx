@@ -11,19 +11,26 @@ import TransactionsPageHeader from './_components/page-header';
 const TransactionsPage = async ({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; date?: string; query?: string }>;
+  searchParams: Promise<{
+    category?: string;
+    date?: string;
+    query?: string;
+    tag?: string;
+  }>;
 }) => {
   const {
     category: inputCategory,
     date: inputDate,
     query: inputQuery,
+    tag: inputTag,
   } = await searchParams;
   const categoriesFetch = getParentCategories();
   const category = inputCategory?.trim();
   const query = inputQuery?.trim();
+  const tag = inputTag?.trim();
   const date = inputDate ? parseISO(inputDate) : undefined;
   const validDate = date && isValid(date) ? date : undefined;
-  const hasFilters = category || query || validDate;
+  const hasFilters = category || query || tag || validDate;
 
   return (
     <div className="flex flex-col gap-2">
@@ -49,6 +56,7 @@ const TransactionsPage = async ({
               ...(hasFilters && {
                 filters: {
                   ...(category && { category_id: category }),
+                  ...(tag && { tag_id: tag }),
                   ...(validDate && {
                     end_at: endOfDay(validDate),
                     start_at: startOfDay(validDate),
