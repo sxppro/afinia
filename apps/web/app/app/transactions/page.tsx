@@ -7,7 +7,8 @@ import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import { getParentCategories } from '@/lib/db/category';
 import { getTags } from '@/lib/db/tag';
 import { getTransactionTypes } from '@/lib/db/transaction';
-import { booleanParam, stringParam } from '@/lib/params';
+import { booleanParam, dateParam, stringParam } from '@/lib/params';
+import { DEFAULT_TRANSACTION_SORT, isValidSort } from '@/lib/transaction-sort';
 import type { SearchParam } from '@/lib/types';
 import { Suspense } from 'react';
 import TransactionsPageHeader from './_components/page-header';
@@ -17,17 +18,39 @@ const TransactionsPage = async ({
 }: {
   searchParams: Promise<Record<string, SearchParam>>;
 }) => {
-  const { category, query, from, to, tag, type, has_note, has_attachment } =
-    await searchParams;
+  const {
+    category,
+    query,
+    from,
+    to,
+    tag,
+    type,
+    has_note,
+    has_attachment,
+    sort,
+  } = await searchParams;
+
+  const categoryId = stringParam(category);
+  const fromDate = dateParam(from);
+  const toDate = dateParam(to);
+  const hasValidDateRange = !fromDate || !toDate || fromDate <= toDate;
+
+  // Sorting
+  const inputSort = stringParam(sort);
+  const transactionSort = isValidSort(inputSort)
+    ? inputSort
+    : DEFAULT_TRANSACTION_SORT;
+
+  // Filtering
   const filters = {
-    category_id: stringParam(category),
+    category_id: categoryId === 'all' ? undefined : categoryId,
     search_term: stringParam(query),
-    from: stringParam(from),
-    to: stringParam(to),
+    from: hasValidDateRange ? fromDate : undefined,
+    to: hasValidDateRange ? toDate : undefined,
     tag_id: stringParam(tag),
     type: stringParam(type),
-    has_note: booleanParam(has_note),
-    has_attachment: booleanParam(has_attachment),
+    has_note: booleanParam(has_note) === true ? true : undefined,
+    has_attachment: booleanParam(has_attachment) === true ? true : undefined,
   } satisfies TransactionFilters;
   const hasFilters = Object.values(filters).some(
     (value) => value !== undefined
@@ -65,6 +88,10 @@ const TransactionsPage = async ({
               ...(hasFilters && {
                 filters,
               }),
+              sort:
+                transactionSort === DEFAULT_TRANSACTION_SORT
+                  ? undefined
+                  : transactionSort,
             }}
             isInfinite
           />

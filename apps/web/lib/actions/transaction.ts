@@ -12,10 +12,12 @@ import {
 import { addDays, isValid, parse } from 'date-fns';
 import {
   and,
+  asc,
   desc,
   eq,
   exists,
   getTableColumns,
+  gt,
   gte,
   isNotNull,
   isNull,
@@ -28,10 +30,14 @@ import { alias } from 'drizzle-orm/pg-core';
 import { getServerSession } from '../auth/session';
 import { getStartOfDay } from '../dateTime';
 import { db } from '../db/client';
+import { TransactionSort } from '../transaction-sort';
 import { Prettify } from '../types';
 
 export type TransactionCursor = Prettify<
-  Pick<typeof transactionTable.$inferSelect, 'transaction_id' | 'created_at'>
+  Pick<
+    typeof transactionTable.$inferSelect,
+    'transaction_id' | 'created_at' | 'value_in_base_units'
+  >
 >;
 
 export type TransactionFilters = Prettify<
@@ -51,46 +57,31 @@ export type TransactionFilters = Prettify<
 
 /**
  * Paginated transaction retrieval.
- * @param options Cannot use cursor and filters together as it will require many indexes to be performant.
- * - Cursor is designed for keyset pagination with infinite scroll (only `created_at` and `transaction_id`)
- * - Filters are designed for filtering transactions
+ * Uses deterministic keyset pagination for unfiltered, filtered, and sorted
+ * transaction lists.
  * @returns
  */
-export const getTransactionsPaginated = async (
-  options:
-    | {
-        cursor?: TransactionCursor | null;
-        limit?: number;
-      }
-    | { filters?: TransactionFilters; limit?: number; offset?: number }
-) => {
+export const getTransactionsPaginated = async (options: {
+  cursor?: TransactionCursor | null;
+  filters?: TransactionFilters;
+  sort?: TransactionSort;
+  limit?: number;
+}) => {
   const session = await getServerSession();
   if (!session) {
     throw new Error('Unauthorised');
   }
 
-  let offset = 0;
-  const { limit } = options;
+  const { cursor, filters, sort, limit } = options;
   const conditions: (SQL | undefined)[] = [];
 
   // Include internal transfers
-  const includeTransfers =
-    'filters' in options ? options.filters?.include_transfers : false;
+  const includeTransfers = filters?.include_transfers;
   if (!includeTransfers) {
     conditions.push(eq(transactionTable.is_categorizable, true));
   }
 
-  // Cursor mode
-  if ('cursor' in options) {
-    const { cursor } = options;
-    if (cursor) {
-      conditions.push(
-        sql`(${transactionTable.created_at}, ${transactionTable.transaction_id}) < (${cursor.created_at.toISOString()}::timestamptz, ${cursor.transaction_id})`
-      );
-    }
-    // Filter mode
-  } else if ('filters' in options) {
-    const { filters } = options;
+  if (filters) {
     const categoryId = filters?.category_id?.trim();
     const searchTerm = filters?.search_term?.trim();
 
@@ -123,11 +114,11 @@ export const getTransactionsPaginated = async (
       conditions.push(eq(transactionTable.type, filters.type));
     }
 
-    if (filters?.has_note) {
+    if (filters?.has_note === true) {
       conditions.push(isNotNull(transactionTable.note));
     }
 
-    if (filters?.has_attachment) {
+    if (filters?.has_attachment === true) {
       conditions.push(isNotNull(transactionTable.attachment_id));
     }
 
@@ -168,14 +159,69 @@ export const getTransactionsPaginated = async (
         sql`${transactionTable.text_search} @@ websearch_to_tsquery('english', ${searchTerm})`
       );
     }
+  }
 
-    if (options.offset) {
-      offset = options.offset;
-    }
+  if (cursor) {
+    const cursorTimestamp = cursor.created_at.toISOString();
+    const cursorAbsAmount = Math.abs(cursor.value_in_base_units);
+    const absAmount = sql<number>`abs(${transactionTable.value_in_base_units}::bigint)`;
+    /**
+     * If tied on amount, retrieve earlier transactions and transactions
+     * at same time with lower ID
+     */
+    const afterAmountTie = or(
+      lt(transactionTable.created_at, sql`${cursorTimestamp}::timestamptz`),
+      and(
+        eq(transactionTable.created_at, sql`${cursorTimestamp}::timestamptz`),
+        lt(transactionTable.transaction_id, cursor.transaction_id)
+      )
+    );
+
+    /**
+     * Sort by date (ascending or descending via keyset pagination) or
+     * amount (by absolute value)
+     */
+    conditions.push(
+      sort === 'date-asc'
+        ? sql`(${transactionTable.created_at}, ${transactionTable.transaction_id}) > (${cursorTimestamp}::timestamptz, ${cursor.transaction_id})`
+        : sort === 'amount-asc'
+          ? or(
+              gt(absAmount, cursorAbsAmount),
+              and(eq(absAmount, cursorAbsAmount), afterAmountTie)
+            )
+          : sort === 'amount-desc'
+            ? or(
+                lt(absAmount, cursorAbsAmount),
+                and(eq(absAmount, cursorAbsAmount), afterAmountTie)
+              )
+            : sql`(${transactionTable.created_at}, ${transactionTable.transaction_id}) < (${cursorTimestamp}::timestamptz, ${cursor.transaction_id})`
+    );
   }
 
   try {
     const categoryParent = alias(categoryTable, 'category_parent');
+    const orderBy =
+      sort === 'date-asc'
+        ? [
+            asc(transactionTable.created_at),
+            asc(transactionTable.transaction_id),
+          ]
+        : sort === 'amount-asc'
+          ? [
+              asc(sql`abs(${transactionTable.value_in_base_units}::bigint)`),
+              desc(transactionTable.created_at),
+              desc(transactionTable.transaction_id),
+            ]
+          : sort === 'amount-desc'
+            ? [
+                desc(sql`abs(${transactionTable.value_in_base_units}::bigint)`),
+                desc(transactionTable.created_at),
+                desc(transactionTable.transaction_id),
+              ]
+            : [
+                desc(transactionTable.created_at),
+                desc(transactionTable.transaction_id),
+              ];
 
     // Note: will require another index if we will be filtering on category and account together
     const query = db
@@ -199,29 +245,24 @@ export const getTransactionsPaginated = async (
         eq(categoryTable.category_parent_id, categoryParent.category_id)
       )
       .where(and(...conditions, isNull(transactionTable.deleted_at)))
-      .orderBy(
-        desc(transactionTable.created_at),
-        desc(transactionTable.transaction_id)
-      )
-      .offset(offset);
+      .orderBy(...orderBy);
 
     const transactions = await (limit ? query.limit(limit + 1) : query);
     const hasMore = limit ? transactions.length > limit : false;
     const page = hasMore ? transactions.slice(0, limit) : transactions;
-    // Next cursor - only provided in cursor mode
     const lastTransaction = page.at(-1);
-    const next =
-      'cursor' in options && lastTransaction
-        ? {
-            created_at: lastTransaction.created_at,
-            transaction_id: lastTransaction.transaction_id,
-          }
-        : null;
+    const next = lastTransaction
+      ? {
+          created_at: lastTransaction.created_at,
+          transaction_id: lastTransaction.transaction_id,
+          value_in_base_units: lastTransaction.value_in_base_units,
+        }
+      : null;
 
     return { transactions: page, hasMore, next };
   } catch (error) {
     console.error('Error fetching paginated transactions: ', error);
-    return { transactions: [], hasMore: false, next: null };
+    throw error;
   }
 };
 
