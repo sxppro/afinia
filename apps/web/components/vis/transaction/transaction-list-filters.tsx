@@ -46,7 +46,14 @@ import {
   transactionTable,
 } from 'afinia-common/schema';
 import { format, isValid, parse } from 'date-fns';
-import { ArrowUpDown, Loader2, SlidersHorizontal, X } from 'lucide-react';
+import {
+  ArrowDownNarrowWide,
+  ArrowUpDown,
+  ArrowUpNarrowWide,
+  Loader2,
+  SlidersHorizontal,
+  X,
+} from 'lucide-react';
 import {
   parseAsBoolean,
   parseAsString,
@@ -228,7 +235,7 @@ const TransactionListFilters = ({
   return (
     <div className="grid grid-cols-2 gap-1">
       <Select value={category ?? 'all'} onValueChange={setCategory}>
-        <SelectTrigger className="w-full max-w-48 text-base">
+        <SelectTrigger className="w-full max-w-48 font-medium">
           <SelectValue placeholder="Category">
             {category === 'all'
               ? 'All Categories'
@@ -238,22 +245,22 @@ const TransactionListFilters = ({
                     ?.category_name}
           </SelectValue>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent position="popper" align="center">
           <SelectGroup>
             <SelectLabel>Category</SelectLabel>
-            <SelectItem className="text-base" value="all">
+            <SelectItem className="font-sans" value="all">
               All Categories
             </SelectItem>
             {categories.map((category) => (
               <SelectItem
                 key={category.category_id}
-                className="text-base"
                 value={category.category_id}
+                className="font-sans"
               >
                 {category.category_name}
               </SelectItem>
             ))}
-            <SelectItem className="text-base" value="uncategorised">
+            <SelectItem className="font-sans" value="uncategorised">
               Uncategorised
             </SelectItem>
           </SelectGroup>
@@ -465,17 +472,23 @@ const TransactionListFilters = ({
         disabled={isLoading}
       >
         <SelectTrigger
-          className="col-span-2 w-full bg-transparent text-base"
+          className="col-span-2 w-full bg-transparent font-medium"
           aria-label="Sort transactions"
         >
-          <ArrowUpDown className="size-4" />
+          {sort.endsWith('-desc') ? (
+            <ArrowDownNarrowWide className="size-4" />
+          ) : sort.endsWith('-asc') ? (
+            <ArrowUpNarrowWide className="size-4" />
+          ) : (
+            <ArrowUpDown className="size-4" />
+          )}
           <SelectValue>{sortLabels[sort]}</SelectValue>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent position="popper" align="center">
           <SelectGroup>
             <SelectLabel>Sort transactions</SelectLabel>
             {transactionSortValues.map((value) => (
-              <SelectItem className="text-base" key={value} value={value}>
+              <SelectItem className="font-sans" key={value} value={value}>
                 {sortLabels[value]}
               </SelectItem>
             ))}
