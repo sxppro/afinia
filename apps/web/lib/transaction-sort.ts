@@ -9,5 +9,10 @@ export type TransactionSort = (typeof transactionSortValues)[number];
 
 export const DEFAULT_TRANSACTION_SORT: TransactionSort = 'date-desc';
 
-export const isTransactionSort = (value?: string): value is TransactionSort =>
+/**
+ * Checks if input is a valid transaction sort
+ * @param value
+ * @returns
+ */
+export const isValidSort = (value?: string): value is TransactionSort =>
   transactionSortValues.some((sort) => sort === value);

@@ -36,7 +36,7 @@ import {
 import { getStartOfDay } from '@/lib/dateTime';
 import {
   DEFAULT_TRANSACTION_SORT,
-  isTransactionSort,
+  isValidSort,
   transactionSortValues,
   type TransactionSort,
 } from '@/lib/transaction-sort';
@@ -56,6 +56,22 @@ import {
 } from 'nuqs';
 import { use, useState, useTransition } from 'react';
 import type { Matcher } from 'react-day-picker';
+
+const sortLabels: Record<TransactionSort, string> = {
+  'date-desc': 'Date (newest first)',
+  'date-asc': 'Date (oldest first)',
+  'amount-desc': 'Amount (highest first)',
+  'amount-asc': 'Amount (lowest first)',
+};
+
+const ANY_FILTER_VALUE = '__any__';
+
+const parseFilterDate = (value: string | null) => {
+  if (!value) return undefined;
+
+  const date = parse(value, 'yyyy-MM-dd', getStartOfDay());
+  return isValid(date) ? date : undefined;
+};
 
 const DatePickerFilter = ({
   label,
@@ -118,21 +134,6 @@ const DatePickerFilter = ({
       </Popover>
     </Field>
   );
-};
-
-const sortLabels: Record<TransactionSort, string> = {
-  'date-desc': 'Date (newest first)',
-  'date-asc': 'Date (oldest first)',
-  'amount-desc': 'Amount (highest first)',
-  'amount-asc': 'Amount (lowest first)',
-};
-const ANY_FILTER_VALUE = '__any__';
-
-const parseFilterDate = (value: string | null) => {
-  if (!value) return undefined;
-
-  const date = parse(value, 'yyyy-MM-dd', getStartOfDay());
-  return isValid(date) ? date : undefined;
 };
 
 interface TransactionListFiltersProps {
@@ -457,7 +458,7 @@ const TransactionListFilters = ({
       <Select
         value={sort}
         onValueChange={(value) => {
-          if (isTransactionSort(value)) {
+          if (isValidSort(value)) {
             void setSort(value);
           }
         }}

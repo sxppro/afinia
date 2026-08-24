@@ -17,8 +17,8 @@ import {
   eq,
   exists,
   getTableColumns,
-  gte,
   gt,
+  gte,
   isNotNull,
   isNull,
   lt,
@@ -30,8 +30,8 @@ import { alias } from 'drizzle-orm/pg-core';
 import { getServerSession } from '../auth/session';
 import { getStartOfDay } from '../dateTime';
 import { db } from '../db/client';
-import { Prettify } from '../types';
 import { TransactionSort } from '../transaction-sort';
+import { Prettify } from '../types';
 
 export type TransactionCursor = Prettify<
   Pick<
@@ -52,7 +52,6 @@ export type TransactionFilters = Prettify<
     include_transfers?: boolean;
     has_note?: boolean;
     has_attachment?: boolean;
-    sort?: TransactionSort;
   }
 >;
 
@@ -65,6 +64,7 @@ export type TransactionFilters = Prettify<
 export const getTransactionsPaginated = async (options: {
   cursor?: TransactionCursor | null;
   filters?: TransactionFilters;
+  sort?: TransactionSort;
   limit?: number;
 }) => {
   const session = await getServerSession();
@@ -72,7 +72,7 @@ export const getTransactionsPaginated = async (options: {
     throw new Error('Unauthorised');
   }
 
-  const { cursor, filters, limit } = options;
+  const { cursor, filters, sort, limit } = options;
   const conditions: (SQL | undefined)[] = [];
 
   // Include internal transfers
@@ -161,11 +161,14 @@ export const getTransactionsPaginated = async (options: {
     }
   }
 
-  const sort = filters?.sort;
   if (cursor) {
     const cursorTimestamp = cursor.created_at.toISOString();
-    const cursorAmount = Math.abs(cursor.value_in_base_units);
-    const absoluteAmount = sql<number>`abs(${transactionTable.value_in_base_units}::bigint)`;
+    const cursorAbsAmount = Math.abs(cursor.value_in_base_units);
+    const absAmount = sql<number>`abs(${transactionTable.value_in_base_units}::bigint)`;
+    /**
+     * If tied on amount, retrieve earlier transactions and transactions
+     * at same time with lower ID
+     */
     const afterAmountTie = or(
       lt(transactionTable.created_at, sql`${cursorTimestamp}::timestamptz`),
       and(
@@ -174,18 +177,22 @@ export const getTransactionsPaginated = async (options: {
       )
     );
 
+    /**
+     * Sort by date (ascending or descending via keyset pagination) or
+     * amount (by absolute value)
+     */
     conditions.push(
       sort === 'date-asc'
         ? sql`(${transactionTable.created_at}, ${transactionTable.transaction_id}) > (${cursorTimestamp}::timestamptz, ${cursor.transaction_id})`
         : sort === 'amount-asc'
           ? or(
-              gt(absoluteAmount, cursorAmount),
-              and(eq(absoluteAmount, cursorAmount), afterAmountTie)
+              gt(absAmount, cursorAbsAmount),
+              and(eq(absAmount, cursorAbsAmount), afterAmountTie)
             )
           : sort === 'amount-desc'
             ? or(
-                lt(absoluteAmount, cursorAmount),
-                and(eq(absoluteAmount, cursorAmount), afterAmountTie)
+                lt(absAmount, cursorAbsAmount),
+                and(eq(absAmount, cursorAbsAmount), afterAmountTie)
               )
             : sql`(${transactionTable.created_at}, ${transactionTable.transaction_id}) < (${cursorTimestamp}::timestamptz, ${cursor.transaction_id})`
     );

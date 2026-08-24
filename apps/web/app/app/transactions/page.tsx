@@ -8,10 +8,7 @@ import { getParentCategories } from '@/lib/db/category';
 import { getTags } from '@/lib/db/tag';
 import { getTransactionTypes } from '@/lib/db/transaction';
 import { booleanParam, dateParam, stringParam } from '@/lib/params';
-import {
-  DEFAULT_TRANSACTION_SORT,
-  isTransactionSort,
-} from '@/lib/transaction-sort';
+import { DEFAULT_TRANSACTION_SORT, isValidSort } from '@/lib/transaction-sort';
 import type { SearchParam } from '@/lib/types';
 import { Suspense } from 'react';
 import TransactionsPageHeader from './_components/page-header';
@@ -32,14 +29,19 @@ const TransactionsPage = async ({
     has_attachment,
     sort,
   } = await searchParams;
+
   const categoryId = stringParam(category);
   const fromDate = dateParam(from);
   const toDate = dateParam(to);
   const hasValidDateRange = !fromDate || !toDate || fromDate <= toDate;
-  const requestedSort = stringParam(sort);
-  const transactionSort = isTransactionSort(requestedSort)
-    ? requestedSort
+
+  // Sorting
+  const inputSort = stringParam(sort);
+  const transactionSort = isValidSort(inputSort)
+    ? inputSort
     : DEFAULT_TRANSACTION_SORT;
+
+  // Filtering
   const filters = {
     category_id: categoryId === 'all' ? undefined : categoryId,
     search_term: stringParam(query),
@@ -49,10 +51,6 @@ const TransactionsPage = async ({
     type: stringParam(type),
     has_note: booleanParam(has_note) === true ? true : undefined,
     has_attachment: booleanParam(has_attachment) === true ? true : undefined,
-    sort:
-      transactionSort === DEFAULT_TRANSACTION_SORT
-        ? undefined
-        : transactionSort,
   } satisfies TransactionFilters;
   const hasFilters = Object.values(filters).some(
     (value) => value !== undefined
@@ -90,6 +88,10 @@ const TransactionsPage = async ({
               ...(hasFilters && {
                 filters,
               }),
+              sort:
+                transactionSort === DEFAULT_TRANSACTION_SORT
+                  ? undefined
+                  : transactionSort,
             }}
             isInfinite
           />
