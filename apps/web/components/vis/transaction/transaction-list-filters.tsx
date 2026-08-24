@@ -33,7 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { getStartOfDay } from '@/lib/dateTime';
+import { getEndOfDay, getStartOfDay } from '@/lib/dateTime';
 import {
   DEFAULT_TRANSACTION_SORT,
   isValidSort,
@@ -89,6 +89,8 @@ const DatePickerFilter = ({
 }: {
   label: string;
   value: Date | undefined;
+  minDate?: Date;
+  maxDate?: Date;
   onChange: (date: Date | undefined) => void;
   container: HTMLDivElement | null;
   disabled?: Matcher | Matcher[];
@@ -193,6 +195,12 @@ const TransactionListFilters = ({
   const [drawer, setDrawer] = useState<HTMLDivElement | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  const fromDate = draftFilters.from
+    ? parse(draftFilters.from, 'yyyy-MM-dd', getStartOfDay())
+    : undefined;
+  const toDate = draftFilters.to
+    ? parse(draftFilters.to, 'yyyy-MM-dd', getEndOfDay())
+    : undefined;
   const activeFilterCount = [
     parseFilterDate(filters.from) || parseFilterDate(filters.to),
     filters.tag,
