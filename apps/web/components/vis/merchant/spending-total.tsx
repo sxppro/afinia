@@ -1,15 +1,16 @@
-import { getStartOfDay } from '@/lib/dateTime';
 import { getMerchantSpending } from '@/lib/db/spending';
 import { transactionExternalTable } from 'afinia-common/schema';
-import { endOfMonth, startOfMonth } from 'date-fns';
+import { Interval } from 'date-fns';
 import { sum } from 'drizzle-orm';
 import CurrencyFlow from '../currency-flow';
 
-const MerchantSpendingTotal = async ({ merchant }: { merchant: string }) => {
-  const range = {
-    start: startOfMonth(getStartOfDay()),
-    end: endOfMonth(getStartOfDay()),
-  };
+const MerchantSpendingTotal = async ({
+  merchant,
+  range,
+}: {
+  merchant: string;
+  range: Interval<Date, Date>;
+}) => {
   const [spending] = await getMerchantSpending({
     select: {
       value: sum(transactionExternalTable.value_in_base_units).mapWith(Number),

@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import SpendingByCategory from '@/components/vis/category/spending-by-category';
 import SpendingByDay from '@/components/vis/category/spending-by-day';
 import MerchantSpendingAverage from '@/components/vis/merchant/spending-average';
+import MerchantSpendingMonthNavigation from '@/components/vis/merchant/spending-month-navigation';
 import MerchantSpendingTotal from '@/components/vis/merchant/spending-total';
 import TransactionList from '@/components/vis/transaction/transaction-list';
 import { SMALL_PAGE_SIZE } from '@/lib/constants';
@@ -17,7 +18,19 @@ import {
 import { siteConfig } from '@/lib/siteConfig';
 import { colours } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
-import { endOfMonth, format, startOfMonth } from 'date-fns';
+import {
+  addMonths,
+  endOfMonth,
+  format,
+  isAfter,
+  isBefore,
+  isMatch,
+  max,
+  min,
+  parse,
+  startOfMonth,
+  subMonths,
+} from 'date-fns';
 import { lt, sql, sum } from 'drizzle-orm';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -26,10 +39,15 @@ import { Suspense } from 'react';
 
 const MerchantInsightsPage = async ({
   params,
+  searchParams,
 }: {
   params: Promise<{ merchant: string }>;
+  searchParams: Promise<{ month?: string }>;
 }) => {
-  const { merchant: merchantName } = await params;
+  const [{ merchant: merchantName }, { month }] = await Promise.all([
+    params,
+    searchParams,
+  ]);
 
   if (!merchantName) {
     return redirect(siteConfig.baseLinks.appHome);
@@ -37,14 +55,30 @@ const MerchantInsightsPage = async ({
 
   const [merchant] = await getMerchantByName(decodeURIComponent(merchantName));
 
-  if (!merchant?.name) {
+  if (!merchant?.name || !merchant.firstTransactionAt) {
     return redirect(siteConfig.baseLinks.appHome);
   }
 
+  const currentMonth = startOfMonth(getStartOfDay());
+  const requestedMonth =
+    month && isMatch(month, 'yyyy-MM')
+      ? startOfMonth(parse(month, 'yyyy-MM', currentMonth))
+      : currentMonth;
+  const earliestMonth = startOfMonth(merchant.firstTransactionAt);
+  const selectedMonth = max([
+    earliestMonth,
+    min([requestedMonth, currentMonth]),
+  ]);
   const range = {
-    start: startOfMonth(getStartOfDay()),
-    end: endOfMonth(getStartOfDay()),
+    start: selectedMonth,
+    end: endOfMonth(selectedMonth),
   };
+  const previousMonth = isAfter(selectedMonth, earliestMonth)
+    ? format(subMonths(selectedMonth, 1), 'yyyy-MM')
+    : null;
+  const nextMonth = isBefore(selectedMonth, currentMonth)
+    ? format(addMonths(selectedMonth, 1), 'yyyy-MM')
+    : null;
   const spendingByDayFetch = getMerchantSpendingByTimestamp({
     merchant: merchant.name,
     interval: 'day',
@@ -123,17 +157,20 @@ const MerchantInsightsPage = async ({
 
       <Separator />
 
-      <div>
-        <p className="font-medium">{format(range.start, 'MMMM, yyyy')}</p>
+      <MerchantSpendingMonthNavigation
+        monthLabel={format(range.start, 'MMMM, yyyy')}
+        previousMonth={previousMonth}
+        nextMonth={nextMonth}
+      >
         <div className="flex h-10 items-end gap-1 pb-1">
           <Suspense fallback={<Skeleton className="h-full w-24" />}>
-            <MerchantSpendingTotal merchant={merchant.name} />
+            <MerchantSpendingTotal merchant={merchant.name} range={range} />
           </Suspense>
         </div>
         <Suspense fallback={<Skeleton className="h-48 w-full" />}>
           <SpendingByDay dataFetch={spendingByDayFetch} />
         </Suspense>
-      </div>
+      </MerchantSpendingMonthNavigation>
 
       <div className="flex flex-col gap-2">
         <h2 className="text-xl font-semibold">Categories</h2>
@@ -156,6 +193,7 @@ const MerchantInsightsPage = async ({
           }
         >
           <TransactionList
+            isInfinite
             options={{
               filters: { merchant: merchant.name },
               limit: SMALL_PAGE_SIZE,
