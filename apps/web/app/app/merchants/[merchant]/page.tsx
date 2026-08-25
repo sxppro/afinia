@@ -15,6 +15,7 @@ import {
   getMerchantSpendingByTimestamp,
 } from '@/lib/db/spending';
 import { siteConfig } from '@/lib/siteConfig';
+import { colours } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
 import { endOfMonth, format, startOfMonth } from 'date-fns';
 import { lt, sql, sum } from 'drizzle-orm';
@@ -62,6 +63,7 @@ const MerchantInsightsPage = async ({
         END
       `,
       name: sql<string>`coalesce(${transactionExternalTable.category}, 'Uncategorised')`,
+      categoryParentId: transactionExternalTable.category_parent_id,
       value: sql<number>`abs(${sum(
         transactionExternalTable.value_in_base_units
       )})`
@@ -73,10 +75,19 @@ const MerchantInsightsPage = async ({
   })
     .groupBy(
       transactionExternalTable.category_id,
-      transactionExternalTable.category
+      transactionExternalTable.category,
+      transactionExternalTable.category_parent_id
     )
     .having(lt(sum(transactionExternalTable.value_in_base_units), 0))
-    .orderBy(sql`value`);
+    .orderBy(sql`value`)
+    .then((categories) =>
+      categories.map(({ categoryParentId, ...category }) => ({
+        ...category,
+        barColor:
+          colours[categoryParentId ?? category.key]?.background ??
+          colours.uncategorised.background,
+      }))
+    );
 
   return (
     <div className="flex flex-col gap-4">
