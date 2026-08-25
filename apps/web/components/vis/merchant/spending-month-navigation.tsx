@@ -8,6 +8,7 @@ import {
   PointerEvent,
   ReactNode,
   useCallback,
+  useEffect,
   useRef,
   useTransition,
 } from 'react';
@@ -30,15 +31,56 @@ const MerchantSpendingMonthNavigation = ({
   const pointerStart = useRef<{ x: number; y: number } | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  useEffect(() => {
+    // #region agent log
+    void fetch('/api/debug/merchant-month', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        hypothesisId: 'A,B,E',
+        location: 'spending-month-navigation.tsx:client-commit',
+        message: 'Merchant month client props committed',
+        data: {
+          href: window.location.href,
+          monthLabel,
+          previousMonth,
+          nextMonth,
+        },
+      }),
+      keepalive: true,
+    });
+    // #endregion
+  }, [monthLabel, nextMonth, previousMonth]);
+
   const navigateToMonth = useCallback(
     (month: string | null) => {
       if (!month) return;
+
+      // #region agent log
+      void fetch('/api/debug/merchant-month', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          hypothesisId: 'A,E',
+          location: 'spending-month-navigation.tsx:navigateToMonth',
+          message: 'Merchant month navigation requested',
+          data: {
+            href: window.location.href,
+            target: `${pathname}?month=${month}`,
+            monthLabel,
+            previousMonth,
+            nextMonth,
+          },
+        }),
+        keepalive: true,
+      });
+      // #endregion
 
       startTransition(() => {
         router.push(`${pathname}?month=${month}`, { scroll: false });
       });
     },
-    [pathname, router]
+    [monthLabel, nextMonth, pathname, previousMonth, router]
   );
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {

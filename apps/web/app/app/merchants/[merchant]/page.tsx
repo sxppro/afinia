@@ -35,6 +35,7 @@ import { lt, sql, sum } from 'drizzle-orm';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { appendFileSync } from 'node:fs';
 import { Suspense } from 'react';
 
 const MerchantInsightsPage = async ({
@@ -48,6 +49,19 @@ const MerchantInsightsPage = async ({
     params,
     searchParams,
   ]);
+
+  // #region agent log
+  appendFileSync(
+    '/opt/cursor/logs/debug.log',
+    `${JSON.stringify({
+      hypothesisId: 'A,C,E',
+      location: 'merchants/[merchant]/page.tsx:route-entry',
+      message: 'Merchant page route inputs resolved',
+      data: { merchantName, month: month ?? null },
+      timestamp: Date.now(),
+    })}\n`
+  );
+  // #endregion
 
   if (!merchantName) {
     return redirect(siteConfig.baseLinks.appHome);
@@ -79,10 +93,54 @@ const MerchantInsightsPage = async ({
   const nextMonth = isBefore(selectedMonth, currentMonth)
     ? format(addMonths(selectedMonth, 1), 'yyyy-MM')
     : null;
+
+  // #region agent log
+  appendFileSync(
+    '/opt/cursor/logs/debug.log',
+    `${JSON.stringify({
+      hypothesisId: 'C',
+      location: 'merchants/[merchant]/page.tsx:month-selection',
+      message: 'Merchant month range selected',
+      data: {
+        rawMonth: month ?? null,
+        currentMonth: currentMonth.toISOString(),
+        requestedMonth: requestedMonth.toISOString(),
+        earliestMonth: earliestMonth.toISOString(),
+        selectedMonth: selectedMonth.toISOString(),
+        rangeStart: range.start.toISOString(),
+        rangeEnd: range.end.toISOString(),
+        previousMonth,
+        nextMonth,
+      },
+      timestamp: Date.now(),
+    })}\n`
+  );
+  // #endregion
+
   const spendingByDayFetch = getMerchantSpendingByTimestamp({
     merchant: merchant.name,
     interval: 'day',
     range,
+  }).then((days) => {
+    // #region agent log
+    appendFileSync(
+      '/opt/cursor/logs/debug.log',
+      `${JSON.stringify({
+        hypothesisId: 'B,D',
+        location: 'merchants/[merchant]/page.tsx:day-query',
+        message: 'Merchant daily spending query resolved',
+        data: {
+          selectedMonth: format(selectedMonth, 'yyyy-MM'),
+          count: days.length,
+          first: days.at(0) ?? null,
+          last: days.at(-1) ?? null,
+          total: days.reduce((total, day) => total + (day.value ?? 0), 0),
+        },
+        timestamp: Date.now(),
+      })}\n`
+    );
+    // #endregion
+    return days;
   });
   const spendingByCategoryFetch = getMerchantSpending({
     select: {
@@ -114,14 +172,32 @@ const MerchantInsightsPage = async ({
     )
     .having(lt(sum(transactionExternalTable.value_in_base_units), 0))
     .orderBy(sql`value`)
-    .then((categories) =>
-      categories.map(({ categoryParentId, ...category }) => ({
+    .then((categories) => {
+      // #region agent log
+      appendFileSync(
+        '/opt/cursor/logs/debug.log',
+        `${JSON.stringify({
+          hypothesisId: 'B,D',
+          location: 'merchants/[merchant]/page.tsx:category-query',
+          message: 'Merchant category spending query resolved',
+          data: {
+            selectedMonth: format(selectedMonth, 'yyyy-MM'),
+            categories: categories.map(({ categoryParentId, ...category }) => ({
+              ...category,
+              categoryParentId,
+            })),
+          },
+          timestamp: Date.now(),
+        })}\n`
+      );
+      // #endregion
+      return categories.map(({ categoryParentId, ...category }) => ({
         ...category,
         barColor:
           colours[categoryParentId ?? category.key]?.background ??
           colours.uncategorised.background,
-      }))
-    );
+      }));
+    });
 
   return (
     <div className="flex flex-col gap-4">
