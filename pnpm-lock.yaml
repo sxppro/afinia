@@ -12,6 +12,9 @@ catalogs:
     date-fns:
       specifier: ^4.1.0
       version: 4.1.0
+    drizzle-orm:
+      specifier: ^0.45.2
+      version: 0.45.2
 
 importers:
 
@@ -33,8 +36,8 @@ importers:
         specifier: 'catalog:'
         version: 4.1.0
       drizzle-orm:
-        specifier: ^0.44.6
-        version: 0.44.6(kysely@0.28.8)(postgres@3.4.7)
+        specifier: 'catalog:'
+        version: 0.45.2(kysely@0.28.8)(postgres@3.4.7)
       p-limit:
         specifier: ^7.3.0
         version: 7.3.0
@@ -109,8 +112,8 @@ importers:
         specifier: 'catalog:'
         version: 4.1.0
       drizzle-orm:
-        specifier: ^0.44.6
-        version: 0.44.6(kysely@0.28.8)(postgres@3.4.7)
+        specifier: 'catalog:'
+        version: 0.45.2(kysely@0.28.8)(postgres@3.4.7)
       lucide-react:
         specifier: ^0.545.0
         version: 0.545.0(react@19.1.0)
@@ -132,6 +135,9 @@ importers:
       react:
         specifier: 19.1.0
         version: 19.1.0
+      react-day-picker:
+        specifier: ^10.0.1
+        version: 10.0.1(@types/react@19.2.2)(react@19.1.0)
       react-dom:
         specifier: 19.1.0
         version: 19.1.0(react@19.1.0)
@@ -203,8 +209,8 @@ importers:
   packages/common:
     dependencies:
       drizzle-orm:
-        specifier: ^0.44.6
-        version: 0.44.6(kysely@0.28.8)(postgres@3.4.7)
+        specifier: 'catalog:'
+        version: 0.45.2(kysely@0.28.8)(postgres@3.4.7)
       openapi-fetch:
         specifier: ^0.17.0
         version: 0.17.0
@@ -2539,8 +2545,8 @@ packages:
     resolution: {integrity: sha512-+CHgPFzuoTQTt7cOYCV6MOw2w8vqEn/ap1yv4bpZOWL03u7rlVRQhUY0WYT3rHsgVTXwYQDZaSUJSQrMBUKuWg==}
     hasBin: true
 
-  drizzle-orm@0.44.6:
-    resolution: {integrity: sha512-uy6uarrrEOc9K1u5/uhBFJbdF5VJ5xQ/Yzbecw3eAYOunv5FDeYkR2m8iitocdHBOHbvorviKOW5GVw0U1j4LQ==}
+  drizzle-orm@0.45.2:
+    resolution: {integrity: sha512-kY0BSaTNYWnoDMVoyY8uxmyHjpJW1geOmBMdSSicKo9CIIWkSxMIj2rkeSR51b8KAPB7m+qysjuHme5nKP+E5Q==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=4'
@@ -3647,6 +3653,16 @@ packages:
       '@types/react':
         optional: true
       '@types/react-dom':
+        optional: true
+
+  react-day-picker@10.0.1:
+    resolution: {integrity: sha512-eNh6BlwcYInWaJtRv18mXQ06Ys/H6rdTZAnTaSdOYJuTpwP1JMCHNd1FDRadA+gbeinq+psdULN5Xnowy9mV8w==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@types/react': '>=16.8.0'
+      react: '>=16.8.0'
+    peerDependenciesMeta:
+      '@types/react':
         optional: true
 
   react-dom@19.1.0:
@@ -6532,7 +6548,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.44.6(kysely@0.28.8)(postgres@3.4.7):
+  drizzle-orm@0.45.2(kysely@0.28.8)(postgres@3.4.7):
     optionalDependencies:
       kysely: 0.28.8
       postgres: 3.4.7
@@ -7686,6 +7702,14 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.2
       '@types/react-dom': 19.2.2(@types/react@19.2.2)
+
+  react-day-picker@10.0.1(@types/react@19.2.2)(react@19.1.0):
+    dependencies:
+      '@date-fns/tz': 1.4.1
+      date-fns: 4.1.0
+      react: 19.1.0
+    optionalDependencies:
+      '@types/react': 19.2.2
 
   react-dom@19.1.0(react@19.1.0):
     dependencies:
