@@ -8,7 +8,7 @@ import MerchantSpendingAverage from '@/components/vis/merchant/spending-average'
 import MerchantSpendingMonthNavigation from '@/components/vis/merchant/spending-month-navigation';
 import MerchantSpendingTotal from '@/components/vis/merchant/spending-total';
 import TransactionList from '@/components/vis/transaction/transaction-list';
-import { SMALL_PAGE_SIZE } from '@/lib/constants';
+import { SMALL_PAGE_SIZE, TZ } from '@/lib/constants';
 import { getStartOfDay } from '@/lib/dateTime';
 import { getMerchantByName } from '@/lib/db/merchant';
 import {
@@ -17,6 +17,7 @@ import {
 } from '@/lib/db/spending';
 import { siteConfig } from '@/lib/siteConfig';
 import { colours } from '@/lib/ui';
+import { TZDateMini } from '@date-fns/tz';
 import { transactionExternalTable } from 'afinia-common/schema';
 import {
   addMonths,
@@ -78,7 +79,9 @@ const MerchantInsightsPage = async ({
     month && isMatch(month, 'yyyy-MM')
       ? startOfMonth(parse(month, 'yyyy-MM', currentMonth))
       : currentMonth;
-  const earliestMonth = startOfMonth(merchant.firstTransactionAt);
+  const earliestMonth = startOfMonth(
+    new TZDateMini(merchant.firstTransactionAt, TZ)
+  );
   const selectedMonth = max([
     earliestMonth,
     min([requestedMonth, currentMonth]),
