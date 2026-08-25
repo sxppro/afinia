@@ -2,7 +2,6 @@ import { getMerchantSpending } from '@/lib/db/spending';
 import { transactionExternalTable } from 'afinia-common/schema';
 import { Interval } from 'date-fns';
 import { sum } from 'drizzle-orm';
-import { appendFileSync } from 'node:fs';
 import CurrencyFlow from '../currency-flow';
 
 const MerchantSpendingTotal = async ({
@@ -20,24 +19,6 @@ const MerchantSpendingTotal = async ({
     merchant,
   });
   const value = spending?.value ?? 0;
-
-  // #region agent log
-  appendFileSync(
-    '/opt/cursor/logs/debug.log',
-    `${JSON.stringify({
-      hypothesisId: 'B,D',
-      location: 'spending-total.tsx:query-result',
-      message: 'Merchant spending total query resolved',
-      data: {
-        merchant,
-        rangeStart: range.start.toISOString(),
-        rangeEnd: range.end.toISOString(),
-        value,
-      },
-      timestamp: Date.now(),
-    })}\n`
-  );
-  // #endregion
 
   return (
     <>
