@@ -4,9 +4,9 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import SpendingByCategory from '@/components/vis/category/spending-by-category';
 import SpendingByDay from '@/components/vis/category/spending-by-day';
-import MerchantSpendingAverage from '@/components/vis/merchant/spending-average';
-import MerchantSpendingMonthNavigation from '@/components/vis/merchant/spending-month-navigation';
-import MerchantSpendingTotal from '@/components/vis/merchant/spending-total';
+import SpendingAverage from '@/components/vis/merchant/spending-average';
+import SpendingMonthNavigation from '@/components/vis/merchant/spending-month-navigation';
+import SpendingTotal from '@/components/vis/merchant/spending-total';
 import TransactionList from '@/components/vis/transaction/transaction-list';
 import { SMALL_PAGE_SIZE, TZ } from '@/lib/constants';
 import { getStartOfDay } from '@/lib/dateTime';
@@ -154,27 +154,27 @@ const MerchantInsightsPage = async ({
         <div className="flex-1">
           <p className="text-muted-foreground font-medium">Average per month</p>
           <Suspense fallback={<Skeleton className="h-9 w-32" />}>
-            <MerchantSpendingAverage merchant={merchant.name} />
+            <SpendingAverage merchant={merchant.name} />
           </Suspense>
         </div>
       </div>
 
       <Separator />
 
-      <MerchantSpendingMonthNavigation
+      <SpendingMonthNavigation
         monthLabel={format(range.start, 'MMMM, yyyy')}
         previousMonth={previousMonth}
         nextMonth={nextMonth}
       >
         <div className="flex h-10 items-end gap-1 pb-1">
           <Suspense fallback={<Skeleton className="h-full w-24" />}>
-            <MerchantSpendingTotal merchant={merchant.name} range={range} />
+            <SpendingTotal merchant={merchant.name} range={range} />
           </Suspense>
         </div>
         <Suspense fallback={<Skeleton className="h-48 w-full" />}>
           <SpendingByDay dataFetch={spendingByDayFetch} />
         </Suspense>
-      </MerchantSpendingMonthNavigation>
+      </SpendingMonthNavigation>
 
       <div className="flex flex-col gap-2">
         <h2 className="text-xl font-semibold">Categories</h2>

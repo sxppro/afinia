@@ -4,7 +4,7 @@ import { Interval } from 'date-fns';
 import { sum } from 'drizzle-orm';
 import CurrencyFlow from '../currency-flow';
 
-const MerchantSpendingTotal = async ({
+const SpendingTotal = async ({
   merchant,
   range,
 }: {
@@ -30,4 +30,4 @@ const MerchantSpendingTotal = async ({
   );
 };
 
-export default MerchantSpendingTotal;
+export default SpendingTotal;

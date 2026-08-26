@@ -13,7 +13,7 @@ import {
 } from 'date-fns';
 import { avg, eq } from 'drizzle-orm';
 
-const MerchantSpendingAverage = async ({ merchant }: { merchant: string }) => {
+const SpendingAverage = async ({ merchant }: { merchant: string }) => {
   const MIN_MONTHS = 3;
   const [account] = await db
     .select({ createdAt: accountTable.created_at })
@@ -31,6 +31,9 @@ const MerchantSpendingAverage = async ({ merchant }: { merchant: string }) => {
   };
   const months = differenceInMonths(interval.end, interval.start);
 
+  /**
+   * Calculate monthly average spend for the last 3 months
+   */
   if (months >= MIN_MONTHS) {
     const avgInterval = {
       start: startOfMonth(subMonths(getStartOfDay(), MIN_MONTHS)),
@@ -58,4 +61,4 @@ const MerchantSpendingAverage = async ({ merchant }: { merchant: string }) => {
   return <p className="text-3xl/tight font-semibold">$—.——</p>;
 };
 
-export default MerchantSpendingAverage;
+export default SpendingAverage;
