@@ -33,12 +33,7 @@ const SpendingMonthNavigation = ({
   );
 
   return (
-    <div
-      className={cn(
-        'touch-pan-y transition-opacity',
-        isPending && 'opacity-60'
-      )}
-    >
+    <div className={cn('transition-opacity', isPending && 'opacity-60')}>
       <div className="flex items-center justify-between">
         <p className="font-medium">{monthLabel}</p>
         <div>

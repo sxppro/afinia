@@ -158,7 +158,7 @@ const TransactionItemDetails = ({
               {description ? (
                 <Link
                   href={`${siteConfig.baseLinks.merchants}/${encodeURIComponent(description)}`}
-                  className="hover:underline hover:underline-offset-2"
+                  className="underline underline-offset-2"
                 >
                   {description}
                 </Link>
