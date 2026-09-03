@@ -1,24 +1,13 @@
-import CategoryIcon from '@/components/icons/category-icon';
 import { Button } from '@/components/ui/button';
-import { CategoryBar } from '@/components/ui/category-bar';
-import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import SpendingByCategory from '@/components/vis/category/spending-by-category';
-import SpendingByMonth from '@/components/vis/category/spending-by-month';
-import CurrencyFlow from '@/components/vis/currency-flow';
-import { getStartOfDay } from '@/lib/dateTime';
-import {
-  getCategorySpending,
-  getCategorySpendingByTimestamp,
-} from '@/lib/db/spending';
+import SpendingCalendar from '@/components/vis/spending/spending-calendar';
+import SpendingViewTabs from '@/components/vis/spending/spending-view-tabs';
 import { siteConfig } from '@/lib/siteConfig';
-import { cn, colours, formatCurrency } from '@/lib/ui';
-import { transactionExternalTable } from 'afinia-common/schema';
-import { endOfMonth, startOfMonth, subMonths } from 'date-fns';
-import { lt, sql, sum } from 'drizzle-orm';
-import { ArrowLeft, ChartColumn, Ellipsis, List } from 'lucide-react';
+import { ArrowLeft, Ellipsis } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import SpendingOverview from './_components/spending-overview';
+import SpendingTrends from './_components/spending-trends';
 
 const SpendingPage = async ({
   searchParams,
@@ -26,66 +15,13 @@ const SpendingPage = async ({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) => {
   const params = await searchParams;
-  const isChartView = 'view' in params && params.view === 'chart';
-  // This month
-  const range = {
-    start: startOfMonth(getStartOfDay()),
-    end: endOfMonth(getStartOfDay()),
-  };
-  // Last 12 months
-  const chartRange = {
-    start: startOfMonth(subMonths(getStartOfDay(), 11)),
-    end: endOfMonth(getStartOfDay()),
-  };
-
-  // Data fetching
-  const spending = await getCategorySpending({
-    select: {
-      id: sql<string>`coalesce(${transactionExternalTable.category_parent_id}, 'uncategorised')`,
-      name: sql<string>`coalesce(${transactionExternalTable.category_parent}, 'Uncategorised')`,
-      value: sum(transactionExternalTable.value_in_base_units)
-        .mapWith(Number)
-        .as('value'),
-    },
-    range,
-  })
-    .groupBy(
-      transactionExternalTable.category_parent_id,
-      transactionExternalTable.category_parent
-    )
-    .having(lt(sum(transactionExternalTable.value_in_base_units), 0))
-    .orderBy(sql`value`);
-  const subCategorySpendingQuery = (category: string) =>
-    getCategorySpending({
-      select: {
-        href: sql<string>`CONCAT('${sql.raw(
-          siteConfig.baseLinks.spending
-        )}/', ${transactionExternalTable.category_id})`,
-        name: transactionExternalTable.category,
-        value: sql<number>`abs(${sum(
-          transactionExternalTable.value_in_base_units
-        )})`
-          .mapWith(Number)
-          .as('value'),
-      },
-      range,
-      category,
-    })
-      .groupBy(
-        transactionExternalTable.category_id,
-        transactionExternalTable.category
-      )
-      .having(lt(sum(transactionExternalTable.value_in_base_units), 0))
-      .orderBy(sql`value`);
-  const monthlySpendingQuery = (category: string) =>
-    getCategorySpendingByTimestamp({
-      category,
-      interval: 'month',
-      range: chartRange,
-    });
+  const requestedView = Array.isArray(params.view) ? params.view[0] : params.view;
+  const activeView = ['calendar', 'trends'].includes(requestedView ?? '')
+    ? requestedView!
+    : 'overview';
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <div className="flex justify-between">
         <div className="flex items-center gap-4">
           <Button
@@ -108,88 +44,27 @@ const SpendingPage = async ({
         </div>
       </div>
 
-      <div>
-        <p className="text-muted-foreground text-lg font-medium">This month</p>
-        <div className="flex items-stretch justify-between">
-          <CurrencyFlow
-            className="text-4xl/tight font-semibold"
-            value={spending.reduce((acc, curr) => acc + curr.value, 0)}
-          />
-          <Button
-            variant="outline"
-            className="size-12 rounded-full"
-            nativeButton={false}
-            render={
-              <Link
-                href={
-                  isChartView
-                    ? siteConfig.baseLinks.spending
-                    : `${siteConfig.baseLinks.spending}?view=chart`
-                }
-              >
-                {isChartView ? (
-                  <List className="size-6" />
-                ) : (
-                  <ChartColumn className="size-6" />
-                )}
-              </Link>
-            }
-          />
-        </div>
-      </div>
+      <SpendingViewTabs activeView={activeView} />
 
-      <div>
-        <CategoryBar
-          className="h-4"
-          values={spending.map(({ value }) => value)}
-          colors={spending.map(
-            ({ id }) => colours[id]?.background ?? 'bg-gray-300'
-          )}
-          showLabels={false}
-        />
-      </div>
-
-      {spending.map(({ id, name, value }) => (
-        <div className="flex flex-col gap-2" key={id}>
-          <div className="flex items-center gap-2">
-            <div
-              className={cn(
-                'rounded-lg p-2',
-                colours[id]?.background ?? 'bg-gray-300'
-              )}
-            >
-              <CategoryIcon category={id} className="size-4 stroke-white" />
-            </div>
-            <Link href={`${siteConfig.baseLinks.spending}/${id}`}>
-              <p className="text-lg font-medium underline underline-offset-4">
-                {name}
-              </p>
-            </Link>
-            <p className="ml-auto text-xl font-bold">
-              {formatCurrency(value, {
-                absolute: true,
-                baseUnits: true,
-              })}
+      {activeView === 'calendar' ? (
+        <section>
+          <div className="mb-3">
+            <h2 className="text-xl font-semibold">Daily spending</h2>
+            <p className="text-muted-foreground text-sm">
+              Scroll through your history and tap a day for transactions
             </p>
           </div>
-          {isChartView ? (
-            <Suspense>
-              <SpendingByMonth
-                category={id}
-                dataFetch={monthlySpendingQuery(id)}
-              />
-            </Suspense>
-          ) : (
-            <Suspense fallback={<Skeleton className="h-24 w-full" />}>
-              <SpendingByCategory
-                category={id}
-                dataFetch={subCategorySpendingQuery(id)}
-              />
-            </Suspense>
-          )}
-          <Separator className="mt-2" />
-        </div>
-      ))}
+          <SpendingCalendar />
+        </section>
+      ) : activeView === 'trends' ? (
+        <Suspense fallback={<Skeleton className="h-72 w-full" />}>
+          <SpendingTrends />
+        </Suspense>
+      ) : (
+        <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+          <SpendingOverview />
+        </Suspense>
+      )}
     </div>
   );
 };
