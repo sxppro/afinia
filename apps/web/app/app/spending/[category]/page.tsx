@@ -117,7 +117,7 @@ const CategorySpendingPage = async ({
       <Separator />
       <div>
         <div className="flex items-center justify-between">
-          <p className="font-medium">{format(range.start, 'MMMM, yyyy')}</p>
+          <p className="font-medium">{format(range.start, 'MMMM yyyy')}</p>
           <div>
             <Button variant="ghost" className="has-[>svg]:px-1">
               <ArrowLeft className="size-5" />

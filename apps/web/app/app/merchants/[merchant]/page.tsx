@@ -162,7 +162,7 @@ const MerchantInsightsPage = async ({
       <Separator />
 
       <SpendingMonthNavigation
-        monthLabel={format(range.start, 'MMMM, yyyy')}
+        monthLabel={format(range.start, 'MMMM yyyy')}
         previousMonth={previousMonth}
         nextMonth={nextMonth}
       >

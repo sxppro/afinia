@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/ui';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
+import { parseAsString, useQueryState } from 'nuqs';
 import { ReactNode, useCallback, useTransition } from 'react';
 
 const SpendingMonthNavigation = ({
@@ -17,19 +17,24 @@ const SpendingMonthNavigation = ({
   previousMonth: string | null;
   nextMonth: string | null;
 }) => {
-  const pathname = usePathname();
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [, setMonth] = useQueryState(
+    'month',
+    parseAsString.withOptions({
+      history: 'replace',
+      scroll: false,
+      shallow: false,
+      startTransition,
+    })
+  );
 
   const navigateToMonth = useCallback(
     (month: string | null) => {
       if (!month) return;
 
-      startTransition(() => {
-        router.push(`${pathname}?month=${month}`, { scroll: false });
-      });
+      setMonth(month);
     },
-    [pathname, router]
+    [setMonth]
   );
 
   return (
