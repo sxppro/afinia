@@ -52,6 +52,7 @@ export type TransactionFilters = Prettify<
     include_transfers?: boolean;
     has_note?: boolean;
     has_attachment?: boolean;
+    merchant?: string;
   }
 >;
 
@@ -84,6 +85,7 @@ export const getTransactionsPaginated = async (options: {
   if (filters) {
     const categoryId = filters?.category_id?.trim();
     const searchTerm = filters?.search_term?.trim();
+    const merchant = filters?.merchant;
 
     if (filters?.account_id !== undefined) {
       conditions.push(eq(transactionTable.account_id, filters.account_id));
@@ -152,6 +154,10 @@ export const getTransactionsPaginated = async (options: {
           )
         );
       }
+    }
+
+    if (merchant) {
+      conditions.push(eq(transactionTable.description, merchant));
     }
 
     if (searchTerm) {
