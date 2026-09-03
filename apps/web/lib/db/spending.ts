@@ -315,9 +315,9 @@ export const getSpendingCategoriesByMonth = (
     })
     .from(transactionExternalTable)
     .where(spendingRangeFilter(range))
-    .groupBy(monthSort, month, categoryId, categoryName)
+    .groupBy(sql`1, 2, 3, 4`)
     .having(lt(sum(transactionExternalTable.value_in_base_units), 0))
-    .orderBy(asc(monthSort), asc(categoryName));
+    .orderBy(sql`2 asc, 4 asc`);
 };
 
 export const getEarliestSpendingDate = async () => {
