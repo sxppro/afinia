@@ -1,4 +1,5 @@
 import { getStartOfDay } from '@/lib/dateTime';
+import { TZ } from '@/lib/constants';
 import {
   getEarliestSpendingDate,
   getSpendingByDay,
@@ -15,6 +16,7 @@ import {
   addMonths,
   endOfMonth,
   endOfYear,
+  format,
   startOfMonth,
   subMonths,
 } from 'date-fns';
@@ -33,10 +35,10 @@ export const spendingRouter = router({
     });
 
     return {
-      today: getMonthKey(today) + `-${String(today.getDate()).padStart(2, '0')}`,
+      today: format(today, 'yyyy-MM-dd'),
       currentMonth: getMonthKey(today),
       earliestMonth: earliestDate
-        ? getMonthKey(startOfMonth(new TZDateMini(earliestDate, 'Australia/Melbourne')))
+        ? getMonthKey(startOfMonth(new TZDateMini(earliestDate, TZ)))
         : getMonthKey(today),
       latestMonth: getMonthKey(endOfYear(today)),
       scaleMax: getPercentile(

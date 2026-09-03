@@ -99,13 +99,21 @@ const SpendingOverview = async () => {
   const change =
     previousTotal > 0 ? ((total - previousTotal) / previousTotal) * 100 : 0;
   const previousByCategory = new Map(
-    previousCategories.map(({ id, value }) => [id, value])
+    previousCategories.map((category) => [category.id, category])
   );
-  const movers = categories
-    .map((category) => ({
-      ...category,
-      delta: category.value - (previousByCategory.get(category.id) ?? 0),
-    }))
+  const currentByCategory = new Map(
+    categories.map((category) => [category.id, category])
+  );
+  const movers = [...new Set([...currentByCategory.keys(), ...previousByCategory.keys()])]
+    .map((id) => {
+      const current = currentByCategory.get(id);
+      const previous = previousByCategory.get(id);
+      return {
+        id,
+        name: current?.name ?? previous?.name ?? id,
+        delta: (current?.value ?? 0) - (previous?.value ?? 0),
+      };
+    })
     .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
     .slice(0, 4);
   const topMerchantShare =
