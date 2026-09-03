@@ -823,9 +823,9 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
               )}`;
               return (
                 <React.Fragment key={category}>
-                  <defs key={category}>
+                  <defs key={`defs-${category}`}>
                     <linearGradient
-                      key={category}
+                      key={`gradient-${category}`}
                       className={cx(
                         getColorClassName(
                           categoryColors.get(
@@ -943,7 +943,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
                       }
                       return <React.Fragment key={index}></React.Fragment>;
                     }}
-                    key={category}
+                    key={`area-${category}`}
                     name={category}
                     type="linear"
                     dataKey={category}
@@ -965,7 +965,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
                   <Line
                     className={cx('cursor-pointer')}
                     strokeOpacity={0}
-                    key={category}
+                    key={`line-${category}`}
                     name={category}
                     type="linear"
                     dataKey={category}

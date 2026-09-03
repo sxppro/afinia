@@ -6,17 +6,20 @@ import {
   desc,
   eq,
   gte,
-  lt,
+  gt,
   lte,
   min,
   or,
   sql,
-  sum,
 } from 'drizzle-orm';
 import { IntervalConfig, SelectedFields } from 'drizzle-orm/pg-core';
 import { TZ } from '../constants';
 import { Prettify } from '../types';
 import { db } from './client';
+
+const spendingAmount = sql<number>`coalesce(sum(CASE WHEN ${transactionExternalTable.value_in_base_units} < 0 THEN -${transactionExternalTable.value_in_base_units} ELSE 0 END), 0)`.mapWith(
+  Number
+);
 
 export const getCategorySpending = <T extends SelectedFields>({
   select,
@@ -69,13 +72,7 @@ export const getCategorySpendingByTimestamp = ({
       value: sql<number | null>`
       CASE 
         WHEN time_series.interval_start > NOW() THEN NULL
-        WHEN coalesce(${sum(
-          transactionExternalTable.value_in_base_units
-        )}, 0) < 0
-        THEN abs(coalesce(${sum(
-          transactionExternalTable.value_in_base_units
-        )}, 0))
-        ELSE 0
+        ELSE coalesce(sum(CASE WHEN ${transactionExternalTable.value_in_base_units} < 0 THEN -${transactionExternalTable.value_in_base_units} ELSE 0 END), 0)
       END
       `
         .mapWith(Number)
@@ -157,13 +154,7 @@ export const getMerchantSpendingByTimestamp = ({
       value: sql<number | null>`
         CASE
           WHEN time_series.interval_start > NOW() THEN NULL
-          WHEN coalesce(${sum(
-            transactionExternalTable.value_in_base_units
-          )}, 0) < 0
-          THEN abs(coalesce(${sum(
-            transactionExternalTable.value_in_base_units
-          )}, 0))
-          ELSE 0
+          ELSE coalesce(sum(CASE WHEN ${transactionExternalTable.value_in_base_units} < 0 THEN -${transactionExternalTable.value_in_base_units} ELSE 0 END), 0)
         END
       `
         .mapWith(Number)
@@ -192,10 +183,6 @@ export const getMerchantSpendingByTimestamp = ({
     .orderBy(sql<string>`time_series.interval_start`);
 };
 
-const netSpending = sql<number>`greatest(-coalesce(${sum(
-  transactionExternalTable.value_in_base_units
-)}, 0), 0)`.mapWith(Number);
-
 const spendingRangeFilter = (range: Prettify<Partial<Interval<Date, Date>>>) =>
   and(
     range.start
@@ -208,7 +195,7 @@ export const getSpendingTotal = async (
   range: Prettify<Partial<Interval<Date, Date>>>
 ) => {
   const [result] = await db
-    .select({ value: netSpending.as('value') })
+    .select({ value: spendingAmount.as('value') })
     .from(transactionExternalTable)
     .where(spendingRangeFilter(range));
 
@@ -229,9 +216,7 @@ export const getSpendingByDay = ({
       value: sql<number | null>`
         CASE
           WHEN time_series.interval_start > NOW() THEN NULL
-          ELSE greatest(-coalesce(${sum(
-            transactionExternalTable.value_in_base_units
-          )}, 0), 0)
+          ELSE coalesce(sum(CASE WHEN ${transactionExternalTable.value_in_base_units} < 0 THEN -${transactionExternalTable.value_in_base_units} ELSE 0 END), 0)
         END
       `
         .mapWith(Number)
@@ -265,13 +250,13 @@ export const getSpendingByCategory = (
     .select({
       id: categoryId.as('id'),
       name: categoryName.as('name'),
-      value: netSpending.as('value'),
+      value: spendingAmount.as('value'),
     })
     .from(transactionExternalTable)
     .where(spendingRangeFilter(range))
     .groupBy(categoryId, categoryName)
-    .having(lt(sum(transactionExternalTable.value_in_base_units), 0))
-    .orderBy(desc(netSpending));
+    .having(gt(spendingAmount, 0))
+    .orderBy(desc(spendingAmount));
 };
 
 export const getSpendingByMerchant = (
@@ -283,7 +268,7 @@ export const getSpendingByMerchant = (
   return db
     .select({
       merchant: merchant.as('merchant'),
-      value: netSpending.as('value'),
+      value: spendingAmount.as('value'),
       transactions:
         sql<number>`count(${transactionExternalTable.transaction_id})`
           .mapWith(Number)
@@ -292,8 +277,8 @@ export const getSpendingByMerchant = (
     .from(transactionExternalTable)
     .where(spendingRangeFilter(range))
     .groupBy(merchant)
-    .having(lt(sum(transactionExternalTable.value_in_base_units), 0))
-    .orderBy(desc(netSpending))
+    .having(gt(spendingAmount, 0))
+    .orderBy(desc(spendingAmount))
     .limit(limit);
 };
 
@@ -311,12 +296,12 @@ export const getSpendingCategoriesByMonth = (
       monthSort: monthSort.as('month_sort'),
       categoryId: categoryId.as('category_id'),
       categoryName: categoryName.as('category_name'),
-      value: netSpending.as('value'),
+      value: spendingAmount.as('value'),
     })
     .from(transactionExternalTable)
     .where(spendingRangeFilter(range))
     .groupBy(sql`1, 2, 3, 4`)
-    .having(lt(sum(transactionExternalTable.value_in_base_units), 0))
+    .having(gt(spendingAmount, 0))
     .orderBy(sql`2 asc, 4 asc`);
 };
 
