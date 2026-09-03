@@ -1,10 +1,25 @@
 import { transactionExternalTable } from 'afinia-common/schema';
 import { format, Interval } from 'date-fns';
-import { and, eq, gte, isNotNull, lte, or, sql, sum } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  gt,
+  lte,
+  min,
+  or,
+  sql,
+} from 'drizzle-orm';
 import { IntervalConfig, SelectedFields } from 'drizzle-orm/pg-core';
 import { TZ } from '../constants';
 import { Prettify } from '../types';
 import { db } from './client';
+
+const spendingAmount = sql<number>`coalesce(sum(CASE WHEN ${transactionExternalTable.value_in_base_units} < 0 THEN -${transactionExternalTable.value_in_base_units} ELSE 0 END), 0)`.mapWith(
+  Number
+);
 
 export const getCategorySpending = <T extends SelectedFields>({
   select,
@@ -26,7 +41,6 @@ export const getCategorySpending = <T extends SelectedFields>({
         range?.end
           ? lte(transactionExternalTable.created_at, range.end)
           : undefined,
-        isNotNull(transactionExternalTable.category_id),
         category
           ? or(
               eq(transactionExternalTable.category_id, category),
@@ -58,13 +72,7 @@ export const getCategorySpendingByTimestamp = ({
       value: sql<number | null>`
       CASE 
         WHEN time_series.interval_start > NOW() THEN NULL
-        WHEN coalesce(${sum(
-          transactionExternalTable.value_in_base_units
-        )}, 0) < 0
-        THEN abs(coalesce(${sum(
-          transactionExternalTable.value_in_base_units
-        )}, 0))
-        ELSE 0
+        ELSE coalesce(sum(CASE WHEN ${transactionExternalTable.value_in_base_units} < 0 THEN -${transactionExternalTable.value_in_base_units} ELSE 0 END), 0)
       END
       `
         .mapWith(Number)
@@ -146,13 +154,7 @@ export const getMerchantSpendingByTimestamp = ({
       value: sql<number | null>`
         CASE
           WHEN time_series.interval_start > NOW() THEN NULL
-          WHEN coalesce(${sum(
-            transactionExternalTable.value_in_base_units
-          )}, 0) < 0
-          THEN abs(coalesce(${sum(
-            transactionExternalTable.value_in_base_units
-          )}, 0))
-          ELSE 0
+          ELSE coalesce(sum(CASE WHEN ${transactionExternalTable.value_in_base_units} < 0 THEN -${transactionExternalTable.value_in_base_units} ELSE 0 END), 0)
         END
       `
         .mapWith(Number)
@@ -179,4 +181,134 @@ export const getMerchantSpendingByTimestamp = ({
     )
     .groupBy(sql<string>`time_series.interval_start`)
     .orderBy(sql<string>`time_series.interval_start`);
+};
+
+const spendingRangeFilter = (range: Prettify<Partial<Interval<Date, Date>>>) =>
+  and(
+    range.start
+      ? gte(transactionExternalTable.created_at, range.start)
+      : undefined,
+    range.end ? lte(transactionExternalTable.created_at, range.end) : undefined
+  );
+
+export const getSpendingTotal = async (
+  range: Prettify<Partial<Interval<Date, Date>>>
+) => {
+  const [result] = await db
+    .select({ value: spendingAmount.as('value') })
+    .from(transactionExternalTable)
+    .where(spendingRangeFilter(range));
+
+  return result?.value ?? 0;
+};
+
+export const getSpendingByDay = ({
+  range,
+}: {
+  range: Interval<Date, Date>;
+}) => {
+  const formattedStart = format(range.start, 'yyyy-MM-dd');
+  const formattedEnd = format(range.end, 'yyyy-MM-dd');
+
+  return db
+    .select({
+      date: sql<string>`to_char(time_series.interval_start AT TIME ZONE ${TZ}, 'YYYY-MM-DD')`,
+      value: sql<number | null>`
+        CASE
+          WHEN time_series.interval_start > NOW() THEN NULL
+          ELSE coalesce(sum(CASE WHEN ${transactionExternalTable.value_in_base_units} < 0 THEN -${transactionExternalTable.value_in_base_units} ELSE 0 END), 0)
+        END
+      `
+        .mapWith(Number)
+        .as('value'),
+    })
+    .from(
+      sql`generate_series('${sql.raw(
+        `${formattedStart} ${TZ}`
+      )}'::timestamptz, '${sql.raw(
+        `${formattedEnd} ${TZ}`
+      )}'::timestamptz, '1 day'::interval, ${TZ}) AS time_series(interval_start)`
+    )
+    .leftJoin(
+      transactionExternalTable,
+      eq(
+        sql`date_trunc('day', ${transactionExternalTable.created_at}, ${TZ})`,
+        sql`time_series.interval_start`
+      )
+    )
+    .groupBy(sql`time_series.interval_start`)
+    .orderBy(asc(sql`time_series.interval_start`));
+};
+
+export const getSpendingByCategory = (
+  range: Prettify<Partial<Interval<Date, Date>>>
+) => {
+  const categoryId = sql<string>`coalesce(${transactionExternalTable.category_parent_id}, ${transactionExternalTable.category_id}, 'uncategorised')`;
+  const categoryName = sql<string>`coalesce(${transactionExternalTable.category_parent}, ${transactionExternalTable.category}, 'Uncategorised')`;
+
+  return db
+    .select({
+      id: categoryId.as('id'),
+      name: categoryName.as('name'),
+      value: spendingAmount.as('value'),
+    })
+    .from(transactionExternalTable)
+    .where(spendingRangeFilter(range))
+    .groupBy(categoryId, categoryName)
+    .having(gt(spendingAmount, 0))
+    .orderBy(desc(spendingAmount));
+};
+
+export const getSpendingByMerchant = (
+  range: Prettify<Partial<Interval<Date, Date>>>,
+  limit = 5
+) => {
+  const merchant = sql<string>`coalesce(${transactionExternalTable.description}, 'Unknown merchant')`;
+
+  return db
+    .select({
+      merchant: merchant.as('merchant'),
+      value: spendingAmount.as('value'),
+      transactions:
+        sql<number>`count(${transactionExternalTable.transaction_id})`
+          .mapWith(Number)
+          .as('transactions'),
+    })
+    .from(transactionExternalTable)
+    .where(spendingRangeFilter(range))
+    .groupBy(merchant)
+    .having(gt(spendingAmount, 0))
+    .orderBy(desc(spendingAmount))
+    .limit(limit);
+};
+
+export const getSpendingCategoriesByMonth = (
+  range: Prettify<Partial<Interval<Date, Date>>>
+) => {
+  const month = sql<string>`to_char(date_trunc('month', ${transactionExternalTable.created_at}, ${TZ}) AT TIME ZONE ${TZ}, 'Mon YY')`;
+  const monthSort = sql<Date>`date_trunc('month', ${transactionExternalTable.created_at}, ${TZ})`;
+  const categoryId = sql<string>`coalesce(${transactionExternalTable.category_parent_id}, ${transactionExternalTable.category_id}, 'uncategorised')`;
+  const categoryName = sql<string>`coalesce(${transactionExternalTable.category_parent}, ${transactionExternalTable.category}, 'Uncategorised')`;
+
+  return db
+    .select({
+      month: month.as('month'),
+      monthSort: monthSort.as('month_sort'),
+      categoryId: categoryId.as('category_id'),
+      categoryName: categoryName.as('category_name'),
+      value: spendingAmount.as('value'),
+    })
+    .from(transactionExternalTable)
+    .where(spendingRangeFilter(range))
+    .groupBy(sql`1, 2, 3, 4`)
+    .having(gt(spendingAmount, 0))
+    .orderBy(sql`2 asc, 4 asc`);
+};
+
+export const getEarliestSpendingDate = async () => {
+  const [result] = await db
+    .select({ date: min(transactionExternalTable.created_at).as('date') })
+    .from(transactionExternalTable);
+
+  return result?.date ?? null;
 };
