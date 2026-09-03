@@ -25,6 +25,9 @@ import Link from 'next/link';
 const baseCurrency = (value: number) =>
   formatCurrency(value, { baseUnits: true, absolute: true });
 
+const signedCurrency = (value: number) =>
+  formatCurrency(value, { baseUnits: true });
+
 const titleCase = (value: string) =>
   value
     .toLowerCase()
@@ -138,7 +141,7 @@ const InsightsPage = async () => {
           <CardHeader className="px-4">
             <CardDescription>Net cash flow</CardDescription>
             <CardTitle className="text-2xl">
-              {baseCurrency((monthCashflow?.income ?? 0) - monthlySpend)}
+              {signedCurrency((monthCashflow?.income ?? 0) - monthlySpend)}
             </CardTitle>
           </CardHeader>
           <CardContent className="px-4 text-sm">
@@ -182,7 +185,7 @@ const InsightsPage = async () => {
                   key={date}
                   style={{
                     backgroundColor: value
-                      ? `rgb(${categoryColours[dominantCategoryByDay.get(date) ?? 'uncategorised']} / ${intensity})`
+                      ? `rgb(${categoryColours[dominantCategoryByDay.get(date) ?? 'uncategorised'] ?? categoryColours.uncategorised} / ${intensity})`
                       : undefined,
                     opacity: day.getMonth() === today.getMonth() ? 1 : 0.35,
                   }}
