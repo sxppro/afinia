@@ -8,6 +8,7 @@ import { cn as cx } from '@/lib/ui';
 type Bar<T> = T & {
   key?: string;
   href?: string;
+  barColor?: string;
   value: number;
   name: string;
 };
@@ -94,7 +95,7 @@ function BarListInner<T>(
                 onValueChange
                   ? 'group-hover:bg-blue-300 dark:group-hover:bg-blue-800'
                   : '',
-                barColor,
+                item.barColor ?? barColor,
                 // margin and duration
                 {
                   'mb-0': index === sortedData.length - 1,

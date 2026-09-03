@@ -178,7 +178,7 @@ const InsightsPage = async () => {
               return (
                 <Link
                   className="aspect-square rounded-md border border-border/50 transition-transform hover:scale-110"
-                  href={`${siteConfig.baseLinks.transactions}?date=${date}`}
+                  href={`${siteConfig.baseLinks.transactions}?from=${date}&to=${date}`}
                   key={date}
                   style={{
                     backgroundColor: value
@@ -337,6 +337,9 @@ const InsightsPage = async () => {
           </CardHeader>
           <CardContent>
             <BarList data={insights.merchantSpend.map((item) => ({
+              href: item.name
+                ? `${siteConfig.baseLinks.merchants}/${encodeURIComponent(item.name)}`
+                : undefined,
               name: item.name ?? 'Unknown merchant',
               value: item.value,
             }))} valueFormatter={baseCurrency} />

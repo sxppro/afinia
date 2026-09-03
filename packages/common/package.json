@@ -16,7 +16,7 @@
     "openapi-typescript": "^7.10.1"
   },
   "dependencies": {
-    "drizzle-orm": "^0.44.6",
+    "drizzle-orm": "catalog:",
     "openapi-fetch": "^0.17.0"
   }
 }

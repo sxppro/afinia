@@ -33,7 +33,6 @@ const TransactionListInfinite = ({
   initialHasMore,
   options,
 }: TransactionListInfiniteProps) => {
-  const filterMode = 'filters' in options;
   const pageSize = options.limit ?? DEFAULT_PAGE_SIZE;
   // State
   const [transactions, setTransactions] = useState(initialTransactions);
@@ -44,7 +43,6 @@ const TransactionListInfinite = ({
   // Refs
   const inFlightLoadRef = useRef(false);
   const cursorRef = useRef(initialCursor);
-  const offsetRef = useRef(filterMode ? (options.offset ?? 0) : 0);
   const hasMoreRef = useRef(hasMore);
 
   // Hooks
@@ -57,28 +55,17 @@ const TransactionListInfinite = ({
     inFlightLoadRef.current = true;
     setIsFetching(true);
     setError(false);
-    const nextOffset = offsetRef.current + pageSize;
 
     try {
       const {
         transactions: newTransactions,
         hasMore: nextHasMore,
         next: nextCursor,
-      } = await getTransactionsPaginated(
-        // Fetch by filters or cursor
-        filterMode
-          ? {
-              ...options,
-              offset: nextOffset,
-            }
-          : {
-              cursor: cursorRef.current,
-              limit: pageSize,
-            }
-      );
-      if (filterMode) {
-        offsetRef.current = nextOffset;
-      }
+      } = await getTransactionsPaginated({
+        ...options,
+        cursor: cursorRef.current,
+        limit: pageSize,
+      });
       cursorRef.current = nextCursor;
       hasMoreRef.current = nextHasMore;
       // startTransition limitation after an async fn
@@ -94,7 +81,7 @@ const TransactionListInfinite = ({
       inFlightLoadRef.current = false;
       setIsFetching(false);
     }
-  }, [filterMode, options, pageSize, startTransition]);
+  }, [options, pageSize, startTransition]);
 
   // Effects
   useEffect(() => {

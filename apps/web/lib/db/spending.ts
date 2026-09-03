@@ -49,6 +49,7 @@ export const getCategorySpendingByTimestamp = ({
   const formattedStart = format(start, 'yyyy-MM-dd');
   const formattedEnd = format(end, 'yyyy-MM-dd');
   const timestampFormat = interval === 'month' ? 'Mon YYYY' : 'DD Mon';
+
   return db
     .select({
       timestamp: sql<string>`to_char(time_series.interval_start AT TIME ZONE ${TZ}, '${sql.raw(
@@ -93,6 +94,87 @@ export const getCategorySpendingByTimestamp = ({
             ? eq(transactionExternalTable.category_parent_id, category)
             : undefined
         )
+      )
+    )
+    .groupBy(sql<string>`time_series.interval_start`)
+    .orderBy(sql<string>`time_series.interval_start`);
+};
+
+export const getMerchantSpending = <T extends SelectedFields>({
+  select,
+  range,
+  merchant,
+}: {
+  select: T;
+  range: Prettify<Partial<Interval<Date, Date>>>;
+  merchant: string;
+}) =>
+  db
+    .select(select)
+    .from(transactionExternalTable)
+    .where(
+      and(
+        range?.start
+          ? gte(transactionExternalTable.created_at, range.start)
+          : undefined,
+        range?.end
+          ? lte(transactionExternalTable.created_at, range.end)
+          : undefined,
+        eq(transactionExternalTable.description, merchant)
+      )
+    );
+
+export const getMerchantSpendingByTimestamp = ({
+  merchant,
+  interval,
+  range,
+}: {
+  merchant: string;
+  interval: NonNullable<IntervalConfig['fields']>;
+  range: Interval<Date, Date>;
+}) => {
+  const { start, end } = range;
+  const formattedStart = format(start, 'yyyy-MM-dd');
+  const formattedEnd = format(end, 'yyyy-MM-dd');
+  const timestampFormat = interval === 'month' ? 'Mon YYYY' : 'DD Mon';
+
+  return db
+    .select({
+      timestamp: sql<string>`to_char(time_series.interval_start AT TIME ZONE ${TZ}, '${sql.raw(
+        timestampFormat
+      )}')`,
+      value: sql<number | null>`
+        CASE
+          WHEN time_series.interval_start > NOW() THEN NULL
+          WHEN coalesce(${sum(
+            transactionExternalTable.value_in_base_units
+          )}, 0) < 0
+          THEN abs(coalesce(${sum(
+            transactionExternalTable.value_in_base_units
+          )}, 0))
+          ELSE 0
+        END
+      `
+        .mapWith(Number)
+        .as('value'),
+    })
+    .from(
+      sql`generate_series('${sql.raw(
+        `${formattedStart} ${TZ}`
+      )}'::timestamptz, '${sql.raw(
+        `${formattedEnd} ${TZ}`
+      )}'::timestamptz, '1 ${sql.raw(
+        interval
+      )}'::interval, ${TZ}) AS time_series(interval_start)`
+    )
+    .leftJoin(
+      transactionExternalTable,
+      and(
+        eq(
+          sql`date_trunc(${interval}, ${transactionExternalTable.created_at}, ${TZ})`,
+          sql`time_series.interval_start`
+        ),
+        eq(transactionExternalTable.description, merchant)
       )
     )
     .groupBy(sql<string>`time_series.interval_start`)
