@@ -13,7 +13,11 @@ const views = [
 const SpendingViewTabs = ({ activeView }: { activeView: string }) => (
   <nav
     aria-label="Spending views"
-    className="bg-muted grid grid-cols-3 rounded-xl p-1"
+    className={cn(
+      'bg-muted grid grid-cols-3 rounded-xl p-1',
+      activeView === 'calendar' &&
+        'sticky top-3 z-30 shadow-sm ring-3 ring-background'
+    )}
   >
     {views.map(({ id, label, icon: Icon }) => (
       <Link

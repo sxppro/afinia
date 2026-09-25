@@ -32,7 +32,7 @@ const SpendingCalendarMonth = ({
       id={`spending-month-${month.month}`}
       className="[content-visibility:auto] [contain-intrinsic-size:auto_390px]"
     >
-      <div className="bg-background/95 sticky top-0 z-10 flex items-baseline justify-between py-3 backdrop-blur">
+      <div className="bg-background/95 sticky top-[6.5rem] z-10 flex items-baseline justify-between py-3 backdrop-blur">
         <h2 className="text-xl font-semibold">
           {format(monthKeyToDate(month.month), 'MMMM yyyy')}
         </h2>

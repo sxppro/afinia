@@ -211,7 +211,7 @@ const LoadedCalendar = ({ meta }: { meta: CalendarMeta }) => {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between gap-3">
+      <div className="bg-background/95 sticky top-[4.25rem] z-20 flex items-center justify-between gap-3 py-2 backdrop-blur">
         <p className="text-muted-foreground text-xs">Less spent</p>
         <div className="flex items-center gap-1">{intensityLegend}</div>
         <p className="text-muted-foreground text-xs">More spent</p>
