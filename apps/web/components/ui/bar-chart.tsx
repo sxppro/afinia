@@ -650,7 +650,7 @@ const BarChart = React.forwardRef<HTMLDivElement, BarChartProps>(
         tremor-id="tremor-raw"
         {...other}
       >
-        <ResponsiveContainer>
+        <ResponsiveContainer initialDimension={{ width: 700, height: 320 }}>
           <RechartsBarChart
             data={data}
             onClick={

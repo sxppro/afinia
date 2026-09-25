@@ -47,10 +47,30 @@ const formatNumber = (num: number): string => {
   return num.toFixed(1);
 };
 
+const getBarLabelData = (values: number[], sumValues: number) => {
+  let prefixSum = 0;
+  let hiddenTotal = 0;
+
+  return values.map((widthPercentage) => {
+    prefixSum += widthPercentage;
+    const showLabel =
+      (widthPercentage >= 0.1 * sumValues ||
+        hiddenTotal >= 0.09 * sumValues) &&
+      sumValues - prefixSum >= 0.1 * sumValues &&
+      prefixSum >= 0.1 * sumValues &&
+      prefixSum < 0.9 * sumValues;
+
+    hiddenTotal = showLabel ? 0 : hiddenTotal + widthPercentage;
+    return { widthPercentage, prefixSum, showLabel };
+  });
+};
+
 const BarLabels = ({ values }: { values: number[] }) => {
   const sumValues = React.useMemo(() => sumNumericArray(values), [values]);
-  let prefixSum = 0;
-  let sumConsecutiveHiddenLabels = 0;
+  const labels = React.useMemo(
+    () => getBarLabelData(values, sumValues),
+    [sumValues, values]
+  );
 
   return (
     <div
@@ -62,20 +82,7 @@ const BarLabels = ({ values }: { values: number[] }) => {
       )}
     >
       <div className="absolute bottom-0 left-0 flex items-center">0</div>
-      {values.map((widthPercentage, index) => {
-        prefixSum += widthPercentage;
-
-        const showLabel =
-          (widthPercentage >= 0.1 * sumValues ||
-            sumConsecutiveHiddenLabels >= 0.09 * sumValues) &&
-          sumValues - prefixSum >= 0.1 * sumValues &&
-          prefixSum >= 0.1 * sumValues &&
-          prefixSum < 0.9 * sumValues;
-
-        sumConsecutiveHiddenLabels = showLabel
-          ? 0
-          : (sumConsecutiveHiddenLabels += widthPercentage);
-
+      {labels.map(({ widthPercentage, prefixSum, showLabel }, index) => {
         const widthPositionLeft = getPositionLeft(widthPercentage, sumValues);
 
         return (
