@@ -1,5 +1,3 @@
-import { BarChart } from '@/components/ui/bar-chart';
-import { AreaChart } from '@/components/ui/area-chart';
 import {
   Card,
   CardContent,
@@ -8,6 +6,10 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { BarList } from '@/components/ui/bar-list';
+import {
+  CurrencyAreaChart,
+  CurrencyBarChart,
+} from '@/components/vis/insights/currency-charts';
 import { getSpendingInsights } from '@/lib/db/insights';
 import { siteConfig } from '@/lib/siteConfig';
 import { formatCurrency } from '@/lib/ui';
@@ -254,7 +256,7 @@ const InsightsPage = async () => {
           <CardDescription>Income, spending, and what remains each month.</CardDescription>
         </CardHeader>
         <CardContent>
-          <BarChart
+          <CurrencyBarChart
             className="h-56"
             colors={['fill-emerald-500', 'fill-chart-1']}
             data={insights.monthlyCashflow}
@@ -262,7 +264,6 @@ const InsightsPage = async () => {
             categories={['income', 'spend']}
             showLegend
             showYAxis={false}
-            valueFormatter={baseCurrency}
           />
         </CardContent>
       </Card>
@@ -275,14 +276,13 @@ const InsightsPage = async () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <AreaChart
+          <CurrencyAreaChart
             className="h-56"
             colors={['blue', 'gray']}
             data={paceSeries}
             index="day"
             categories={['spend', 'projection']}
             showYAxis={false}
-            valueFormatter={baseCurrency}
           />
         </CardContent>
       </Card>
