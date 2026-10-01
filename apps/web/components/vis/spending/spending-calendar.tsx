@@ -118,10 +118,7 @@ const LoadedCalendar = ({ meta }: { meta: CalendarMeta }) => {
 
       const startMonth =
         direction === 'previous'
-          ? [
-              shiftMonthKey(firstMonth, -3),
-              meta.earliestMonth,
-            ].sort().at(-1)!
+          ? [shiftMonthKey(firstMonth, -3), meta.earliestMonth].sort().at(-1)!
           : shiftMonthKey(lastMonth, 1);
       const count =
         direction === 'previous'
@@ -211,7 +208,7 @@ const LoadedCalendar = ({ meta }: { meta: CalendarMeta }) => {
 
   return (
     <div className="space-y-5">
-      <div className="bg-background/95 sticky top-[4.25rem] z-20 flex items-center justify-between gap-3 py-2 backdrop-blur">
+      <div className="bg-background/95 sticky top-[4.25rem] z-10 flex items-center justify-between gap-3 py-2 backdrop-blur">
         <p className="text-muted-foreground text-xs">Less spent</p>
         <div className="flex items-center gap-1">{intensityLegend}</div>
         <p className="text-muted-foreground text-xs">More spent</p>

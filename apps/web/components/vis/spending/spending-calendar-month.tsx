@@ -1,10 +1,10 @@
-import { cn, formatCurrency } from '@/lib/ui';
 import {
   getCalendarPadding,
   getSpendingIntensity,
   monthKeyToDate,
   SpendingCalendarMonth as SpendingCalendarMonthData,
 } from '@/lib/spending-insights';
+import { cn, formatCurrency } from '@/lib/ui';
 import { format } from 'date-fns';
 import Link from 'next/link';
 
@@ -30,9 +30,14 @@ const SpendingCalendarMonth = ({
   return (
     <section
       id={`spending-month-${month.month}`}
-      className="[content-visibility:auto] [contain-intrinsic-size:auto_390px]"
+      className="[contain-intrinsic-size:auto_390px] [content-visibility:auto]"
     >
-      <div className="bg-background/95 sticky top-[6.5rem] z-10 flex items-baseline justify-between py-3 backdrop-blur">
+      <div
+        className="bg-background/65 sticky top-[6.5rem] flex items-baseline justify-between rounded px-2 py-3 backdrop-blur"
+        style={{
+          mask: 'linear-gradient(180deg,rgba(0, 0, 0, 0) 0%, black 10%, black 90%, rgba(0, 0, 0, 0) 100%)',
+        }}
+      >
         <h2 className="text-xl font-semibold">
           {format(monthKeyToDate(month.month), 'MMMM yyyy')}
         </h2>
@@ -45,7 +50,10 @@ const SpendingCalendarMonth = ({
         aria-hidden="true"
       >
         {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, index) => (
-          <span key={`${day}-${index}`} className="text-muted-foreground text-xs">
+          <span
+            key={`${day}-${index}`}
+            className="text-muted-foreground text-xs"
+          >
             {day}
           </span>
         ))}
