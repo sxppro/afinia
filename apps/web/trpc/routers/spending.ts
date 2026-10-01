@@ -15,7 +15,6 @@ import { TZDateMini } from '@date-fns/tz';
 import {
   addMonths,
   endOfMonth,
-  endOfYear,
   format,
   startOfMonth,
   subMonths,
@@ -40,7 +39,7 @@ export const spendingRouter = router({
       earliestMonth: earliestDate
         ? getMonthKey(startOfMonth(new TZDateMini(earliestDate, TZ)))
         : getMonthKey(today),
-      latestMonth: getMonthKey(endOfYear(today)),
+      latestMonth: getMonthKey(today),
       scaleMax: getPercentile(
         scaleDays.flatMap(({ value }) => (value ? [value] : [])),
         0.9

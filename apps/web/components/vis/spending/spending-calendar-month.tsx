@@ -30,7 +30,7 @@ const SpendingCalendarMonth = ({
   return (
     <section
       id={`spending-month-${month.month}`}
-      className="[contain-intrinsic-size:auto_390px] [content-visibility:auto]"
+      className="scroll-mt-[10rem]"
     >
       <div
         className="bg-background/65 sticky top-[6.5rem] flex items-baseline justify-between rounded px-2 py-3 backdrop-blur"

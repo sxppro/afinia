@@ -53,12 +53,12 @@ const LoadedCalendar = ({ meta }: { meta: CalendarMeta }) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const initialStart =
-    shiftMonthKey(meta.currentMonth, -1) < meta.earliestMonth
+    shiftMonthKey(meta.currentMonth, -2) < meta.earliestMonth
       ? meta.earliestMonth
-      : shiftMonthKey(meta.currentMonth, -1);
+      : shiftMonthKey(meta.currentMonth, -2);
   const initialCount = Math.min(
     3,
-    monthDistance(initialStart, meta.latestMonth) + 1
+    monthDistance(initialStart, meta.currentMonth) + 1
   );
   const initialQuery = useQuery(
     trpc.spending.calendarMonths.queryOptions({
@@ -67,16 +67,13 @@ const LoadedCalendar = ({ meta }: { meta: CalendarMeta }) => {
     })
   );
   const [months, setMonths] = useState<SpendingCalendarMonthData[]>([]);
-  const [loadingDirection, setLoadingDirection] = useState<
-    'previous' | 'next' | null
-  >(null);
-  const [loadError, setLoadError] = useState<'previous' | 'next' | null>(null);
-  const prependHeight = useRef<number | null>(null);
+  const [isFetchingPrevious, setIsFetchingPrevious] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const prependAnchor = useRef<{ id: string; top: number } | null>(null);
+  const inFlightLoadRef = useRef(false);
+  const previousWasInView = useRef(false);
   const didInitialScroll = useRef(false);
   const { ref: previousRef, inView: previousInView } = useInView({
-    rootMargin: '320px',
-  });
-  const { ref: nextRef, inView: nextInView } = useInView({
     rootMargin: '320px',
   });
 
@@ -87,11 +84,15 @@ const LoadedCalendar = ({ meta }: { meta: CalendarMeta }) => {
   }, [initialQuery.data, months.length]);
 
   useLayoutEffect(() => {
-    if (prependHeight.current === null) return;
-    const addedHeight =
-      document.documentElement.scrollHeight - prependHeight.current;
-    window.scrollBy({ top: addedHeight });
-    prependHeight.current = null;
+    const anchor = prependAnchor.current;
+    if (!anchor) return;
+    const anchorElement = document.getElementById(anchor.id);
+    if (anchorElement) {
+      window.scrollBy({
+        top: anchorElement.getBoundingClientRect().top - anchor.top,
+      });
+    }
+    prependAnchor.current = null;
   }, [months]);
 
   useEffect(() => {
@@ -103,71 +104,55 @@ const LoadedCalendar = ({ meta }: { meta: CalendarMeta }) => {
   }, [meta.currentMonth, months.length]);
 
   const firstMonth = months[0]?.month;
-  const lastMonth = months.at(-1)?.month;
   const hasPrevious = !!firstMonth && firstMonth > meta.earliestMonth;
-  const hasNext = !!lastMonth && lastMonth < meta.latestMonth;
 
-  const loadMonths = useCallback(
-    async (direction: 'previous' | 'next') => {
-      if (loadingDirection || !firstMonth || !lastMonth) return;
-      if (
-        (direction === 'previous' && !hasPrevious) ||
-        (direction === 'next' && !hasNext)
-      )
-        return;
+  const loadPreviousMonths = useCallback(async () => {
+    if (inFlightLoadRef.current || !firstMonth || !hasPrevious) return;
 
-      const startMonth =
-        direction === 'previous'
-          ? [shiftMonthKey(firstMonth, -3), meta.earliestMonth].sort().at(-1)!
-          : shiftMonthKey(lastMonth, 1);
-      const count =
-        direction === 'previous'
-          ? monthDistance(startMonth, firstMonth)
-          : Math.min(3, monthDistance(startMonth, meta.latestMonth) + 1);
-
-      setLoadingDirection(direction);
-      setLoadError(null);
-      if (direction === 'previous') {
-        prependHeight.current = document.documentElement.scrollHeight;
-      }
-
-      try {
-        const data = await queryClient.fetchQuery(
-          trpc.spending.calendarMonths.queryOptions({ startMonth, count })
-        );
-        setMonths((current) =>
-          direction === 'previous'
-            ? [...data.months, ...current]
-            : [...current, ...data.months]
-        );
-      } catch (error) {
-        console.error('Failed to load spending calendar months', error);
-        prependHeight.current = null;
-        setLoadError(direction);
-      } finally {
-        setLoadingDirection(null);
-      }
-    },
-    [
-      firstMonth,
-      hasNext,
-      hasPrevious,
-      lastMonth,
-      loadingDirection,
+    inFlightLoadRef.current = true;
+    const startMonth = [
+      shiftMonthKey(firstMonth, -3),
       meta.earliestMonth,
-      meta.latestMonth,
-      queryClient,
-      trpc.spending.calendarMonths,
-    ]
-  );
+    ].sort().at(-1)!;
+    const count = monthDistance(startMonth, firstMonth);
+    const anchorId = `spending-month-${firstMonth}`;
+    const anchorElement = document.getElementById(anchorId);
+    if (anchorElement) {
+      prependAnchor.current = {
+        id: anchorId,
+        top: anchorElement.getBoundingClientRect().top,
+      };
+    }
+    setIsFetchingPrevious(true);
+    setLoadError(false);
+
+    try {
+      const data = await queryClient.fetchQuery(
+        trpc.spending.calendarMonths.queryOptions({ startMonth, count })
+      );
+      setMonths((current) => [...data.months, ...current]);
+    } catch (error) {
+      console.error('Failed to load older spending calendar months', error);
+      prependAnchor.current = null;
+      setLoadError(true);
+    } finally {
+      inFlightLoadRef.current = false;
+      setIsFetchingPrevious(false);
+    }
+  }, [
+    firstMonth,
+    hasPrevious,
+    meta.earliestMonth,
+    queryClient,
+    trpc.spending.calendarMonths,
+  ]);
 
   useEffect(() => {
-    if (previousInView) loadMonths('previous');
-  }, [loadMonths, previousInView]);
-
-  useEffect(() => {
-    if (nextInView) loadMonths('next');
-  }, [loadMonths, nextInView]);
+    if (previousInView && !previousWasInView.current) {
+      loadPreviousMonths();
+    }
+    previousWasInView.current = previousInView;
+  }, [loadPreviousMonths, previousInView]);
 
   const intensityLegend = useMemo(
     () =>
@@ -207,7 +192,7 @@ const LoadedCalendar = ({ meta }: { meta: CalendarMeta }) => {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 [overflow-anchor:none]">
       <div className="bg-background/95 sticky top-[4.25rem] z-10 flex items-center justify-between gap-3 py-2 backdrop-blur">
         <p className="text-muted-foreground text-xs">Less spent</p>
         <div className="flex items-center gap-1">{intensityLegend}</div>
@@ -216,13 +201,13 @@ const LoadedCalendar = ({ meta }: { meta: CalendarMeta }) => {
 
       {hasPrevious ? (
         <div ref={previousRef} className="flex h-8 justify-center">
-          {loadingDirection === 'previous' ? (
+          {isFetchingPrevious ? (
             <Skeleton className="h-2 w-24 rounded-full" />
-          ) : loadError === 'previous' ? (
+          ) : loadError ? (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => loadMonths('previous')}
+              onClick={loadPreviousMonths}
             >
               Retry older months
             </Button>
@@ -238,22 +223,6 @@ const LoadedCalendar = ({ meta }: { meta: CalendarMeta }) => {
           scaleMax={meta.scaleMax}
         />
       ))}
-
-      {hasNext ? (
-        <div ref={nextRef} className="flex h-8 justify-center">
-          {loadingDirection === 'next' ? (
-            <Skeleton className="h-2 w-24 rounded-full" />
-          ) : loadError === 'next' ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => loadMonths('next')}
-            >
-              Retry newer months
-            </Button>
-          ) : null}
-        </div>
-      ) : null}
     </div>
   );
 };
