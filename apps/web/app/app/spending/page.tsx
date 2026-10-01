@@ -1,24 +1,30 @@
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import SpendingCalendar from '@/components/vis/spending/spending-calendar';
-import SpendingViewTabs from '@/components/vis/spending/spending-view-tabs';
+import { stringParam } from '@/lib/params';
 import { siteConfig } from '@/lib/siteConfig';
+import { SearchParam } from '@/lib/types';
 import { ArrowLeft, Ellipsis } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import SpendingOverview from './_components/spending-overview';
 import SpendingTrends from './_components/spending-trends';
+import SpendingViewTabs from './_components/spending-view-tabs';
+
+const DEFAULT_VIEW = 'overview';
+const SUPPORTED_VIEWS = ['overview', 'calendar', 'trends'];
 
 const SpendingPage = async ({
   searchParams,
 }: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: Promise<Record<string, SearchParam>>;
 }) => {
   const params = await searchParams;
-  const requestedView = Array.isArray(params.view) ? params.view[0] : params.view;
-  const activeView = ['calendar', 'trends'].includes(requestedView ?? '')
-    ? requestedView!
-    : 'overview';
+  const { view } = params;
+  const selectedView = stringParam(view) ?? DEFAULT_VIEW;
+  const activeView = SUPPORTED_VIEWS.includes(selectedView)
+    ? selectedView
+    : DEFAULT_VIEW;
 
   return (
     <div className="flex flex-col gap-5">
