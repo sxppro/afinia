@@ -11,10 +11,8 @@ import TransactionList from '@/components/vis/transaction/transaction-list';
 import { SMALL_PAGE_SIZE, TZ } from '@/lib/constants';
 import { getStartOfDay } from '@/lib/dateTime';
 import { getMerchantByName } from '@/lib/db/merchant';
-import {
-  getMerchantSpending,
-  getMerchantSpendingByTimestamp,
-} from '@/lib/db/spending';
+import { getMerchantSpendingByTimestamp } from '@/lib/db/spending';
+import { getExternalTransactions } from '@/lib/db/transaction';
 import { siteConfig } from '@/lib/siteConfig';
 import { colours } from '@/lib/ui';
 import { TZDateMini } from '@date-fns/tz';
@@ -88,7 +86,7 @@ const MerchantInsightsPage = async ({
     interval: 'day',
     range,
   });
-  const spendingByCategoryFetch = getMerchantSpending({
+  const spendingByCategoryFetch = getExternalTransactions({
     select: {
       key: sql<string>`coalesce(${transactionExternalTable.category_id}, 'uncategorised')`,
       href: sql<string | undefined>`
