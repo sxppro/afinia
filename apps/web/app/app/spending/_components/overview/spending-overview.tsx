@@ -28,24 +28,6 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import SpendingChange from './spending-change';
 
-const Metric = ({
-  label,
-  value,
-  detail,
-}: {
-  label: string;
-  value: React.ReactNode;
-  detail?: React.ReactNode;
-}) => (
-  <div className="bg-muted/50 flex min-h-24 flex-col justify-between rounded-xl border p-3">
-    <p className="text-muted-foreground text-sm">{label}</p>
-    <div>
-      <div className="text-xl font-semibold">{value}</div>
-      {detail ? <div className="mt-1">{detail}</div> : null}
-    </div>
-  </div>
-);
-
 const SpendingOverview = async () => {
   const today = getStartOfDay();
   const currentStart = startOfMonth(today);
@@ -140,23 +122,30 @@ const SpendingOverview = async () => {
         <SpendingChange value={change} />
       </section>
 
-      <section className="grid grid-cols-2 gap-2">
-        <Metric
-          label="Daily average"
-          value={formatCurrency(total / Math.max(elapsedDays.length, 1), {
-            baseUnits: true,
-          })}
-        />
-        <Metric
-          label="No-spend days"
-          value={noSpendDays}
-          detail={
-            <p className="text-muted-foreground text-xs">
+      <Separator />
+
+      <section className="flex gap-2">
+        <div className="flex flex-1 flex-col justify-between gap-2">
+          <p className="text-muted-foreground">Daily average</p>
+          <p className="text-2xl font-semibold">
+            {formatCurrency(total / Math.max(elapsedDays.length, 1), {
+              baseUnits: true,
+            })}
+          </p>
+        </div>
+        <Separator orientation="vertical" />
+        <div className="flex flex-1 flex-col justify-between gap-2">
+          <p className="text-muted-foreground">Days without spending</p>
+          <div className="flex items-baseline gap-1">
+            <p className="text-2xl font-semibold">{noSpendDays}</p>
+            <p className="text-muted-foreground text-sm">
               of {elapsedDays.length} days
             </p>
-          }
-        />
+          </div>
+        </div>
       </section>
+
+      <Separator />
 
       <section className="space-y-3">
         <div>
