@@ -1,6 +1,5 @@
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { stringParam } from '@/lib/params';
 import { siteConfig } from '@/lib/siteConfig';
 import { SearchParam } from '@/lib/types';
 import { ArrowLeft, Ellipsis } from 'lucide-react';
@@ -9,21 +8,15 @@ import { Suspense } from 'react';
 import SpendingOverview from './_components/spending-overview';
 import SpendingTrends from './_components/spending-trends';
 import SpendingViewTabs from './_components/spending-view-tabs';
-
-const DEFAULT_VIEW = 'overview';
-const SUPPORTED_VIEWS = ['overview', 'trends'];
+import { viewLoader } from './_lib/search-params';
 
 const SpendingPage = async ({
   searchParams,
 }: {
   searchParams: Promise<Record<string, SearchParam>>;
 }) => {
-  const params = await searchParams;
+  const params = await viewLoader(searchParams);
   const { view } = params;
-  const selectedView = stringParam(view) ?? DEFAULT_VIEW;
-  const activeView = SUPPORTED_VIEWS.includes(selectedView)
-    ? selectedView
-    : DEFAULT_VIEW;
 
   return (
     <div className="flex flex-col gap-5">
@@ -49,9 +42,9 @@ const SpendingPage = async ({
         </div>
       </div>
 
-      <SpendingViewTabs activeView={activeView} />
+      <SpendingViewTabs activeView={view} />
 
-      {activeView === 'trends' ? (
+      {view === 'trends' ? (
         <Suspense fallback={<Skeleton className="h-72 w-full" />}>
           <SpendingTrends />
         </Suspense>
