@@ -5,7 +5,7 @@ import { SearchParam } from '@/lib/types';
 import { ArrowLeft, Ellipsis } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import SpendingOverview from './_components/spending-overview';
+import SpendingOverview from './_components/overview/spending-overview';
 import SpendingTrends from './_components/spending-trends';
 import SpendingViewTabs from './_components/spending-view-tabs';
 import { viewLoader } from './_lib/search-params';
@@ -19,7 +19,7 @@ const SpendingPage = async ({
   const { view } = params;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       <div className="flex justify-between">
         <div className="flex items-center gap-4">
           <Button

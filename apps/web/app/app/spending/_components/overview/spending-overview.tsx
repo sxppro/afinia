@@ -24,28 +24,9 @@ import {
   subMonths,
 } from 'date-fns';
 import { lt, sql, sum } from 'drizzle-orm';
-import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
-
-const Comparison = ({ value }: { value: number }) => {
-  const Icon = value > 0 ? ArrowUpRight : value < 0 ? ArrowDownRight : Minus;
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-0.5 text-xs font-medium',
-        value > 0
-          ? 'text-red-600 dark:text-red-400'
-          : value < 0
-            ? 'text-emerald-600 dark:text-emerald-400'
-            : 'text-muted-foreground'
-      )}
-    >
-      <Icon className="size-3.5" />
-      {Math.abs(value).toFixed(0)}%
-    </span>
-  );
-};
+import SpendingChange from './spending-change';
 
 const Metric = ({
   label,
@@ -104,7 +85,9 @@ const SpendingOverview = async () => {
   const currentByCategory = new Map(
     categories.map((category) => [category.id, category])
   );
-  const movers = [...new Set([...currentByCategory.keys(), ...previousByCategory.keys()])]
+  const movers = [
+    ...new Set([...currentByCategory.keys(), ...previousByCategory.keys()]),
+  ]
     .map((id) => {
       const current = currentByCategory.get(id);
       const previous = previousByCategory.get(id);
@@ -146,22 +129,15 @@ const SpendingOverview = async () => {
       .orderBy(sql`value`);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       <section>
-        <p className="text-muted-foreground text-sm font-medium">
-          Spent this month
-        </p>
+        <p className="text-muted-foreground text-lg font-medium">This month</p>
         <CurrencyFlow
           className="text-4xl/tight font-semibold"
           value={total}
           signDisplay="never"
         />
-        <div className="mt-1 flex items-center gap-2">
-          <Comparison value={change} />
-          <p className="text-muted-foreground text-xs">
-            versus the same point last month
-          </p>
-        </div>
+        <SpendingChange value={change} />
       </section>
 
       <section className="grid grid-cols-2 gap-2">
@@ -236,7 +212,10 @@ const SpendingOverview = async () => {
           </p>
         </div>
         {movers.map(({ id, name, delta }) => (
-          <div key={id} className="flex items-center gap-3 rounded-xl border p-3">
+          <div
+            key={id}
+            className="flex items-center gap-3 rounded-xl border p-3"
+          >
             <div
               className={cn(
                 'rounded-lg p-2',
