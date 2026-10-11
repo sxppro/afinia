@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import SpendingCalendar from '@/components/vis/spending/spending-calendar';
 import { stringParam } from '@/lib/params';
 import { siteConfig } from '@/lib/siteConfig';
 import { SearchParam } from '@/lib/types';
@@ -11,7 +12,7 @@ import SpendingTrends from './_components/spending-trends';
 import SpendingViewTabs from './_components/spending-view-tabs';
 
 const DEFAULT_VIEW = 'overview';
-const SUPPORTED_VIEWS = ['overview', 'trends'];
+const SUPPORTED_VIEWS = ['overview', 'calendar', 'trends'];
 
 const SpendingPage = async ({
   searchParams,
@@ -51,7 +52,17 @@ const SpendingPage = async ({
 
       <SpendingViewTabs activeView={activeView} />
 
-      {activeView === 'trends' ? (
+      {activeView === 'calendar' ? (
+        <section>
+          <div className="mb-3">
+            <h2 className="text-xl font-semibold">Daily spending</h2>
+            <p className="text-muted-foreground text-sm">
+              Scroll through your history and tap a day for transactions
+            </p>
+          </div>
+          <SpendingCalendar />
+        </section>
+      ) : activeView === 'trends' ? (
         <Suspense fallback={<Skeleton className="h-72 w-full" />}>
           <SpendingTrends />
         </Suspense>

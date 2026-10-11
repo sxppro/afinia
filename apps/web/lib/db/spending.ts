@@ -8,6 +8,7 @@ import {
   gte,
   gt,
   lte,
+  min,
   or,
   sql,
 } from 'drizzle-orm';
@@ -302,4 +303,12 @@ export const getSpendingCategoriesByMonth = (
     .groupBy(sql`1, 2, 3, 4`)
     .having(gt(spendingAmount, 0))
     .orderBy(sql`2 asc, 4 asc`);
+};
+
+export const getEarliestSpendingDate = async () => {
+  const [result] = await db
+    .select({ date: min(transactionExternalTable.created_at).as('date') })
+    .from(transactionExternalTable);
+
+  return result?.date ?? null;
 };
