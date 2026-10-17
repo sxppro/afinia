@@ -30,7 +30,7 @@ const SpendingTotal = async ({
         <CurrencyFlow
           className="text-4xl/tight font-semibold"
           value={total}
-          signDisplay="never"
+          options={{ signDisplay: 'never' }}
         />
         <SpendingChange value={change} />
       </section>

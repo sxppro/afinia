@@ -36,7 +36,7 @@ const CategoryDelta = ({
       <CurrencyFlow
         className={cn('text-sm font-semibold tabular-nums', textColour)}
         value={delta}
-        signDisplay="always"
+        options={{ signDisplay: 'always', maximumFractionDigits: 0 }}
       />
       <NumberFlow
         className={cn('text-sm font-semibold tabular-nums', textColour)}

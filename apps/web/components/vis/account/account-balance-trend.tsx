@@ -27,7 +27,7 @@ const AccountBalanceTrend = ({
         <span className="inline-flex items-center gap-1 transition">
           <CurrencyFlow
             value={0}
-            signDisplay="negative"
+            options={{ signDisplay: 'negative' }}
             className="text-base font-semibold"
             hideable
           />
@@ -83,7 +83,7 @@ const AccountBalanceTrend = ({
           {totalChange && <Icon className="size-5" />}
           <CurrencyFlow
             value={totalChange}
-            signDisplay="negative"
+            options={{ signDisplay: 'negative' }}
             className="text-base font-semibold"
             hideable
           />
