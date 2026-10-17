@@ -162,6 +162,7 @@ const CategorySpendingPage = async ({
               filters: { category_id: category.category_id },
               limit: SMALL_PAGE_SIZE,
             }}
+            isInfinite
           />
         </Suspense>
       </div>
