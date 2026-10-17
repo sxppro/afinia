@@ -31,21 +31,23 @@ const TopMerchants = async ({ range }: { range: Interval<Date, Date> }) => {
         </div>
       </div>
       {merchants.map(({ merchant, value, transactions }) => (
-        <Link
-          key={merchant}
-          href={`${siteConfig.baseLinks.merchants}/${encodeURIComponent(merchant)}`}
-          className="flex items-center justify-between gap-3 rounded-xl border p-3"
-        >
+        <div key={merchant} className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="truncate font-medium">{merchant}</p>
+            <Link
+              href={`${siteConfig.baseLinks.merchants}/${encodeURIComponent(merchant)}`}
+            >
+              <p className="font-medium underline underline-offset-4">
+                {merchant}
+              </p>
+            </Link>
             <p className="text-muted-foreground text-xs">
               {transactions} transaction{transactions === 1 ? '' : 's'}
             </p>
           </div>
-          <p className="font-semibold">
+          <p className="text-lg font-bold">
             {formatCurrency(value, { baseUnits: true })}
           </p>
-        </Link>
+        </div>
       ))}
     </section>
   );
