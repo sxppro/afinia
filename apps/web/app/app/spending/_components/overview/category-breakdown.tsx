@@ -9,7 +9,7 @@ import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours, formatCurrency } from '@/lib/ui';
 import NumberFlow from '@number-flow/react';
 import { transactionExternalTable } from 'afinia-common/schema';
-import type { Interval } from 'date-fns';
+import { format, type Interval } from 'date-fns';
 import { lt, sql, sum } from 'drizzle-orm';
 import Link from 'next/link';
 import { Suspense } from 'react';
@@ -108,6 +108,13 @@ const CategoryBreakdown = async ({
       />
       {categorySpending.map(({ id, name, value }) => {
         const previousSpend = previousSpendMap.get(id) ?? 0;
+        const isUncategorised = id === 'uncategorised';
+        const href = isUncategorised
+          ? `${siteConfig.baseLinks.transactions}?category=uncategorised&from=${format(
+              range.start,
+              'yyyy-MM-dd'
+            )}&to=${format(range.end, 'yyyy-MM-dd')}`
+          : `${siteConfig.baseLinks.spending}/${id}`;
 
         return (
           <div className="flex flex-col gap-2" key={id}>
@@ -120,7 +127,7 @@ const CategoryBreakdown = async ({
               >
                 <CategoryIcon category={id} className="size-4 stroke-white" />
               </div>
-              <Link href={`${siteConfig.baseLinks.spending}/${id}`}>
+              <Link href={href}>
                 <p className="text-lg font-medium underline underline-offset-4">
                   {name}
                 </p>
@@ -135,12 +142,14 @@ const CategoryBreakdown = async ({
                 </p>
               </div>
             </div>
-            <Suspense fallback={<Skeleton className="h-24 w-full" />}>
-              <SpendingByCategory
-                category={id}
-                dataFetch={subCategorySpendingQuery(id)}
-              />
-            </Suspense>
+            {isUncategorised ? null : (
+              <Suspense fallback={<Skeleton className="h-24 w-full" />}>
+                <SpendingByCategory
+                  category={id}
+                  dataFetch={subCategorySpendingQuery(id)}
+                />
+              </Suspense>
+            )}
           </div>
         );
       })}
