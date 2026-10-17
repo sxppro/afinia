@@ -88,17 +88,20 @@ const AccountBalanceTrend = ({
             hideable
           />
         </span>
-        <NumberFlow
-          className={cn('font-semibold', textColour)}
-          value={totalChangeDecimal}
-          format={{
-            style: 'percent',
-            maximumFractionDigits: 1,
-            signDisplay: 'never',
-          }}
-          prefix="("
-          suffix=")"
-        />
+        {/* Only show percent if start is not 0 */}
+        {start !== 0 && (
+          <NumberFlow
+            className={cn('font-semibold', textColour)}
+            value={totalChangeDecimal}
+            format={{
+              style: 'percent',
+              maximumFractionDigits: 1,
+              signDisplay: 'never',
+            }}
+            prefix="("
+            suffix=")"
+          />
+        )}
         <span>over {label}</span>
       </NumberFlowGroup>
     </p>
