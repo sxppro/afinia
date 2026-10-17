@@ -1,53 +1,23 @@
 import { transactionExternalTable } from 'afinia-common/schema';
 import { format, Interval } from 'date-fns';
-import {
-  and,
-  asc,
-  desc,
-  eq,
-  gte,
-  gt,
-  lte,
-  or,
-  sql,
-} from 'drizzle-orm';
-import { IntervalConfig, SelectedFields } from 'drizzle-orm/pg-core';
+import { and, asc, desc, eq, gt, gte, lte, or, sql } from 'drizzle-orm';
+import { IntervalConfig } from 'drizzle-orm/pg-core';
 import { TZ } from '../constants';
 import { Prettify } from '../types';
 import { db } from './client';
 
-const spendingAmount = sql<number>`coalesce(sum(CASE WHEN ${transactionExternalTable.value_in_base_units} < 0 THEN -${transactionExternalTable.value_in_base_units} ELSE 0 END), 0)`.mapWith(
-  Number
-);
+const spendingAmount =
+  sql<number>`coalesce(sum(CASE WHEN ${transactionExternalTable.value_in_base_units} < 0 THEN -${transactionExternalTable.value_in_base_units} ELSE 0 END), 0)`.mapWith(
+    Number
+  );
 
-export const getCategorySpending = <T extends SelectedFields>({
-  select,
-  range,
-  category,
-}: {
-  select: T;
-  range: Prettify<Partial<Interval<Date, Date>>>;
-  category?: string;
-}) =>
-  db
-    .select(select)
-    .from(transactionExternalTable)
-    .where(
-      and(
-        range?.start
-          ? gte(transactionExternalTable.created_at, range.start)
-          : undefined,
-        range?.end
-          ? lte(transactionExternalTable.created_at, range.end)
-          : undefined,
-        category
-          ? or(
-              eq(transactionExternalTable.category_id, category),
-              eq(transactionExternalTable.category_parent_id, category)
-            )
-          : undefined
-      )
-    );
+const spendingRangeFilter = (range: Prettify<Partial<Interval<Date, Date>>>) =>
+  and(
+    range.start
+      ? gte(transactionExternalTable.created_at, range.start)
+      : undefined,
+    range.end ? lte(transactionExternalTable.created_at, range.end) : undefined
+  );
 
 export const getCategorySpendingByTimestamp = ({
   category,
@@ -107,30 +77,6 @@ export const getCategorySpendingByTimestamp = ({
     .orderBy(sql<string>`time_series.interval_start`);
 };
 
-export const getMerchantSpending = <T extends SelectedFields>({
-  select,
-  range,
-  merchant,
-}: {
-  select: T;
-  range: Prettify<Partial<Interval<Date, Date>>>;
-  merchant: string;
-}) =>
-  db
-    .select(select)
-    .from(transactionExternalTable)
-    .where(
-      and(
-        range?.start
-          ? gte(transactionExternalTable.created_at, range.start)
-          : undefined,
-        range?.end
-          ? lte(transactionExternalTable.created_at, range.end)
-          : undefined,
-        eq(transactionExternalTable.description, merchant)
-      )
-    );
-
 export const getMerchantSpendingByTimestamp = ({
   merchant,
   interval,
@@ -181,14 +127,6 @@ export const getMerchantSpendingByTimestamp = ({
     .groupBy(sql<string>`time_series.interval_start`)
     .orderBy(sql<string>`time_series.interval_start`);
 };
-
-const spendingRangeFilter = (range: Prettify<Partial<Interval<Date, Date>>>) =>
-  and(
-    range.start
-      ? gte(transactionExternalTable.created_at, range.start)
-      : undefined,
-    range.end ? lte(transactionExternalTable.created_at, range.end) : undefined
-  );
 
 export const getSpendingTotal = async (
   range: Prettify<Partial<Interval<Date, Date>>>
