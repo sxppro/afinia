@@ -2,16 +2,32 @@ import { transactionExternalTable } from 'afinia-common/schema';
 import { format, Interval } from 'date-fns';
 import { and, asc, desc, eq, gt, gte, lte, or, sql } from 'drizzle-orm';
 import { IntervalConfig } from 'drizzle-orm/pg-core';
+import { cache } from 'react';
 import { TZ } from '../constants';
 import { Prettify } from '../types';
 import { db } from './client';
 
+/**
+ * Net spending as a positive amount in base units.
+ * Sum of transaction values are negated and floored to 0.
+ * Returns 0 when the sum of transaction values is positive or
+ * there are no transactions.
+ */
 const spendingAmount =
-  sql<number>`coalesce(sum(CASE WHEN ${transactionExternalTable.value_in_base_units} < 0 THEN -${transactionExternalTable.value_in_base_units} ELSE 0 END), 0)`.mapWith(
+  sql<number>`greatest(-coalesce(sum(${transactionExternalTable.value_in_base_units}), 0), 0)`.mapWith(
     Number
   );
 
-const spendingRangeFilter = (range: Prettify<Partial<Interval<Date, Date>>>) =>
+/**
+ * Maps a transaction to its parent category, otherwise it is "uncategorised".
+ */
+const categoryId = sql<string>`coalesce(${transactionExternalTable.category_parent_id}, 'uncategorised')`;
+const categoryName = sql<string>`coalesce(${transactionExternalTable.category_parent}, 'Uncategorised')`;
+
+/**
+ * Restricts transactions to those created within the range
+ */
+const createdWithin = (range: Prettify<Partial<Interval<Date, Date>>>) =>
   and(
     range.start
       ? gte(transactionExternalTable.created_at, range.start)
@@ -19,7 +35,12 @@ const spendingRangeFilter = (range: Prettify<Partial<Interval<Date, Date>>>) =>
     range.end ? lte(transactionExternalTable.created_at, range.end) : undefined
   );
 
-export const getSpendingByTimestamp = ({
+/**
+ * Time series of net spending by day or month buckets (in TZ).
+ * @returns Time series. Buckets with no spending return 0,
+ * buckets in the future return null
+ */
+export const getSpendingTimeSeries = ({
   category,
   merchant,
   interval,
@@ -34,37 +55,32 @@ export const getSpendingByTimestamp = ({
   const formattedStart = format(start, 'yyyy-MM-dd');
   const formattedEnd = format(end, 'yyyy-MM-dd');
   const timestampFormat = interval === 'month' ? 'Mon YYYY' : 'DD Mon';
+  const intervalStart = sql`time_series.interval_start`;
 
   return db
     .select({
-      timestamp: sql<string>`to_char(time_series.interval_start AT TIME ZONE ${TZ}, '${sql.raw(
-        timestampFormat
-      )}')`,
+      date: sql<string>`to_char(${intervalStart} AT TIME ZONE ${TZ}, 'YYYY-MM-DD')`,
+      timestamp: sql<string>`to_char(${intervalStart} AT TIME ZONE ${TZ}, ${timestampFormat})`,
       value: sql<number | null>`
-      CASE 
-        WHEN time_series.interval_start > NOW() THEN NULL
-        ELSE coalesce(sum(CASE WHEN ${transactionExternalTable.value_in_base_units} < 0 THEN -${transactionExternalTable.value_in_base_units} ELSE 0 END), 0)
+      CASE
+        WHEN ${intervalStart} > NOW() THEN NULL
+        ELSE ${spendingAmount}
       END
       `
         .mapWith(Number)
         .as('value'),
     })
     .from(
-      sql`generate_series('${sql.raw(
-        `${formattedStart} ${TZ}`
-      )}'::timestamptz, '${sql.raw(
-        `${formattedEnd} ${TZ}`
-      )}'::timestamptz, '1 ${sql.raw(
-        interval
-      )}'::interval, ${TZ}) AS time_series(interval_start)`
+      sql`generate_series(${formattedStart}::date::timestamp AT TIME ZONE ${TZ}, ${formattedEnd}::date::timestamp AT TIME ZONE ${TZ}, ${`1 ${interval}`}::interval, ${TZ}) AS time_series(interval_start)`
     )
     .leftJoin(
       transactionExternalTable,
       and(
         eq(
           sql`date_trunc(${interval}, ${transactionExternalTable.created_at}, ${TZ})`,
-          sql`time_series.interval_start`
+          intervalStart
         ),
+        createdWithin(range),
         category
           ? or(
               eq(transactionExternalTable.category_id, category),
@@ -76,78 +92,49 @@ export const getSpendingByTimestamp = ({
           : undefined
       )
     )
-    .groupBy(sql<string>`time_series.interval_start`)
-    .orderBy(sql<string>`time_series.interval_start`);
+    .groupBy(intervalStart)
+    .orderBy(intervalStart);
 };
 
+/**
+ * Sum of all net spending
+ */
 export const getSpendingTotal = async (
   range: Prettify<Partial<Interval<Date, Date>>>
 ) => {
   const [result] = await db
     .select({ value: spendingAmount.as('value') })
     .from(transactionExternalTable)
-    .where(spendingRangeFilter(range));
+    .where(createdWithin(range));
 
   return result?.value ?? 0;
 };
 
-export const getSpendingByDay = ({
-  range,
-}: {
-  range: Interval<Date, Date>;
-}) => {
-  const formattedStart = format(range.start, 'yyyy-MM-dd');
-  const formattedEnd = format(range.end, 'yyyy-MM-dd');
+/**
+ * Groups net spending by category.
+ * Cached per request (by range reference).
+ * @returns The top categories ordered by spending
+ */
+export const getSpendingByCategory = cache(
+  async (range: Prettify<Partial<Interval<Date, Date>>>) =>
+    db
+      .select({
+        id: categoryId.as('id'),
+        name: categoryName.as('name'),
+        value: spendingAmount.as('value'),
+      })
+      .from(transactionExternalTable)
+      .where(createdWithin(range))
+      .groupBy(categoryId, categoryName)
+      .having(gt(spendingAmount, 0))
+      .orderBy(desc(spendingAmount))
+);
 
-  return db
-    .select({
-      date: sql<string>`to_char(time_series.interval_start AT TIME ZONE ${TZ}, 'YYYY-MM-DD')`,
-      value: sql<number | null>`
-        CASE
-          WHEN time_series.interval_start > NOW() THEN NULL
-          ELSE coalesce(sum(CASE WHEN ${transactionExternalTable.value_in_base_units} < 0 THEN -${transactionExternalTable.value_in_base_units} ELSE 0 END), 0)
-        END
-      `
-        .mapWith(Number)
-        .as('value'),
-    })
-    .from(
-      sql`generate_series('${sql.raw(
-        `${formattedStart} ${TZ}`
-      )}'::timestamptz, '${sql.raw(
-        `${formattedEnd} ${TZ}`
-      )}'::timestamptz, '1 day'::interval, ${TZ}) AS time_series(interval_start)`
-    )
-    .leftJoin(
-      transactionExternalTable,
-      eq(
-        sql`date_trunc('day', ${transactionExternalTable.created_at}, ${TZ})`,
-        sql`time_series.interval_start`
-      )
-    )
-    .groupBy(sql`time_series.interval_start`)
-    .orderBy(asc(sql`time_series.interval_start`));
-};
-
-export const getSpendingByCategory = (
-  range: Prettify<Partial<Interval<Date, Date>>>
-) => {
-  const categoryId = sql<string>`coalesce(${transactionExternalTable.category_parent_id}, ${transactionExternalTable.category_id}, 'uncategorised')`;
-  const categoryName = sql<string>`coalesce(${transactionExternalTable.category_parent}, ${transactionExternalTable.category}, 'Uncategorised')`;
-
-  return db
-    .select({
-      id: categoryId.as('id'),
-      name: categoryName.as('name'),
-      value: spendingAmount.as('value'),
-    })
-    .from(transactionExternalTable)
-    .where(spendingRangeFilter(range))
-    .groupBy(categoryId, categoryName)
-    .having(gt(spendingAmount, 0))
-    .orderBy(desc(spendingAmount));
-};
-
+/**
+ * Groups net spending by merchant
+ * @returns The top `limit` merchants ordered by spending,
+ * each with its total and transaction count
+ */
 export const getSpendingByMerchant = (
   range: Prettify<Partial<Interval<Date, Date>>>,
   limit = 5
@@ -164,20 +151,26 @@ export const getSpendingByMerchant = (
           .as('transactions'),
     })
     .from(transactionExternalTable)
-    .where(spendingRangeFilter(range))
+    .where(createdWithin(range))
     .groupBy(merchant)
     .having(gt(spendingAmount, 0))
     .orderBy(desc(spendingAmount))
     .limit(limit);
 };
 
-export const getSpendingCategoriesByMonth = (
+/**
+ * Groups net spending by category and calendar month (in TZ).
+ * @returns One row per month and category that has spending, ordered
+ * by month and category name
+ */
+export const getSpendingByCategoryAndMonth = (
   range: Prettify<Partial<Interval<Date, Date>>>
 ) => {
-  const month = sql<string>`to_char(date_trunc('month', ${transactionExternalTable.created_at}, ${TZ}) AT TIME ZONE ${TZ}, 'Mon YY')`;
-  const monthSort = sql<Date>`date_trunc('month', ${transactionExternalTable.created_at}, ${TZ})`;
-  const categoryId = sql<string>`coalesce(${transactionExternalTable.category_parent_id}, ${transactionExternalTable.category_id}, 'uncategorised')`;
-  const categoryName = sql<string>`coalesce(${transactionExternalTable.category_parent}, ${transactionExternalTable.category}, 'Uncategorised')`;
+  // TZ is inlined as a literal (not a bound param) so the SELECT and GROUP BY
+  // expressions are textually identical and Postgres can match them.
+  const tz = sql.raw(`'${TZ}'`);
+  const monthSort = sql<Date>`date_trunc('month', ${transactionExternalTable.created_at}, ${tz})`;
+  const month = sql<string>`to_char(${monthSort} AT TIME ZONE ${tz}, 'Mon YY')`;
 
   return db
     .select({
@@ -188,8 +181,8 @@ export const getSpendingCategoriesByMonth = (
       value: spendingAmount.as('value'),
     })
     .from(transactionExternalTable)
-    .where(spendingRangeFilter(range))
-    .groupBy(sql`1, 2, 3, 4`)
+    .where(createdWithin(range))
+    .groupBy(monthSort, categoryId, categoryName)
     .having(gt(spendingAmount, 0))
-    .orderBy(sql`2 asc, 4 asc`);
+    .orderBy(asc(monthSort), asc(categoryName));
 };

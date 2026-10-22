@@ -1,12 +1,17 @@
 import SpendingTrendsCharts from '@/components/vis/spending/spending-trends-charts';
 import { getStartOfDay } from '@/lib/dateTime';
 import {
-  getSpendingByTimestamp,
-  getSpendingByDay,
-  getSpendingCategoriesByMonth,
+  getSpendingByCategoryAndMonth,
+  getSpendingTimeSeries,
 } from '@/lib/db/spending';
 import { colours } from '@/lib/ui';
-import { endOfMonth, getISODay, parseISO, startOfMonth, subMonths } from 'date-fns';
+import {
+  endOfMonth,
+  getISODay,
+  parseISO,
+  startOfMonth,
+  subMonths,
+} from 'date-fns';
 
 const weekdayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -17,9 +22,9 @@ const SpendingTrends = async () => {
     end: endOfMonth(today),
   };
   const [monthly, days, categoryRows] = await Promise.all([
-    getSpendingByTimestamp({ interval: 'month', range }),
-    getSpendingByDay({ range }),
-    getSpendingCategoriesByMonth(range),
+    getSpendingTimeSeries({ interval: 'month', range }),
+    getSpendingTimeSeries({ interval: 'day', range }),
+    getSpendingByCategoryAndMonth(range),
   ]);
 
   const weekdayTotals = Array.from({ length: 7 }, () => ({
@@ -33,10 +38,7 @@ const SpendingTrends = async () => {
     weekdayTotals[index].days += 1;
   }
 
-  const categoryTotals = new Map<
-    string,
-    { name: string; value: number }
-  >();
+  const categoryTotals = new Map<string, { name: string; value: number }>();
   for (const row of categoryRows) {
     const category = categoryTotals.get(row.categoryId);
     categoryTotals.set(row.categoryId, {

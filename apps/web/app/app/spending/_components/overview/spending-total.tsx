@@ -1,6 +1,9 @@
 import { Separator } from '@/components/ui/separator';
 import CurrencyFlow from '@/components/vis/currency-flow';
-import { getSpendingByDay, getSpendingTotal } from '@/lib/db/spending';
+import {
+  getSpendingByCategory,
+  getSpendingTimeSeries,
+} from '@/lib/db/spending';
 import { formatCurrency } from '@/lib/ui';
 import type { Interval } from 'date-fns';
 import SpendingChange from './spending-change';
@@ -12,11 +15,17 @@ const SpendingTotal = async ({
   range: Interval<Date, Date>;
   previousRange: Interval<Date, Date>;
 }) => {
-  const [total, previousTotal, days] = await Promise.all([
-    getSpendingTotal(range),
-    getSpendingTotal(previousRange),
-    getSpendingByDay({ range }),
+  const [categories, previousCategories, days] = await Promise.all([
+    getSpendingByCategory(range),
+    getSpendingByCategory(previousRange),
+    getSpendingTimeSeries({ interval: 'day', range }),
   ]);
+  // Sum of category spending so the total always matches the breakdown
+  const total = categories.reduce((sum, { value }) => sum + value, 0);
+  const previousTotal = previousCategories.reduce(
+    (sum, { value }) => sum + value,
+    0
+  );
 
   const elapsedDays = days.filter(({ value }) => value !== null);
   const noSpendDays = elapsedDays.filter(({ value }) => value === 0).length;
