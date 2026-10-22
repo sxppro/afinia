@@ -19,12 +19,14 @@ const spendingRangeFilter = (range: Prettify<Partial<Interval<Date, Date>>>) =>
     range.end ? lte(transactionExternalTable.created_at, range.end) : undefined
   );
 
-export const getCategorySpendingByTimestamp = ({
+export const getSpendingByTimestamp = ({
   category,
+  merchant,
   interval,
   range,
 }: {
   category?: string;
+  merchant?: string;
   interval: NonNullable<IntervalConfig['fields']>;
   range: Interval<Date, Date>;
 }) => {
@@ -63,65 +65,15 @@ export const getCategorySpendingByTimestamp = ({
           sql`date_trunc(${interval}, ${transactionExternalTable.created_at}, ${TZ})`,
           sql`time_series.interval_start`
         ),
-        or(
-          category
-            ? eq(transactionExternalTable.category_id, category)
-            : undefined,
-          category
-            ? eq(transactionExternalTable.category_parent_id, category)
-            : undefined
-        )
-      )
-    )
-    .groupBy(sql<string>`time_series.interval_start`)
-    .orderBy(sql<string>`time_series.interval_start`);
-};
-
-export const getMerchantSpendingByTimestamp = ({
-  merchant,
-  interval,
-  range,
-}: {
-  merchant: string;
-  interval: NonNullable<IntervalConfig['fields']>;
-  range: Interval<Date, Date>;
-}) => {
-  const { start, end } = range;
-  const formattedStart = format(start, 'yyyy-MM-dd');
-  const formattedEnd = format(end, 'yyyy-MM-dd');
-  const timestampFormat = interval === 'month' ? 'Mon YYYY' : 'DD Mon';
-
-  return db
-    .select({
-      timestamp: sql<string>`to_char(time_series.interval_start AT TIME ZONE ${TZ}, '${sql.raw(
-        timestampFormat
-      )}')`,
-      value: sql<number | null>`
-        CASE
-          WHEN time_series.interval_start > NOW() THEN NULL
-          ELSE coalesce(sum(CASE WHEN ${transactionExternalTable.value_in_base_units} < 0 THEN -${transactionExternalTable.value_in_base_units} ELSE 0 END), 0)
-        END
-      `
-        .mapWith(Number)
-        .as('value'),
-    })
-    .from(
-      sql`generate_series('${sql.raw(
-        `${formattedStart} ${TZ}`
-      )}'::timestamptz, '${sql.raw(
-        `${formattedEnd} ${TZ}`
-      )}'::timestamptz, '1 ${sql.raw(
-        interval
-      )}'::interval, ${TZ}) AS time_series(interval_start)`
-    )
-    .leftJoin(
-      transactionExternalTable,
-      and(
-        eq(
-          sql`date_trunc(${interval}, ${transactionExternalTable.created_at}, ${TZ})`,
-          sql`time_series.interval_start`
-        ),
-        eq(transactionExternalTable.description, merchant)
+        category
+          ? or(
+              eq(transactionExternalTable.category_id, category),
+              eq(transactionExternalTable.category_parent_id, category)
+            )
+          : undefined,
+        merchant
+          ? eq(transactionExternalTable.description, merchant)
+          : undefined
       )
     )
     .groupBy(sql<string>`time_series.interval_start`)

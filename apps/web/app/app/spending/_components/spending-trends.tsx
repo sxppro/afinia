@@ -1,7 +1,7 @@
 import SpendingTrendsCharts from '@/components/vis/spending/spending-trends-charts';
 import { getStartOfDay } from '@/lib/dateTime';
 import {
-  getCategorySpendingByTimestamp,
+  getSpendingByTimestamp,
   getSpendingByDay,
   getSpendingCategoriesByMonth,
 } from '@/lib/db/spending';
@@ -17,7 +17,7 @@ const SpendingTrends = async () => {
     end: endOfMonth(today),
   };
   const [monthly, days, categoryRows] = await Promise.all([
-    getCategorySpendingByTimestamp({ interval: 'month', range }),
+    getSpendingByTimestamp({ interval: 'month', range }),
     getSpendingByDay({ range }),
     getSpendingCategoriesByMonth(range),
   ]);

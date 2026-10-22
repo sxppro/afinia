@@ -11,7 +11,7 @@ import TransactionList from '@/components/vis/transaction/transaction-list';
 import { SMALL_PAGE_SIZE, TZ } from '@/lib/constants';
 import { getStartOfDay } from '@/lib/dateTime';
 import { getMerchantByName } from '@/lib/db/merchant';
-import { getMerchantSpendingByTimestamp } from '@/lib/db/spending';
+import { getSpendingByTimestamp } from '@/lib/db/spending';
 import { getExternalTransactions } from '@/lib/db/transaction';
 import { siteConfig } from '@/lib/siteConfig';
 import { colours } from '@/lib/ui';
@@ -81,7 +81,7 @@ const MerchantInsightsPage = async ({
     ? format(addMonths(selectedMonth, 1), 'yyyy-MM')
     : null;
 
-  const spendingByDayFetch = getMerchantSpendingByTimestamp({
+  const spendingByDayFetch = getSpendingByTimestamp({
     merchant: merchant.name,
     interval: 'day',
     range,

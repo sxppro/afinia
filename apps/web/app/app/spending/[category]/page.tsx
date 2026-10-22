@@ -10,7 +10,7 @@ import TransactionList from '@/components/vis/transaction/transaction-list';
 import { SMALL_PAGE_SIZE } from '@/lib/constants';
 import { getStartOfDay } from '@/lib/dateTime';
 import { getCategoryById } from '@/lib/db/category';
-import { getCategorySpendingByTimestamp } from '@/lib/db/spending';
+import { getSpendingByTimestamp } from '@/lib/db/spending';
 import { getExternalTransactions } from '@/lib/db/transaction';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours } from '@/lib/ui';
@@ -44,7 +44,7 @@ const CategorySpendingPage = async ({
     start: startOfMonth(getStartOfDay()),
     end: endOfMonth(getStartOfDay()),
   };
-  const categorySpendingFetch = getCategorySpendingByTimestamp({
+  const categorySpendingFetch = getSpendingByTimestamp({
     category: category.category_id,
     interval: 'day',
     range,
