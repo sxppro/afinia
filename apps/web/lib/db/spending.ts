@@ -1,6 +1,17 @@
 import { transactionExternalTable } from 'afinia-common/schema';
 import { format, Interval } from 'date-fns';
-import { and, asc, desc, eq, gt, gte, lte, or, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gt,
+  gte,
+  inArray,
+  lte,
+  or,
+  sql,
+} from 'drizzle-orm';
 import { IntervalConfig } from 'drizzle-orm/pg-core';
 import { cache } from 'react';
 import { TZ } from '../constants';
@@ -8,13 +19,18 @@ import { Prettify } from '../types';
 import { db } from './client';
 
 /**
+ * Inflow transaction types that offset spending. All other inflows
+ * (e.g. salary, interest, direct credits) are income, not negative spend.
+ */
+const SPENDING_OFFSET_TYPES = ['Refund'];
+
+/**
  * Net spending as a positive amount in base units.
- * Sum of transaction values are negated and floored to 0.
- * Returns 0 when the sum of transaction values is positive or
- * there are no transactions.
+ * Outflows are summed, offset only by refunds, negated and floored to 0.
+ * Returns 0 when refunds exceed outflows or there are no transactions.
  */
 const spendingAmount =
-  sql<number>`greatest(-coalesce(sum(${transactionExternalTable.value_in_base_units}), 0), 0)`.mapWith(
+  sql<number>`greatest(-coalesce(sum(${transactionExternalTable.value_in_base_units}) filter (where ${transactionExternalTable.value_in_base_units} < 0 or ${inArray(transactionExternalTable.type, SPENDING_OFFSET_TYPES)}), 0), 0)`.mapWith(
     Number
   );
 
