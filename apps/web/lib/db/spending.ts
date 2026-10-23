@@ -19,9 +19,7 @@ import { Prettify } from '../types';
 import { db } from './client';
 
 /**
- * Inflow transaction types that offset spending even when uncategorised.
- * Other uncategorised inflows (e.g. salary, interest, direct credits) are
- * income, not negative spend.
+ * Transaction types that should offset spending when uncategorised
  */
 const SPENDING_OFFSET_TYPES = ['Refund'];
 
@@ -29,7 +27,7 @@ const SPENDING_OFFSET_TYPES = ['Refund'];
  * Net spending as a positive amount in base units.
  * Outflows are summed, offset by refunds and categorised inflows,
  * negated and floored to 0.
- * Returns 0 when offsets exceed outflows or there are no transactions.
+ * Returns 0 when inflows exceed outflows or there are no transactions.
  */
 const spendingAmount =
   sql<number>`greatest(-coalesce(sum(${transactionExternalTable.value_in_base_units}) filter (where ${transactionExternalTable.value_in_base_units} < 0 or ${inArray(transactionExternalTable.type, SPENDING_OFFSET_TYPES)} or ${transactionExternalTable.category_id} is not null), 0), 0)`.mapWith(
