@@ -27,7 +27,7 @@ const AccountBalanceTrend = ({
         <span className="inline-flex items-center gap-1 transition">
           <CurrencyFlow
             value={0}
-            signDisplay="negative"
+            options={{ signDisplay: 'negative' }}
             className="text-base font-semibold"
             hideable
           />
@@ -83,22 +83,25 @@ const AccountBalanceTrend = ({
           {totalChange && <Icon className="size-5" />}
           <CurrencyFlow
             value={totalChange}
-            signDisplay="negative"
+            options={{ signDisplay: 'negative' }}
             className="text-base font-semibold"
             hideable
           />
         </span>
-        <NumberFlow
-          className={cn('font-semibold', textColour)}
-          value={totalChangeDecimal}
-          format={{
-            style: 'percent',
-            maximumFractionDigits: 1,
-            signDisplay: 'never',
-          }}
-          prefix="("
-          suffix=")"
-        />
+        {/* Only show percent if start is not 0 */}
+        {start !== 0 && (
+          <NumberFlow
+            className={cn('font-semibold', textColour)}
+            value={totalChangeDecimal}
+            format={{
+              style: 'percent',
+              maximumFractionDigits: 1,
+              signDisplay: 'never',
+            }}
+            prefix="("
+            suffix=")"
+          />
+        )}
         <span>over {label}</span>
       </NumberFlowGroup>
     </p>

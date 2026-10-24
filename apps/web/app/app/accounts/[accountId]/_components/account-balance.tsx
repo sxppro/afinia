@@ -8,7 +8,7 @@ const AccountBalance = async ({ accountId }: { accountId: number }) => {
     <CurrencyFlow
       className="-mt-1 text-3xl/tight font-semibold"
       value={balance?.value ?? 0}
-      signDisplay="auto"
+      options={{ signDisplay: 'auto' }}
       hideable
     />
   );
