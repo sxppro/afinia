@@ -10,6 +10,7 @@ import {
   Label,
   BarChart as RechartsBarChart,
   Legend as RechartsLegend,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -51,9 +52,12 @@ const renderShape = (
   props: any,
   activeBar: any | undefined,
   activeLegend: string | undefined,
-  layout: string
+  layout: string,
+  isPartial?: (row: Record<string, any>) => boolean
 ) => {
-  const { fillOpacity, name, payload, value } = props;
+  const { name, payload, value } = props;
+  const fillOpacity =
+    (props.fillOpacity ?? 1) * (isPartial?.(payload) ? 0.4 : 1);
   let { x, width, y, height } = props;
 
   if (layout === 'horizontal' && height < 0) {
@@ -547,6 +551,14 @@ interface BarChartProps extends React.HTMLAttributes<HTMLDivElement> {
   legendPosition?: 'left' | 'center' | 'right';
   tooltipCallback?: (tooltipCallbackContent: TooltipProps) => void;
   customTooltip?: React.ComponentType<TooltipProps>;
+  /**
+   * Draws a dashed horizontal line at this value, e.g. an average
+   */
+  referenceValue?: number;
+  /**
+   * Rows that are incomplete (e.g. the current month) are drawn faded
+   */
+  isPartial?: (row: Record<string, any>) => boolean;
 }
 
 const BarChart = React.forwardRef<HTMLDivElement, BarChartProps>(
@@ -581,6 +593,8 @@ const BarChart = React.forwardRef<HTMLDivElement, BarChartProps>(
       legendPosition = 'right',
       tooltipCallback,
       customTooltip,
+      referenceValue,
+      isPartial,
       ...other
     } = props;
     const CustomTooltip = customTooltip;
@@ -776,7 +790,7 @@ const BarChart = React.forwardRef<HTMLDivElement, BarChartProps>(
               )}
             </YAxis>
             <Tooltip
-              wrapperStyle={{ outline: 'none' }}
+              wrapperStyle={{ outline: 'none', zIndex: 10 }}
               isAnimationActive={true}
               animationDuration={100}
               cursor={{ fill: '#d1d5db', opacity: '0.15' }}
@@ -860,11 +874,20 @@ const BarChart = React.forwardRef<HTMLDivElement, BarChartProps>(
                 isAnimationActive={false}
                 fill=""
                 shape={(props: any) =>
-                  renderShape(props, activeBar, activeLegend, layout)
+                  renderShape(props, activeBar, activeLegend, layout, isPartial)
                 }
                 onClick={onBarClick}
               />
             ))}
+            {referenceValue !== undefined && layout !== 'vertical' ? (
+              <ReferenceLine
+                y={referenceValue}
+                className="text-gray-400 dark:text-gray-600"
+                stroke="currentColor"
+                strokeDasharray="4 4"
+                ifOverflow="extendDomain"
+              />
+            ) : null}
           </RechartsBarChart>
         </ResponsiveContainer>
       </div>

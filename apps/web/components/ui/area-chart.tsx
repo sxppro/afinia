@@ -746,7 +746,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
               )}
             </YAxis>
             <Tooltip
-              wrapperStyle={{ outline: 'none' }}
+              wrapperStyle={{ outline: 'none', zIndex: 10 }}
               isAnimationActive={true}
               animationDuration={100}
               cursor={{ stroke: '#d1d5db', strokeWidth: 1 }}
