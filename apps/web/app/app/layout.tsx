@@ -5,7 +5,7 @@ import { siteConfig } from '@/lib/siteConfig';
 import { TRPCReactProvider } from '@/trpc/client';
 import { redirect } from 'next/navigation';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
-import React, { ViewTransition } from 'react';
+import React from 'react';
 
 const AppLayout = async ({
   children,
@@ -20,14 +20,12 @@ const AppLayout = async ({
 
   return (
     <TRPCReactProvider>
-      <ViewTransition>
-        <NuqsAdapter>
-          <BalanceVisibilityProvider>
-            <div className="min-h-screen overscroll-none p-3">{children}</div>
-            <Toaster />
-          </BalanceVisibilityProvider>
-        </NuqsAdapter>
-      </ViewTransition>
+      <NuqsAdapter>
+        <BalanceVisibilityProvider>
+          <div className="min-h-screen overscroll-none p-3">{children}</div>
+          <Toaster />
+        </BalanceVisibilityProvider>
+      </NuqsAdapter>
     </TRPCReactProvider>
   );
 };
