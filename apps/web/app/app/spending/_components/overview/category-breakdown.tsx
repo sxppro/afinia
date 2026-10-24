@@ -32,11 +32,14 @@ const CategoryDelta = ({
   }
 
   return (
-    <p className="flex items-center gap-1">
+    <p className="flex items-center gap-1 uppercase">
       <CurrencyFlow
         className={cn('text-sm font-semibold tabular-nums', textColour)}
         value={delta}
-        options={{ signDisplay: 'always', maximumFractionDigits: 0 }}
+        options={{
+          signDisplay: 'always',
+          notation: 'compact',
+        }}
       />
       <NumberFlow
         className={cn('text-sm font-semibold tabular-nums', textColour)}
@@ -44,7 +47,9 @@ const CategoryDelta = ({
         format={{
           style: 'percent',
           maximumFractionDigits: 0,
+          maximumSignificantDigits: 3,
           signDisplay: 'never',
+          notation: 'compact',
         }}
         prefix="("
         suffix=")"
