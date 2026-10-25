@@ -1,4 +1,4 @@
-import SpendingMonthlyChart from '@/components/vis/spending/spending-monthly';
+import SpendingByMonth from '@/components/vis/spending/spending-by-month';
 import { getStartOfDay, toYearMonth } from '@/lib/dateTime';
 import {
   getSpendingByCategory,
@@ -65,7 +65,7 @@ const SpendingMonthly = async () => {
     Math.max(completeMonths.length, 1);
 
   return (
-    <SpendingMonthlyChart
+    <SpendingByMonth
       data={[...rows.values()]}
       average={Math.round(average)}
       categoryNames={totalCategorySpend.map(({ name }) => name)}

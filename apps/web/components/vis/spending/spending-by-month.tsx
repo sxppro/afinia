@@ -85,7 +85,7 @@ const Tooltip = ({ active, payload }: TooltipProps) => {
   );
 };
 
-const SpendingMonthly = ({
+const SpendingByMonth = ({
   data,
   average,
   categoryNames,
@@ -161,4 +161,4 @@ const SpendingMonthly = ({
   );
 };
 
-export default SpendingMonthly;
+export default SpendingByMonth;
