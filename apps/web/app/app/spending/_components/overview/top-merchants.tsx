@@ -1,3 +1,4 @@
+import { Skeleton } from '@/components/ui/skeleton';
 import { getSpendingByMerchant, getSpendingTotal } from '@/lib/db/spending';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours, formatCurrency } from '@/lib/ui';
@@ -60,5 +61,26 @@ const TopMerchants = async ({ range }: { range: Interval<Date, Date> }) => {
     </section>
   );
 };
+
+export const TopMerchantsSkeleton = () => (
+  <section className="flex flex-col gap-3">
+    <div>
+      <h2 className="text-xl font-semibold">Top Merchants</h2>
+      <Skeleton className="mt-1 h-5 w-40" />
+    </div>
+    {[...Array(5)].map((_, i) => (
+      <div className="flex items-center justify-between gap-3" key={i}>
+        <div className="flex items-center gap-2">
+          <Skeleton className="size-2 rounded-full" />
+          <div className="flex flex-col gap-1">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-4 w-20" />
+          </div>
+        </div>
+        <Skeleton className="h-7 w-16" />
+      </div>
+    ))}
+  </section>
+);
 
 export default TopMerchants;

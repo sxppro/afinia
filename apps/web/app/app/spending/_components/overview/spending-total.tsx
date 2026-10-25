@@ -1,4 +1,5 @@
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import CurrencyFlow from '@/components/vis/currency-flow';
 import {
   getSpendingByCategory,
@@ -69,5 +70,27 @@ const SpendingTotal = async ({
     </>
   );
 };
+
+export const SpendingTotalSkeleton = () => (
+  <>
+    <section>
+      <p className="text-muted-foreground text-lg font-medium">This month</p>
+      <Skeleton className="my-1 h-10 w-40" />
+      <Skeleton className="h-5 w-48" />
+    </section>
+    <Separator />
+    <section className="flex gap-2">
+      <div className="flex flex-1 flex-col justify-between gap-2">
+        <p className="text-muted-foreground">Daily average</p>
+        <Skeleton className="h-8 w-20" />
+      </div>
+      <Separator orientation="vertical" />
+      <div className="flex flex-1 flex-col justify-between gap-2">
+        <p className="text-muted-foreground">Days without spending</p>
+        <Skeleton className="h-8 w-24" />
+      </div>
+    </section>
+  </>
+);
 
 export default SpendingTotal;

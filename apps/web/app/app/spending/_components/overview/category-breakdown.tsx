@@ -148,7 +148,7 @@ const CategoryBreakdown = async ({
               </div>
             </div>
             {isUncategorised ? null : (
-              <Suspense fallback={<Skeleton className="h-24 w-full" />}>
+              <Suspense fallback={<SubCategorySkeleton />}>
                 <SpendingByCategory
                   category={id}
                   dataFetch={subCategorySpendingQuery(id)}
@@ -161,5 +161,35 @@ const CategoryBreakdown = async ({
     </section>
   );
 };
+
+const SubCategorySkeleton = () => (
+  <div className="flex flex-col gap-1.5">
+    {[...Array(3)].map((_, i) => (
+      <Skeleton className="h-8 w-full" key={i} />
+    ))}
+  </div>
+);
+
+export const CategoryBreakdownSkeleton = () => (
+  <section className="flex flex-col gap-3">
+    <div>
+      <h2 className="text-xl font-semibold">Category Breakdown</h2>
+      <p className="text-muted-foreground text-sm">
+        Your spending by category vs same time last month
+      </p>
+    </div>
+    <Skeleton className="h-4 w-full rounded-full" />
+    {[...Array(4)].map((_, i) => (
+      <div className="flex flex-col gap-2" key={i}>
+        <div className="flex items-center gap-2">
+          <Skeleton className="size-8 rounded-lg" />
+          <Skeleton className="h-6 w-28" />
+          <Skeleton className="ml-auto h-7 w-20" />
+        </div>
+        <SubCategorySkeleton />
+      </div>
+    ))}
+  </section>
+);
 
 export default CategoryBreakdown;

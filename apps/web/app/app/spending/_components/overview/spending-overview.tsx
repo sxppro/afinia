@@ -1,5 +1,4 @@
 import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
 import { getStartOfDay } from '@/lib/dateTime';
 import {
   addDays,
@@ -10,10 +9,14 @@ import {
   subMonths,
 } from 'date-fns';
 import { Suspense } from 'react';
-import CategoryBreakdown from './category-breakdown';
-import RecurringPayments from './recurring-payments';
-import SpendingTotal from './spending-total';
-import TopMerchants from './top-merchants';
+import CategoryBreakdown, {
+  CategoryBreakdownSkeleton,
+} from './category-breakdown';
+import RecurringPayments, {
+  RecurringPaymentsSkeleton,
+} from './recurring-payments';
+import SpendingTotal, { SpendingTotalSkeleton } from './spending-total';
+import TopMerchants, { TopMerchantsSkeleton } from './top-merchants';
 
 const SpendingOverview = async () => {
   const today = getStartOfDay();
@@ -30,19 +33,19 @@ const SpendingOverview = async () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <Suspense fallback={<Skeleton className="h-24 w-full" />}>
+      <Suspense fallback={<SpendingTotalSkeleton />}>
         <SpendingTotal range={currentRange} previousRange={previousRange} />
       </Suspense>
       <Separator />
-      <Suspense fallback={<Skeleton className="h-24 w-full" />}>
+      <Suspense fallback={<CategoryBreakdownSkeleton />}>
         <CategoryBreakdown range={currentRange} previousRange={previousRange} />
       </Suspense>
       <Separator />
-      <Suspense fallback={<Skeleton className="h-24 w-full" />}>
+      <Suspense fallback={<TopMerchantsSkeleton />}>
         <TopMerchants range={currentRange} />
       </Suspense>
       <Separator />
-      <Suspense fallback={<Skeleton className="h-48 w-full" />}>
+      <Suspense fallback={<RecurringPaymentsSkeleton />}>
         <RecurringPayments />
       </Suspense>
     </div>
