@@ -8,6 +8,8 @@ import {
   gt,
   gte,
   inArray,
+  isNotNull,
+  lt,
   lte,
   or,
   sql,
@@ -149,7 +151,7 @@ export const getSpendingByCategory = cache(
 /**
  * Groups net spending by merchant
  * @returns The top `limit` merchants ordered by spending,
- * each with its total and transaction count
+ * each with its total, transaction count and most common category
  */
 export const getSpendingByMerchant = (
   range: Prettify<Partial<Interval<Date, Date>>>,
@@ -160,6 +162,9 @@ export const getSpendingByMerchant = (
   return db
     .select({
       merchant: merchant.as('merchant'),
+      categoryId: sql<string>`mode() within group (order by ${categoryId})`.as(
+        'category_id'
+      ),
       value: spendingAmount.as('value'),
       transactions:
         sql<number>`count(${transactionExternalTable.transaction_id})`
@@ -176,17 +181,16 @@ export const getSpendingByMerchant = (
 
 /**
  * Groups net spending by category and calendar month (in TZ).
- * @returns One row per month and category that has spending, ordered
+ * @returns One row per month (YYYY-MM) and category that has spending, ordered
  * by month and category name
  */
 export const getSpendingByCategoryAndMonth = (
   range: Prettify<Partial<Interval<Date, Date>>>
 ) => {
-  // TZ is inlined as a literal (not a bound param) so the SELECT and GROUP BY
-  // expressions are textually identical and Postgres can match them.
+  // TZ is inlined so the SELECT and GROUP BY expressions match
   const tz = sql.raw(`'${TZ}'`);
   const monthSort = sql<Date>`date_trunc('month', ${transactionExternalTable.created_at}, ${tz})`;
-  const month = sql<string>`to_char(${monthSort} AT TIME ZONE ${tz}, 'Mon YY')`;
+  const month = sql<string>`to_char(${monthSort} AT TIME ZONE ${tz}, 'YYYY-MM')`;
 
   return db
     .select({
@@ -201,4 +205,125 @@ export const getSpendingByCategoryAndMonth = (
     .groupBy(monthSort, categoryId, categoryName)
     .having(gt(spendingAmount, 0))
     .orderBy(asc(monthSort), asc(categoryName));
+};
+
+/**
+ * Groups net spending by ISO weekday (1 = Monday) and hour of day (in TZ).
+ * @returns One row per weekday and hour that has spending
+ */
+export const getSpendingByHourAndWeekday = (
+  range: Prettify<Partial<Interval<Date, Date>>>
+) => {
+  // TZ is inlined so the SELECT and GROUP BY expressions match
+  const tz = sql.raw(`'${TZ}'`);
+  const localCreatedAt = sql`(${transactionExternalTable.created_at} AT TIME ZONE ${tz})`;
+  const weekday = sql<number>`extract(isodow from ${localCreatedAt})::int`;
+  const hour = sql<number>`extract(hour from ${localCreatedAt})::int`;
+
+  return db
+    .select({
+      weekday: weekday.mapWith(Number).as('weekday'),
+      hour: hour.mapWith(Number).as('hour'),
+      value: spendingAmount.as('value'),
+      transactions:
+        sql<number>`count(${transactionExternalTable.transaction_id})`
+          .mapWith(Number)
+          .as('transactions'),
+    })
+    .from(transactionExternalTable)
+    .where(createdWithin(range))
+    .groupBy(weekday, hour)
+    .having(gt(spendingAmount, 0));
+};
+
+/**
+ * List of all recent payments per merchant, used to detect recurring payments.
+ * Payments on the same day are combined into one.
+ * @param limit Maximum number of most recent payments per merchant
+ * @returns Merchants with at least 2 payments, each with up to `limit`
+ * payments ordered by merchant name and payment date
+ */
+export const getRecentPaymentsByMerchant = ({
+  range,
+  limit = 4,
+}: {
+  range: Interval<Date, Date>;
+  limit?: number;
+}) => {
+  // TZ is inlined so the SELECT and GROUP BY expressions match
+  const tz = sql.raw(`'${TZ}'`);
+  const paymentDate = sql<string>`to_char(${transactionExternalTable.created_at} AT TIME ZONE ${tz}, 'YYYY-MM-DD')`;
+
+  /**
+   * Get merchant payments grouped by date
+   */
+  const merchantPayments = db.$with('payments').as(
+    db
+      .select({
+        merchant: sql<string>`${transactionExternalTable.description}`.as(
+          'merchant'
+        ),
+        date: paymentDate.as('date'),
+        // Most common category for the merchant
+        categoryId:
+          sql<string>`mode() within group (order by ${categoryId})`.as(
+            'category_id'
+          ),
+        amount:
+          sql<number>`-sum(${transactionExternalTable.value_in_base_units})`.as(
+            'amount'
+          ),
+      })
+      .from(transactionExternalTable)
+      .where(
+        and(
+          createdWithin(range),
+          lt(transactionExternalTable.value_in_base_units, 0),
+          isNotNull(transactionExternalTable.description)
+        )
+      )
+      .groupBy(transactionExternalTable.description, paymentDate)
+  );
+
+  /**
+   * Rank each merchant's payments by date and count number of payments for each merchant
+   */
+  const ranked = db.$with('ranked').as(
+    db
+      .select({
+        merchant: merchantPayments.merchant,
+        date: merchantPayments.date,
+        categoryId: merchantPayments.categoryId,
+        amount: merchantPayments.amount,
+        // Number each merchant's payments from newest to oldest
+        rank: sql<number>`row_number() over (partition by ${merchantPayments.merchant} order by ${merchantPayments.date} desc)`.as(
+          'rank'
+        ),
+        // Count number of payments for each merchant
+        count:
+          sql<number>`count(*) over (partition by ${merchantPayments.merchant})`.as(
+            'count'
+          ),
+      })
+      .from(merchantPayments)
+  );
+
+  return (
+    db
+      .with(merchantPayments, ranked)
+      .select({
+        merchant: ranked.merchant,
+        date: ranked.date,
+        categoryId: ranked.categoryId,
+        amount: sql<number>`${ranked.amount}`.mapWith(Number),
+      })
+      .from(ranked)
+      /**
+       * Only include merchants with at least 2 payments and
+       * up to `limit` most recent payments for each merchant
+       */
+      .where(and(lte(ranked.rank, limit), gte(ranked.count, 2)))
+      // Order by merchant name and payment date
+      .orderBy(asc(ranked.merchant), asc(ranked.date))
+  );
 };
