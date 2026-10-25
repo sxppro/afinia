@@ -189,22 +189,20 @@ export const getSpendingByCategoryAndMonth = (
 ) => {
   // TZ is inlined so the SELECT and GROUP BY expressions match
   const tz = sql.raw(`'${TZ}'`);
-  const monthSort = sql<Date>`date_trunc('month', ${transactionExternalTable.created_at}, ${tz})`;
-  const month = sql<string>`to_char(${monthSort} AT TIME ZONE ${tz}, 'YYYY-MM')`;
+  const month = sql<string>`to_char(${transactionExternalTable.created_at} AT TIME ZONE ${tz}, 'YYYY-MM')`;
 
   return db
     .select({
       month: month.as('month'),
-      monthSort: monthSort.as('month_sort'),
       categoryId: categoryId.as('category_id'),
       categoryName: categoryName.as('category_name'),
       value: spendingAmount.as('value'),
     })
     .from(transactionExternalTable)
     .where(createdWithin(range))
-    .groupBy(monthSort, categoryId, categoryName)
+    .groupBy(month, categoryId, categoryName)
     .having(gt(spendingAmount, 0))
-    .orderBy(asc(monthSort), asc(categoryName));
+    .orderBy(asc(month), asc(categoryName));
 };
 
 /**
