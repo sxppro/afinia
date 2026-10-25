@@ -269,6 +269,7 @@ export const getRecentPaymentsByMerchant = ({
           sql<string>`mode() within group (order by ${categoryId})`.as(
             'category_id'
           ),
+        // Outflows are negative, so negate to get a positive amount
         amount:
           sql<number>`-sum(${transactionExternalTable.value_in_base_units})`.as(
             'amount'

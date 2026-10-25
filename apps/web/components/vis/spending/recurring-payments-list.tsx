@@ -17,7 +17,7 @@ const RecurringPaymentsList = ({
           categoryId,
           frequency,
           lastAmount,
-          nextChargeAt,
+          nextPaymentAt,
           monthlyCost,
         }) => (
           <div
@@ -54,7 +54,7 @@ const RecurringPaymentsList = ({
                 </span>
               </p>
               <p className="text-muted-foreground text-xs">
-                Next: ~{format(nextChargeAt, 'd MMM')}
+                Next: ~{format(nextPaymentAt, 'd MMM')}
               </p>
             </div>
           </div>

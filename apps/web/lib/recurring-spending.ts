@@ -1,5 +1,5 @@
+import { tz } from '@date-fns/tz';
 import {
-  addDays,
   addMonths,
   addQuarters,
   addWeeks,
@@ -7,6 +7,7 @@ import {
   differenceInCalendarDays,
   parseISO,
 } from 'date-fns';
+import { TZ } from './constants';
 
 type MerchantPayment = {
   merchant: string;
@@ -60,7 +61,7 @@ export const FREQUENCIES = [
     maxDays: DAYS_PER_FORTNIGHT + 3,
     minPayments: 3,
     perMonth: 26 / 12,
-    next: (date: Date) => addDays(date, 14),
+    next: (date: Date) => addWeeks(date, 2),
   },
   {
     id: 'monthly',
@@ -97,6 +98,15 @@ export const FREQUENCIES = [
 const MAX_AMOUNT_VARIATION = 0.3;
 
 /**
+ * Days between consecutive dates
+ */
+const getGapsInDays = (dates: Date[]) =>
+  dates
+    .slice(1)
+    // Compare with previous date
+    .map((date, index) => differenceInCalendarDays(date, dates[index]));
+
+/**
  * Detects recurring payments from each merchant's most recent payments.
  *
  * A merchant is recurring when its latest gaps between payments all match
@@ -121,7 +131,11 @@ export const detectRecurringPayments = (
   const recurringPayments: RecurringPayment[] = [];
 
   for (const [merchant, merchantPayments] of merchantPaymentsMap) {
-    const paymentDates = merchantPayments.map(({ date }) => parseISO(date));
+    // Dates are already TZ calendar dates (see the SQL), so parse them in TZ
+    // rather than the server's timezone
+    const paymentDates = merchantPayments.map(({ date }) =>
+      parseISO(date, { in: tz(TZ) })
+    );
     // ! Assumption: payments are sorted by date ascending
     const lastPaymentAt = paymentDates[paymentDates.length - 1];
     const last = merchantPayments[merchantPayments.length - 1];
@@ -132,13 +146,9 @@ export const detectRecurringPayments = (
 
       // Check last n payments and their gaps match supported recurring payment frequencies
       const recentPaymentDates = paymentDates.slice(-minPayments);
-      const isMatchedFrequency = recentPaymentDates
-        .slice(1)
-        .every((date, index) => {
-          // Compare last or last 2 payments with previous payment date
-          const gap = differenceInCalendarDays(date, recentPaymentDates[index]);
-          return gap >= minDays && gap <= maxDays;
-        });
+      const isMatchedFrequency = getGapsInDays(recentPaymentDates).every(
+        (gap) => gap >= minDays && gap <= maxDays
+      );
 
       // Check last n payments and their amounts are similar
       const recentPaymentAmounts = merchantPayments
