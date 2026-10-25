@@ -1,7 +1,6 @@
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ReactNode, Suspense } from 'react';
-import RecurringPayments from './trends/recurring-payments';
 import SpendingHourHeatmap from './trends/spending-hour-heatmap';
 import SpendingMonthly from './trends/spending-monthly';
 import SpendingPace from './trends/spending-pace';
@@ -51,10 +50,6 @@ const SpendingTrends = () => (
       fallbackClassName="h-40 w-full"
     >
       <SpendingHourHeatmap />
-    </Section>
-    <Separator />
-    <Section title="Recurring payments" fallbackClassName="h-48 w-full">
-      <RecurringPayments />
     </Section>
   </div>
 );

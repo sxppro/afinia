@@ -18,17 +18,20 @@ const RecurringPayments = async () => {
   const total = payments.reduce((sum, { monthlyCost }) => sum + monthlyCost, 0);
 
   return (
-    <>
-      <p className="text-muted-foreground mb-3 text-sm">
-        About{' '}
-        <span className="text-foreground font-medium">
-          {formatCurrency(total, { baseUnits: true })}
-        </span>{' '}
-        a month across {payments.length} payment
-        {payments.length === 1 ? '' : 's'}
-      </p>
+    <section className="flex flex-col gap-3">
+      <div>
+        <h2 className="text-xl font-semibold">Recurring Payments</h2>
+        <p className="text-muted-foreground">
+          About{' '}
+          <span className="text-foreground font-medium">
+            {formatCurrency(total, { baseUnits: true })}
+          </span>{' '}
+          a month across {payments.length} payment
+          {payments.length === 1 ? '' : 's'}
+        </p>
+      </div>
       <RecurringPaymentsList payments={payments} />
-    </>
+    </section>
   );
 };
 

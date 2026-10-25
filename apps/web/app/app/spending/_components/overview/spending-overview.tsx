@@ -11,6 +11,7 @@ import {
 } from 'date-fns';
 import { Suspense } from 'react';
 import CategoryBreakdown from './category-breakdown';
+import RecurringPayments from './recurring-payments';
 import SpendingTotal from './spending-total';
 import TopMerchants from './top-merchants';
 
@@ -39,6 +40,10 @@ const SpendingOverview = async () => {
       <Separator />
       <Suspense fallback={<Skeleton className="h-24 w-full" />}>
         <TopMerchants range={currentRange} />
+      </Suspense>
+      <Separator />
+      <Suspense fallback={<Skeleton className="h-48 w-full" />}>
+        <RecurringPayments />
       </Suspense>
     </div>
   );
