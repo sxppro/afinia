@@ -32,7 +32,7 @@ const SpendingMonthly = async () => {
     ]);
 
   const currentMonth = format(today, 'yyyy-MM');
-  // Build rows based on time series data
+  // Build chart data based on time series
   const rows = new Map(
     monthlyTimeSeries.map(({ date, value }) => {
       const month = toYearMonth(date); // YYYY-MM
