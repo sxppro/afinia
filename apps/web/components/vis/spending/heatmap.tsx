@@ -10,6 +10,8 @@ import { cn } from '@/lib/ui';
 const Heatmap = ({
   rows,
   columnLabels,
+  centerColumnLabels = false,
+  rowClassName = 'h-4',
   className,
 }: {
   rows: { label?: string; blocks: TrackerBlockProps[] }[];
@@ -17,6 +19,11 @@ const Heatmap = ({
    * One entry per column, `undefined` for columns without a label
    */
   columnLabels: (string | undefined)[];
+  /**
+   * Centre labels over their column, rather than letting them overflow right
+   */
+  centerColumnLabels?: boolean;
+  rowClassName?: string;
   className?: string;
 }) => (
   <div className={cn('flex flex-col gap-1', className)}>
@@ -26,7 +33,10 @@ const Heatmap = ({
         {columnLabels.map((label, index) => (
           <div
             key={index}
-            className="text-muted-foreground min-w-0 flex-1 overflow-visible text-[10px] whitespace-nowrap"
+            className={cn(
+              'text-muted-foreground min-w-0 flex-1 overflow-visible text-[10px] whitespace-nowrap',
+              centerColumnLabels && 'text-center'
+            )}
           >
             {label}
           </div>
@@ -35,11 +45,11 @@ const Heatmap = ({
     </div>
     {rows.map(({ label, blocks }, index) => (
       <div key={index} className="flex items-center gap-2">
-        <div className="text-muted-foreground w-7 shrink-0 text-[10px]">
+        <div className="text-muted-foreground w-7 shrink-0 text-[10px] leading-none">
           {label}
         </div>
         <Tracker
-          className="h-4"
+          className={rowClassName}
           data={blocks}
           defaultBackgroundColor={heatmapEmptyColour}
           hoverEffect

@@ -1,7 +1,7 @@
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ReactNode, Suspense } from 'react';
-import SpendingHourHeatmap from './trends/spending-hour-heatmap';
+import SpendingHourly from './trends/spending-hourly';
 import SpendingMonthly from './trends/spending-monthly';
 import SpendingPace from './trends/spending-pace';
 
@@ -47,9 +47,9 @@ const SpendingTrends = () => (
     <Section
       title="When you spend"
       description="Total spending by weekday and hour over 12 months"
-      fallbackClassName="h-40 w-full"
+      fallbackClassName="h-80 w-full"
     >
-      <SpendingHourHeatmap />
+      <SpendingHourly />
     </Section>
   </div>
 );
