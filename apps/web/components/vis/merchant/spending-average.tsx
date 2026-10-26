@@ -1,6 +1,6 @@
 import { getStartOfDay } from '@/lib/dateTime';
 import { db } from '@/lib/db/client';
-import { getMerchantSpendingByTimestamp } from '@/lib/db/spending';
+import { getSpendingTimeSeries } from '@/lib/db/spending';
 import { formatCurrency } from '@/lib/ui';
 import { AccountTypeEnum } from 'afinia-common/providers/up';
 import { accountTable } from 'afinia-common/schema';
@@ -39,7 +39,7 @@ const SpendingAverage = async ({ merchant }: { merchant: string }) => {
       start: startOfMonth(subMonths(getStartOfDay(), MIN_MONTHS)),
       end: endOfMonth(subMonths(getStartOfDay(), 1)),
     };
-    const monthlySpendingQuery = getMerchantSpendingByTimestamp({
+    const monthlySpendingQuery = getSpendingTimeSeries({
       merchant,
       interval: 'month',
       range: avgInterval,
