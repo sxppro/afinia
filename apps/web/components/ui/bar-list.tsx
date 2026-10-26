@@ -68,9 +68,13 @@ function BarListInner<T>(
         {sortedData.map((item, index) => (
           <Component
             key={item.key ?? item.name}
-            onClick={() => {
-              onValueChange?.(item);
-            }}
+            onClick={
+              onValueChange
+                ? () => {
+                    onValueChange(item);
+                  }
+                : undefined
+            }
             className={cx(
               // base
               'group w-full rounded-sm',
@@ -119,7 +123,11 @@ function BarListInner<T>(
                       focusRing
                     )}
                     rel="noreferrer"
-                    onClick={(event) => event.stopPropagation()}
+                    onClick={
+                      onValueChange
+                        ? (event) => event.stopPropagation()
+                        : undefined
+                    }
                   >
                     {item.name}
                   </a>
