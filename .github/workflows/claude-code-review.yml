@@ -38,4 +38,4 @@ jobs:
           prompt: '/code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
           claude_args: |
             --model opus
-            --allowedTools "mcp__github_inline_comment__create_inline_comment"
+            --permission-mode auto
