@@ -52,4 +52,5 @@ jobs:
           # or https://code.claude.com/docs/en/cli-reference for available options
           claude_args: |
             --model sonnet
+            --permission-mode auto
 
