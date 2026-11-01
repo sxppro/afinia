@@ -7,7 +7,7 @@ import { SMALL_PAGE_SIZE } from '@/lib/constants';
 import { now } from '@/lib/dateTime';
 import { siteConfig } from '@/lib/siteConfig';
 import { format } from 'date-fns';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import AccountBalanceTimeline from './_components/account-balance-timeline';
@@ -39,6 +39,18 @@ const AppHome = ({
         </Suspense>
       </div>
       <Separator />
+      <Link
+        className="flex items-center justify-between rounded-2xl border bg-muted/40 p-4 transition-colors hover:bg-muted"
+        href={siteConfig.baseLinks.insights}
+      >
+        <div>
+          <p className="font-semibold">Your spending insights</p>
+          <p className="text-muted-foreground text-sm">
+            Patterns, cash flow, merchants, and more
+          </p>
+        </div>
+        <Sparkles className="size-5 text-up-good-life" />
+      </Link>
       <div className="flex flex-col gap-2">
         <div className="flex items-center">
           <Button

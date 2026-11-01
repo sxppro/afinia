@@ -11,6 +11,7 @@ export const siteConfig = {
     accounts: '/app/accounts',
     merchants: '/app/merchants',
     spending: '/app/spending',
+    insights: '/app/insights',
     transactions: '/app/transactions',
   },
 } as const;
