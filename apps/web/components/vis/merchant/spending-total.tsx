@@ -1,4 +1,4 @@
-import { getMerchantSpending } from '@/lib/db/spending';
+import { getExternalTransactions } from '@/lib/db/transaction';
 import { transactionExternalTable } from 'afinia-common/schema';
 import { Interval } from 'date-fns';
 import { sum } from 'drizzle-orm';
@@ -11,7 +11,7 @@ const SpendingTotal = async ({
   merchant: string;
   range: Interval<Date, Date>;
 }) => {
-  const [spending] = await getMerchantSpending({
+  const [spending] = await getExternalTransactions({
     select: {
       value: sum(transactionExternalTable.value_in_base_units).mapWith(Number),
     },

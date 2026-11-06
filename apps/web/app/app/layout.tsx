@@ -25,6 +25,9 @@ const AppLayout = async ({
           <BalanceVisibilityProvider>
             <div className="min-h-screen overscroll-none p-3">{children}</div>
             <Toaster />
+            <div className="flex w-full items-center justify-center py-2">
+              <p className="text-muted-foreground text-sm">Powered by Afinia</p>
+            </div>
           </BalanceVisibilityProvider>
         </NuqsAdapter>
       </ViewTransition>

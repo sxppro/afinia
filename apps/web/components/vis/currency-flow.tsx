@@ -2,21 +2,21 @@
 
 import { DEFAULT_CURRENCY } from '@/lib/constants';
 import { cn, formatValueInBaseUnits } from '@/lib/ui';
-import NumberFlow from '@number-flow/react';
+import NumberFlow, { Format } from '@number-flow/react';
 import { useBalanceVisibility } from '../balance-visibility';
 
 const CurrencyFlow = ({
   className,
   value,
-  signDisplay,
   currency,
   hideable,
+  options,
 }: {
   className?: string;
   value: number;
-  signDisplay?: keyof Intl.NumberFormatOptionsSignDisplayRegistry;
   currency?: string;
   hideable?: boolean;
+  options?: Format;
 }) => {
   const { isVisible } = useBalanceVisibility();
 
@@ -33,11 +33,8 @@ const CurrencyFlow = ({
         style: 'currency',
         currency: currency ?? DEFAULT_CURRENCY,
         currencyDisplay: 'narrowSymbol',
-        signDisplay: signDisplay
-          ? signDisplay
-          : value > 0
-            ? 'exceptZero'
-            : 'never',
+        signDisplay: value > 0 ? 'exceptZero' : 'never',
+        ...options,
       }}
     />
   );

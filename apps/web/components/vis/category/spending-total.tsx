@@ -1,5 +1,5 @@
 import { getStartOfDay } from '@/lib/dateTime';
-import { getCategorySpending } from '@/lib/db/spending';
+import { getExternalTransactions } from '@/lib/db/transaction';
 import { transactionExternalTable } from 'afinia-common/schema';
 import { endOfMonth, startOfMonth } from 'date-fns';
 import { sum } from 'drizzle-orm';
@@ -10,7 +10,7 @@ const SpendingTotal = async ({ category }: { category?: string }) => {
     start: startOfMonth(getStartOfDay()),
     end: endOfMonth(getStartOfDay()),
   };
-  const [spending] = await getCategorySpending({
+  const [spending] = await getExternalTransactions({
     select: {
       id: transactionExternalTable.category_parent_id,
       name: transactionExternalTable.category_parent,

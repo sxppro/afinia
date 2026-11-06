@@ -1,13 +1,16 @@
 import { TZDateMini } from '@date-fns/tz';
 import {
   endOfDay,
+  format,
   Interval,
   max,
+  parseISO,
   startOfDay,
   startOfYear,
   subMonths,
   subYears,
 } from 'date-fns';
+import { z } from 'zod';
 import { TZ } from './constants';
 
 export const getStartOfDay = () => startOfDay(TZDateMini.tz(TZ));
@@ -15,6 +18,13 @@ export const getStartOfDay = () => startOfDay(TZDateMini.tz(TZ));
 export const getEndOfDay = () => endOfDay(TZDateMini.tz(TZ));
 
 export const now = () => TZDateMini.tz(TZ);
+
+/**
+ * Converts an ISO date (YYYY-MM-DD) to year month (YYYY-MM)
+ * @throws If `date` isn't a valid ISO date
+ */
+export const toYearMonth = (date: string) =>
+  format(parseISO(z.iso.date().parse(date)), 'yyyy-MM');
 
 export const getDateRange = (
   range: string,

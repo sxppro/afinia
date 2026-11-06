@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import CurrencyFlow from '@/components/vis/currency-flow';
 import { getStartOfDay } from '@/lib/dateTime';
 import { getParentCategories } from '@/lib/db/category';
-import { getCategorySpending } from '@/lib/db/spending';
+import { getExternalTransactions } from '@/lib/db/transaction';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours } from '@/lib/ui';
 import { transactionExternalTable } from 'afinia-common/schema';
@@ -62,7 +62,7 @@ const QuickActions = async () => {
     end: endOfMonth(getStartOfDay()),
   };
   const [spending, categories] = await Promise.all([
-    getCategorySpending({
+    getExternalTransactions({
       select: {
         id: transactionExternalTable.category_parent_id,
         name: transactionExternalTable.category_parent,
