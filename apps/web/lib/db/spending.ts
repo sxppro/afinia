@@ -1,4 +1,4 @@
-import { transactionExternalTable } from 'afinia-common/schema';
+import { transactionSpendingTable } from 'afinia-common/schema';
 import { format, Interval } from 'date-fns';
 import {
   and,
@@ -27,20 +27,20 @@ const SPENDING_OFFSET_TYPES = ['Refund'];
 
 /**
  * Net spending as a positive amount in base units.
- * Outflows are summed, offset by refunds and categorised inflows,
- * negated and floored to 0.
+ * Outflows are offset by refunds, categorised inflows and inflows from
+ * recently paid merchants (see `transaction_spending`).
  * Returns 0 when inflows exceed outflows or there are no transactions.
  */
 const spendingAmount =
-  sql<number>`greatest(-coalesce(sum(${transactionExternalTable.value_in_base_units}) filter (where ${transactionExternalTable.value_in_base_units} < 0 or ${inArray(transactionExternalTable.type, SPENDING_OFFSET_TYPES)} or ${transactionExternalTable.category_id} is not null), 0), 0)`.mapWith(
+  sql<number>`greatest(-coalesce(sum(${transactionSpendingTable.value_in_base_units}) filter (where ${transactionSpendingTable.value_in_base_units} < 0 or ${inArray(transactionSpendingTable.type, SPENDING_OFFSET_TYPES)} or ${transactionSpendingTable.category_id} is not null or ${transactionSpendingTable.is_merchant_offset}), 0), 0)`.mapWith(
     Number
   );
 
 /**
  * Maps a transaction to its parent category, otherwise it is "uncategorised".
  */
-const categoryId = sql<string>`coalesce(${transactionExternalTable.category_parent_id}, 'uncategorised')`;
-const categoryName = sql<string>`coalesce(${transactionExternalTable.category_parent}, 'Uncategorised')`;
+const categoryId = sql<string>`coalesce(${transactionSpendingTable.category_parent_id}, 'uncategorised')`;
+const categoryName = sql<string>`coalesce(${transactionSpendingTable.category_parent}, 'Uncategorised')`;
 
 /**
  * Restricts transactions to those created within the range
@@ -48,9 +48,9 @@ const categoryName = sql<string>`coalesce(${transactionExternalTable.category_pa
 const createdWithin = (range: Prettify<Partial<Interval<Date, Date>>>) =>
   and(
     range.start
-      ? gte(transactionExternalTable.created_at, range.start)
+      ? gte(transactionSpendingTable.created_at, range.start)
       : undefined,
-    range.end ? lte(transactionExternalTable.created_at, range.end) : undefined
+    range.end ? lte(transactionSpendingTable.created_at, range.end) : undefined
   );
 
 /**
@@ -92,21 +92,21 @@ export const getSpendingTimeSeries = ({
       sql`generate_series(${formattedStart}::date::timestamp AT TIME ZONE ${TZ}, ${formattedEnd}::date::timestamp AT TIME ZONE ${TZ}, ${`1 ${interval}`}::interval, ${TZ}) AS time_series(interval_start)`
     )
     .leftJoin(
-      transactionExternalTable,
+      transactionSpendingTable,
       and(
         eq(
-          sql`date_trunc(${interval}, ${transactionExternalTable.created_at}, ${TZ})`,
+          sql`date_trunc(${interval}, ${transactionSpendingTable.created_at}, ${TZ})`,
           intervalStart
         ),
         createdWithin(range),
         category
           ? or(
-              eq(transactionExternalTable.category_id, category),
-              eq(transactionExternalTable.category_parent_id, category)
+              eq(transactionSpendingTable.category_id, category),
+              eq(transactionSpendingTable.category_parent_id, category)
             )
           : undefined,
         merchant
-          ? eq(transactionExternalTable.description, merchant)
+          ? eq(transactionSpendingTable.description, merchant)
           : undefined
       )
     )
@@ -122,7 +122,7 @@ export const getSpendingTotal = async (
 ) => {
   const [result] = await db
     .select({ value: spendingAmount.as('value') })
-    .from(transactionExternalTable)
+    .from(transactionSpendingTable)
     .where(createdWithin(range));
 
   return result?.value ?? 0;
@@ -141,7 +141,7 @@ export const getSpendingByCategory = cache(
         name: categoryName.as('name'),
         value: spendingAmount.as('value'),
       })
-      .from(transactionExternalTable)
+      .from(transactionSpendingTable)
       .where(createdWithin(range))
       .groupBy(categoryId, categoryName)
       .having(gt(spendingAmount, 0))
@@ -157,7 +157,7 @@ export const getSpendingByMerchant = (
   range: Prettify<Partial<Interval<Date, Date>>>,
   limit = 5
 ) => {
-  const merchant = sql<string>`coalesce(${transactionExternalTable.description}, 'Unknown merchant')`;
+  const merchant = sql<string>`coalesce(${transactionSpendingTable.description}, 'Unknown merchant')`;
 
   return db
     .select({
@@ -167,11 +167,11 @@ export const getSpendingByMerchant = (
       ),
       value: spendingAmount.as('value'),
       transactions:
-        sql<number>`count(${transactionExternalTable.transaction_id})`
+        sql<number>`count(${transactionSpendingTable.transaction_id})`
           .mapWith(Number)
           .as('transactions'),
     })
-    .from(transactionExternalTable)
+    .from(transactionSpendingTable)
     .where(createdWithin(range))
     .groupBy(merchant)
     .having(gt(spendingAmount, 0))
@@ -189,7 +189,7 @@ export const getSpendingByCategoryAndMonth = (
 ) => {
   // TZ is inlined so the SELECT and GROUP BY expressions match
   const tz = sql.raw(`'${TZ}'`);
-  const month = sql<string>`to_char(${transactionExternalTable.created_at} AT TIME ZONE ${tz}, 'YYYY-MM')`;
+  const month = sql<string>`to_char(${transactionSpendingTable.created_at} AT TIME ZONE ${tz}, 'YYYY-MM')`;
 
   return db
     .select({
@@ -198,7 +198,7 @@ export const getSpendingByCategoryAndMonth = (
       categoryName: categoryName.as('category_name'),
       value: spendingAmount.as('value'),
     })
-    .from(transactionExternalTable)
+    .from(transactionSpendingTable)
     .where(createdWithin(range))
     .groupBy(month, categoryId, categoryName)
     .having(gt(spendingAmount, 0))
@@ -214,7 +214,7 @@ export const getSpendingByHourAndWeekday = (
 ) => {
   // TZ is inlined so the SELECT and GROUP BY expressions match
   const tz = sql.raw(`'${TZ}'`);
-  const localCreatedAt = sql`(${transactionExternalTable.created_at} AT TIME ZONE ${tz})`;
+  const localCreatedAt = sql`(${transactionSpendingTable.created_at} AT TIME ZONE ${tz})`;
   const weekday = sql<number>`extract(isodow from ${localCreatedAt})::int`;
   const hour = sql<number>`extract(hour from ${localCreatedAt})::int`;
 
@@ -224,11 +224,11 @@ export const getSpendingByHourAndWeekday = (
       hour: hour.mapWith(Number).as('hour'),
       value: spendingAmount.as('value'),
       transactions:
-        sql<number>`count(${transactionExternalTable.transaction_id})`
+        sql<number>`count(${transactionSpendingTable.transaction_id})`
           .mapWith(Number)
           .as('transactions'),
     })
-    .from(transactionExternalTable)
+    .from(transactionSpendingTable)
     .where(createdWithin(range))
     .groupBy(weekday, hour)
     .having(gt(spendingAmount, 0));
@@ -250,7 +250,7 @@ export const getRecentPaymentsByMerchant = ({
 }) => {
   // TZ is inlined so the SELECT and GROUP BY expressions match
   const tz = sql.raw(`'${TZ}'`);
-  const paymentDate = sql<string>`to_char(${transactionExternalTable.created_at} AT TIME ZONE ${tz}, 'YYYY-MM-DD')`;
+  const paymentDate = sql<string>`to_char(${transactionSpendingTable.created_at} AT TIME ZONE ${tz}, 'YYYY-MM-DD')`;
 
   /**
    * Get merchant payments grouped by date
@@ -258,7 +258,7 @@ export const getRecentPaymentsByMerchant = ({
   const merchantPayments = db.$with('payments').as(
     db
       .select({
-        merchant: sql<string>`${transactionExternalTable.description}`.as(
+        merchant: sql<string>`${transactionSpendingTable.description}`.as(
           'merchant'
         ),
         date: paymentDate.as('date'),
@@ -269,19 +269,19 @@ export const getRecentPaymentsByMerchant = ({
           ),
         // Outflows are negative, so negate to get a positive amount
         amount:
-          sql<number>`-sum(${transactionExternalTable.value_in_base_units})`.as(
+          sql<number>`-sum(${transactionSpendingTable.value_in_base_units})`.as(
             'amount'
           ),
       })
-      .from(transactionExternalTable)
+      .from(transactionSpendingTable)
       .where(
         and(
           createdWithin(range),
-          lt(transactionExternalTable.value_in_base_units, 0),
-          isNotNull(transactionExternalTable.description)
+          lt(transactionSpendingTable.value_in_base_units, 0),
+          isNotNull(transactionSpendingTable.description)
         )
       )
-      .groupBy(transactionExternalTable.description, paymentDate)
+      .groupBy(transactionSpendingTable.description, paymentDate)
   );
 
   /**

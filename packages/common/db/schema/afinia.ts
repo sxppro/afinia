@@ -1,4 +1,17 @@
-import { and, desc, eq, getTableColumns, isNull, sql } from 'drizzle-orm';
+import {
+  and,
+  desc,
+  eq,
+  exists,
+  getTableColumns,
+  gt,
+  gte,
+  isNull,
+  lt,
+  notInArray,
+  or,
+  sql,
+} from 'drizzle-orm';
 import {
   alias,
   boolean,
@@ -19,6 +32,22 @@ import {
   TransactionStatusEnum,
 } from '../../providers/up';
 import { user } from './auth';
+
+/**
+ * Transaction types considered income
+ */
+export const INCOME_TXN_TYPES = [
+  'Salary',
+  'Interest',
+  'Dividend',
+  'Bonus Payment',
+];
+
+/**
+ * How far back to look for an outflow to the same merchant
+ * when deciding whether an inflow offsets spending
+ */
+export const MERCHANT_OFFSET_LOOKBACK = '90 days';
 
 /**
  * Schema
@@ -348,6 +377,86 @@ export const transactionExternalTable = schema
       .where(
         and(
           eq(transactionTable.is_categorizable, true),
+          isNull(transactionTable.deleted_at)
+        )
+      )
+      .leftJoin(
+        categoryTable,
+        eq(transactionTable.category_id, categoryTable.category_id)
+      )
+      .leftJoin(
+        categoryParent,
+        eq(categoryTable.category_parent_id, categoryParent.category_id)
+      );
+  });
+
+/**
+ * Transactions used to calculate spending
+ *
+ * Includes all external transactions and non-categorizable inflows that
+ * aren't transfers between accounts nor income.
+ */
+export const transactionSpendingTable = schema
+  .view('transaction_spending')
+  .as((queryBuilder) => {
+    const categoryParent = alias(categoryTable, 'category_parent');
+    const prior = alias(transactionTable, 'prior');
+    const transactionCols = getTableColumns(transactionTable);
+
+    // Find a prior outflow for the same merchant within lookback period
+    const priorOutflow = queryBuilder
+      .select({ transaction_id: prior.transaction_id })
+      .from(prior)
+      .where(
+        and(
+          eq(prior.description, transactionTable.description),
+          lt(prior.value_in_base_units, 0),
+          eq(prior.is_categorizable, true),
+          isNull(prior.deleted_at),
+          gte(
+            prior.created_at,
+            sql`${transactionTable.created_at} - ${sql.raw(`interval '${MERCHANT_OFFSET_LOOKBACK}'`)}`
+          ),
+          lt(prior.created_at, transactionTable.created_at)
+        )
+      );
+
+    return queryBuilder
+      .select({
+        ...transactionCols,
+        category: sql<string>`${categoryTable.category_name}`.as('category'),
+        category_parent_id: sql<string>`${categoryParent.category_id}`.as(
+          'category_parent_id'
+        ),
+        category_parent: sql<string>`${categoryParent.category_name}`.as(
+          'category_parent'
+        ),
+        /**
+         * Uncategorisable inflows that are not income, from a merchant
+         * that had a categorizable outflow within the `MERCHANT_OFFSET_LOOKBACK`
+         * and can therefore offset spending.
+         */
+        is_merchant_offset: sql<boolean>`${and(
+          gt(transactionTable.value_in_base_units, 0),
+          isNull(transactionTable.category_id),
+          isNull(transactionTable.transfer_account_id),
+          or(
+            isNull(transactionTable.type),
+            notInArray(transactionTable.type, INCOME_TXN_TYPES)
+          ),
+          exists(priorOutflow)
+        )}`.as('is_merchant_offset'),
+      })
+      .from(transactionTable)
+      .where(
+        and(
+          or(
+            eq(transactionTable.is_categorizable, true),
+            and(
+              isNull(transactionTable.transfer_account_id),
+              gt(transactionTable.value_in_base_units, 0)
+            )
+          ),
           isNull(transactionTable.deleted_at)
         )
       )

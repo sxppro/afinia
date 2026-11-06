@@ -39,6 +39,7 @@ const CategoryDelta = ({
         options={{
           signDisplay: 'always',
           notation: 'compact',
+          maximumFractionDigits: 0,
         }}
       />
       <NumberFlow
@@ -47,7 +48,6 @@ const CategoryDelta = ({
         format={{
           style: 'percent',
           maximumFractionDigits: 0,
-          maximumSignificantDigits: 3,
           signDisplay: 'never',
           notation: 'compact',
         }}
