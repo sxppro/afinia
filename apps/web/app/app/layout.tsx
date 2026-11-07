@@ -1,28 +1,18 @@
 import { BalanceVisibilityProvider } from '@/components/balance-visibility';
 import { Toaster } from '@/components/ui/sonner';
-import { getServerSession } from '@/lib/auth/session';
-import { siteConfig } from '@/lib/siteConfig';
 import { TRPCReactProvider } from '@/trpc/client';
-import { redirect } from 'next/navigation';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import React, { ViewTransition } from 'react';
 
-// @next-codemod-ignore Cache Components adoption: this segment temporarily allows blocking.
-// Remove this opt-out after verifying the segment passes validation without it.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
-
-const AppLayout = async ({
+/**
+ * Auth is enforced in proxy.ts (full session validation) so this layout
+ * stays free of request-time reads and can be prerendered.
+ */
+const AppLayout = ({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) => {
-  const session = await getServerSession();
-
-  if (!session) {
-    redirect(siteConfig.baseLinks.login);
-  }
-
   return (
     <TRPCReactProvider>
       <ViewTransition>

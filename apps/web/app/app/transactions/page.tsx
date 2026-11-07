@@ -70,7 +70,9 @@ const TransactionsPage = async ({
       <TransactionsPageHeader />
 
       <div className="flex flex-col gap-2">
-        <SearchInput placeholder="Search transactions ..." />
+        <Suspense fallback={<Skeleton className="h-9 w-full" />}>
+          <SearchInput placeholder="Search transactions ..." />
+        </Suspense>
         <Suspense fallback={<Skeleton className="h-9 w-full" />}>
           <TransactionListFilters
             categoriesFetch={categoriesFetch}

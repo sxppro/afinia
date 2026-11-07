@@ -3,9 +3,35 @@ import { getServerSession } from '@/lib/auth/session';
 import { siteConfig } from '@/lib/siteConfig';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { Suspense } from 'react';
 
-const NotFoundPage = async () => {
+const HomeLink = ({ href }: { href: string }) => (
+  <Button
+    className="group mt-8"
+    variant="ghost"
+    nativeButton={false}
+    render={
+      <Link href={href}>
+        Go to the home page
+        <ArrowRight
+          className="ml-1 size-5 text-gray-900 dark:text-gray-50"
+          aria-hidden="true"
+        />
+      </Link>
+    }
+  />
+);
+
+const SessionHomeLink = async () => {
   const session = await getServerSession();
+  return (
+    <HomeLink
+      href={session ? siteConfig.baseLinks.appHome : siteConfig.baseLinks.home}
+    />
+  );
+};
+
+const NotFoundPage = () => {
   return (
     <div className="flex h-screen flex-col items-center justify-center">
       <p className="mt-6 text-4xl font-semibold sm:text-5xl">404</p>
@@ -15,24 +41,9 @@ const NotFoundPage = async () => {
       <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
         Sorry, we couldn&apos;t find the page you&apos;re looking for.
       </p>
-      <Button
-        className="group mt-8"
-        variant="ghost"
-        nativeButton={false}
-        render={
-          <Link
-            href={
-              session ? siteConfig.baseLinks.appHome : siteConfig.baseLinks.home
-            }
-          >
-            Go to the home page
-            <ArrowRight
-              className="ml-1 size-5 text-gray-900 dark:text-gray-50"
-              aria-hidden="true"
-            />
-          </Link>
-        }
-      />
+      <Suspense fallback={<HomeLink href={siteConfig.baseLinks.home} />}>
+        <SessionHomeLink />
+      </Suspense>
     </div>
   );
 };
