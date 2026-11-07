@@ -9,6 +9,7 @@ import {
   startOfMonth,
   subMonths,
 } from 'date-fns';
+import { connection } from 'next/server';
 
 /**
  * Running totals by day of month
@@ -41,6 +42,8 @@ const getAverageAtDay = (
     : 0;
 
 const SpendingPace = async () => {
+  // TODO: Cache Components adoption. Added to unblock the build: remove this boundary to re-trigger the error and review the documented options.
+  await connection();
   const today = getStartOfDay();
   // Get daily spending for this month and past 12 months
   const dailySpending = await getSpendingTimeSeries({

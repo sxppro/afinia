@@ -4,9 +4,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import TransactionList from '@/components/vis/transaction/transaction-list';
 import { SMALL_PAGE_SIZE } from '@/lib/constants';
-import { now } from '@/lib/dateTime';
 import { siteConfig } from '@/lib/siteConfig';
-import { format } from 'date-fns';
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
@@ -15,6 +13,11 @@ import AccountBalanceTotal from './_components/account-balance-total';
 import AccountsList from './_components/accounts-list';
 import AppHomePageHeader from './_components/page-header';
 import QuickActions, { QuickActionsLoading } from './_components/quick-actions';
+
+// @next-codemod-ignore Cache Components adoption: this segment temporarily allows blocking.
+// Remove this opt-out after verifying the segment passes validation without it.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false;
 
 const AppHome = ({
   searchParams,
@@ -40,20 +43,17 @@ const AppHome = ({
       </div>
       <Separator />
       <div className="flex flex-col gap-2">
-        <div className="flex items-center">
-          <Button
-            variant="link"
-            className="flex-1 justify-start gap-0 has-[>svg]:px-0"
-            nativeButton={false}
-            render={
-              <Link href={siteConfig.baseLinks.spending}>
-                <h2 className="text-xl font-semibold">Spending</h2>
-                <ChevronRight className="size-6" />
-              </Link>
-            }
-          />
-          <p className="text-muted-foreground">{format(now(), 'MMMM yyyy')}</p>
-        </div>
+        <Button
+          variant="link"
+          className="flex-1 justify-start gap-0 has-[>svg]:px-0"
+          nativeButton={false}
+          render={
+            <Link href={siteConfig.baseLinks.spending}>
+              <h2 className="text-xl font-semibold">Spending</h2>
+              <ChevronRight className="size-6" />
+            </Link>
+          }
+        />
         <Suspense fallback={<QuickActionsLoading />}>
           <QuickActions />
         </Suspense>
