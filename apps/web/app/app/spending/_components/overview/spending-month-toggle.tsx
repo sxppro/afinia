@@ -68,21 +68,21 @@ const SpendingMonthToggle = ({
     };
   }, [emblaApi]);
 
-  // Update query state once carousel settles on a month
+  // Update the URL as soon as the carousel picks a month
   useEffect(() => {
     if (!emblaApi) return;
 
-    const onSettle = () => {
+    const onSelect = () => {
       const next = months[emblaApi.selectedScrollSnap()];
       if (!next || next === month) return;
 
       setMonth(next);
     };
 
-    emblaApi.on('settle', onSettle);
+    emblaApi.on('select', onSelect);
 
     return () => {
-      emblaApi.off('settle', onSettle);
+      emblaApi.off('select', onSelect);
     };
   }, [emblaApi, months, month, setMonth]);
 

@@ -3,8 +3,8 @@ import { getStartOfDay } from '@/lib/dateTime';
 import { TZDateMini } from '@date-fns/tz';
 import {
   addDays,
-  endOfDay,
   eachMonthOfInterval,
+  endOfDay,
   endOfMonth,
   format,
   getDate,
@@ -21,7 +21,7 @@ import {
 const MONTH_FORMAT = 'yyyy-MM';
 
 /**
- * Resolves the selected month (yyyy-MM), clamped between
+ * Resolves the selected month clamped between
  * earliest account month and current month.
  */
 export const resolveSpendingMonth = (
