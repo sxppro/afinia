@@ -12,7 +12,6 @@ import { TransactionRow } from '@/lib/types';
 import {
   Fragment,
   useCallback,
-  useEffect,
   useRef,
   useState,
   useTransition,
@@ -47,7 +46,6 @@ const TransactionListInfinite = ({
 
   // Hooks
   const [isLoading, startTransition] = useTransition();
-  const { ref, inView } = useInView({ rootMargin: '96px' });
 
   const loadMore = useCallback(async () => {
     if (!hasMoreRef.current || inFlightLoadRef.current) return;
@@ -83,12 +81,12 @@ const TransactionListInfinite = ({
     }
   }, [options, pageSize, startTransition]);
 
-  // Effects
-  useEffect(() => {
-    if (inView) {
-      loadMore();
-    }
-  }, [inView, loadMore]);
+  const { ref } = useInView({
+    rootMargin: '96px',
+    onChange: (inView) => {
+      if (inView) loadMore();
+    },
+  });
 
   return (
     <>
