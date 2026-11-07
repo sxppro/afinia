@@ -100,7 +100,7 @@ const CategoryBreakdown = async ({
       <div>
         <h2 className="text-xl font-semibold">Category Breakdown</h2>
         <p className="text-muted-foreground text-sm">
-          Your spending by category vs same time last month
+          Your spending by category vs same time previous month
         </p>
       </div>
       <CategoryBar
@@ -175,7 +175,7 @@ export const CategoryBreakdownSkeleton = () => (
     <div>
       <h2 className="text-xl font-semibold">Category Breakdown</h2>
       <p className="text-muted-foreground text-sm">
-        Your spending by category vs same time last month
+        Your spending by category vs same time previous month
       </p>
     </div>
     <Skeleton className="h-4 w-full rounded-full" />

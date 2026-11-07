@@ -2,6 +2,7 @@ import { ChartNoAxesCombined, LayoutGrid } from 'lucide-react';
 import {
   createLoader,
   createSerializer,
+  parseAsString,
   parseAsStringLiteral,
 } from 'nuqs/server';
 
@@ -20,8 +21,11 @@ export const VIEWS = [
 export const viewParser =
   parseAsStringLiteral(SUPPORTED_VIEWS).withDefault(DEFAULT_VIEW);
 
+export const monthParser = parseAsString;
+
 export const viewLoader = createLoader({
   view: viewParser,
+  month: monthParser,
 });
 
 export const viewSerializer = createSerializer({

@@ -21,7 +21,7 @@ const SpendingChange = ({ value }: { value: number }) => {
         <Icon className="size-5" />
         {Math.abs(value).toFixed(0)}%
       </span>
-      <p>vs the same time last month</p>
+      <p>vs same time previous month</p>
     </div>
   );
 };

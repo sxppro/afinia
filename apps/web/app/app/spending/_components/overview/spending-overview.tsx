@@ -1,13 +1,6 @@
 import { Separator } from '@/components/ui/separator';
 import { getStartOfDay } from '@/lib/dateTime';
-import {
-  addDays,
-  endOfDay,
-  endOfMonth,
-  getDate,
-  startOfMonth,
-  subMonths,
-} from 'date-fns';
+import { isSameMonth, type Interval } from 'date-fns';
 import { Suspense } from 'react';
 import CategoryBreakdown, {
   CategoryBreakdownSkeleton,
@@ -18,36 +11,42 @@ import RecurringPayments, {
 import SpendingTotal, { SpendingTotalSkeleton } from './spending-total';
 import TopMerchants, { TopMerchantsSkeleton } from './top-merchants';
 
-const SpendingOverview = async () => {
-  const today = getStartOfDay();
-  const currentStart = startOfMonth(today);
-  const currentRange = { start: currentStart, end: endOfDay(today) };
-  const previousStart = startOfMonth(subMonths(today, 1));
-  const previousEnd = endOfDay(
-    addDays(
-      previousStart,
-      Math.min(getDate(today) - 1, getDate(endOfMonth(previousStart)) - 1)
-    )
-  );
-  const previousRange = { start: previousStart, end: previousEnd };
+const SpendingOverview = async ({
+  range,
+  previousRange,
+  monthLabel,
+}: {
+  range: Interval<Date, Date>;
+  previousRange: Interval<Date, Date>;
+  monthLabel: string;
+}) => {
+  const isCurrentMonth = isSameMonth(range.start, getStartOfDay());
 
   return (
     <div className="flex flex-col gap-4">
       <Suspense fallback={<SpendingTotalSkeleton />}>
-        <SpendingTotal range={currentRange} previousRange={previousRange} />
+        <SpendingTotal
+          range={range}
+          previousRange={previousRange}
+          monthLabel={monthLabel}
+        />
       </Suspense>
       <Separator />
       <Suspense fallback={<CategoryBreakdownSkeleton />}>
-        <CategoryBreakdown range={currentRange} previousRange={previousRange} />
+        <CategoryBreakdown range={range} previousRange={previousRange} />
       </Suspense>
       <Separator />
       <Suspense fallback={<TopMerchantsSkeleton />}>
-        <TopMerchants range={currentRange} />
+        <TopMerchants range={range} monthLabel={monthLabel} />
       </Suspense>
-      <Separator />
-      <Suspense fallback={<RecurringPaymentsSkeleton />}>
-        <RecurringPayments />
-      </Suspense>
+      {isCurrentMonth ? (
+        <>
+          <Separator />
+          <Suspense fallback={<RecurringPaymentsSkeleton />}>
+            <RecurringPayments />
+          </Suspense>
+        </>
+      ) : null}
     </div>
   );
 };

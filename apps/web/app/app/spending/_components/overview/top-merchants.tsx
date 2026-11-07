@@ -5,7 +5,13 @@ import { cn, colours, formatCurrency } from '@/lib/ui';
 import { Interval } from 'date-fns';
 import Link from 'next/link';
 
-const TopMerchants = async ({ range }: { range: Interval<Date, Date> }) => {
+const TopMerchants = async ({
+  range,
+  monthLabel,
+}: {
+  range: Interval<Date, Date>;
+  monthLabel: string;
+}) => {
   const [spendingTotal, merchants] = await Promise.all([
     getSpendingTotal(range),
     getSpendingByMerchant(range),
@@ -24,10 +30,11 @@ const TopMerchants = async ({ range }: { range: Interval<Date, Date> }) => {
         <div>
           <h2 className="text-xl font-semibold">Top Merchants</h2>
           <p className="text-muted-foreground">
+            Accounts for{' '}
             <span className="text-foreground font-medium">
               {topMerchantPercent.toFixed(0)}%
             </span>{' '}
-            of this month&apos;s spend
+            of spending for {monthLabel}
           </p>
         </div>
       </div>
@@ -53,7 +60,7 @@ const TopMerchants = async ({ range }: { range: Interval<Date, Date> }) => {
               </p>
             </div>
           </div>
-          <p className="text-lg font-bold">
+          <p className="text-lg font-semibold">
             {formatCurrency(value, { baseUnits: true })}
           </p>
         </div>
