@@ -8,6 +8,7 @@ import {
   startOfMonth,
   subMonths,
 } from 'date-fns';
+import { cacheLife, cacheTag } from 'next/cache';
 import { Suspense } from 'react';
 import CategoryBreakdown, {
   CategoryBreakdownSkeleton,
@@ -17,11 +18,14 @@ import RecurringPayments, {
 } from './recurring-payments';
 import SpendingTotal, { SpendingTotalSkeleton } from './spending-total';
 import TopMerchants, { TopMerchantsSkeleton } from './top-merchants';
-import { connection } from 'next/server';
 
+/**
+ * Cached as one unit so every section shares the same `today`
+ */
 const SpendingOverview = async () => {
-  // TODO: Cache Components adoption. Added to unblock the build: remove this boundary to re-trigger the error and review the documented options.
-  await connection();
+  'use cache';
+  cacheLife('spending');
+  cacheTag('spending');
   const today = getStartOfDay();
   const currentStart = startOfMonth(today);
   const currentRange = { start: currentStart, end: endOfDay(today) };

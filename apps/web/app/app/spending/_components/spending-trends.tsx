@@ -1,5 +1,6 @@
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cacheLife, cacheTag } from 'next/cache';
 import { ReactNode, Suspense } from 'react';
 import SpendingHourly from './trends/spending-hourly';
 import SpendingMonthly from './trends/spending-monthly';
@@ -27,31 +28,40 @@ const Section = ({
   </section>
 );
 
-const SpendingTrends = () => (
-  <div className="flex flex-col gap-6">
-    <Section
-      title="How you're tracking this month"
-      fallbackClassName="h-64 w-full"
-    >
-      <SpendingPace />
-    </Section>
-    <Separator />
-    <Section
-      title="When you spend"
-      description="Total spending by weekday and hour over 12 months"
-      fallbackClassName="h-80 w-full"
-    >
-      <SpendingHourly />
-    </Section>
-    <Separator />
-    <Section
-      title="Monthly spending"
-      description="Net spending over the last 12 months"
-      fallbackClassName="h-64 w-full"
-    >
-      <SpendingMonthly />
-    </Section>
-  </div>
-);
+/**
+ * Cached as one unit so every section shares the same `today`
+ */
+const SpendingTrends = async () => {
+  'use cache';
+  cacheLife('spending');
+  cacheTag('spending');
+
+  return (
+    <div className="flex flex-col gap-6">
+      <Section
+        title="How you're tracking this month"
+        fallbackClassName="h-64 w-full"
+      >
+        <SpendingPace />
+      </Section>
+      <Separator />
+      <Section
+        title="When you spend"
+        description="Total spending by weekday and hour over 12 months"
+        fallbackClassName="h-80 w-full"
+      >
+        <SpendingHourly />
+      </Section>
+      <Separator />
+      <Section
+        title="Monthly spending"
+        description="Net spending over the last 12 months"
+        fallbackClassName="h-64 w-full"
+      >
+        <SpendingMonthly />
+      </Section>
+    </div>
+  );
+};
 
 export default SpendingTrends;

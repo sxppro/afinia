@@ -13,11 +13,8 @@ import {
   startOfMonth,
   subMonths,
 } from 'date-fns';
-import { connection } from 'next/server';
 
 const SpendingMonthly = async () => {
-  // TODO: Cache Components adoption. Added to unblock the build: remove this boundary to re-trigger the error and review the documented options.
-  await connection();
   const today = getStartOfDay();
   // Last 12 months
   const range = {
