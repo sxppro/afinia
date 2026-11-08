@@ -1,36 +1,12 @@
 import { Button } from '@/components/ui/button';
-import { getServerSession } from '@/lib/auth/session';
 import { siteConfig } from '@/lib/siteConfig';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { Suspense } from 'react';
 
-const HomeLink = ({ href }: { href: string }) => (
-  <Button
-    className="group mt-8"
-    variant="ghost"
-    nativeButton={false}
-    render={
-      <Link href={href}>
-        Go to the home page
-        <ArrowRight
-          className="ml-1 size-5 text-gray-900 dark:text-gray-50"
-          aria-hidden="true"
-        />
-      </Link>
-    }
-  />
-);
-
-const SessionHomeLink = async () => {
-  const session = await getServerSession();
-  return (
-    <HomeLink
-      href={session ? siteConfig.baseLinks.appHome : siteConfig.baseLinks.home}
-    />
-  );
-};
-
+/**
+ * This page must stay free of request-time reads so pages
+ * can be prerendered
+ */
 const NotFoundPage = () => {
   return (
     <div className="flex h-screen flex-col items-center justify-center">
@@ -41,9 +17,20 @@ const NotFoundPage = () => {
       <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
         Sorry, we couldn&apos;t find the page you&apos;re looking for.
       </p>
-      <Suspense fallback={<HomeLink href={siteConfig.baseLinks.home} />}>
-        <SessionHomeLink />
-      </Suspense>
+      <Button
+        className="group mt-8"
+        variant="ghost"
+        nativeButton={false}
+        render={
+          <Link href={siteConfig.baseLinks.appHome}>
+            Go to the home page
+            <ArrowRight
+              className="ml-1 size-5 text-gray-900 dark:text-gray-50"
+              aria-hidden="true"
+            />
+          </Link>
+        }
+      />
     </div>
   );
 };
