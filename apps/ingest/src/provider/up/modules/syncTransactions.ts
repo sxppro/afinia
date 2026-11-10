@@ -27,6 +27,7 @@ import {
   upsertTransactions,
 } from '../common/transaction';
 import { upClient } from '../utils/clients';
+import { summariseTransactionChanges } from '../utils/changes';
 import {
   ALERT_LEVEL,
   DEFAULT_PAGE_SIZE,
@@ -247,7 +248,13 @@ const syncTransactionsByDateRange = async (
    * all transactions were retrieved from provider
    */
   if (paginationComplete) {
-    await checkTransactionsByDateRange(start, end, syncStartTime, providerTxns);
+    await checkTransactionsByDateRange(
+      start,
+      end,
+      syncStartTime,
+      metrics,
+      providerTxns
+    );
   } else {
     console.warn(
       `[${PROCESS_NAME}] Failed to retrieve all transactions between ${startDate}-${endDate}: transaction sync incomplete`
@@ -263,6 +270,7 @@ const syncTransactionsByDateRange = async (
  * @param start
  * @param end
  * @param syncStartTime - Start time of sync
+ * @param metrics - Metrics to record deletions against
  * @param providerData - Map of provider transactions between start and end dates, if available
  * @returns
  */
@@ -270,6 +278,7 @@ const checkTransactionsByDateRange = async (
   start: Date,
   end: Date,
   syncStartTime: Date,
+  metrics: ProcessTransactionsMetrics,
   providerData?: Map<string, TransactionResource>
 ) => {
   try {
@@ -334,7 +343,12 @@ const checkTransactionsByDateRange = async (
             ) {
               return;
             }
-            await deleteTransaction(txn.transaction.provider_id, PROCESS_NAME);
+            await deleteTransaction(
+              txn.transaction.provider_id,
+              PROCESS_NAME,
+              undefined,
+              metrics
+            );
             await notify(
               ALERT_LEVEL.WARN,
               `[DB Txns Check] Transaction ${txn.transaction.provider_id} deleted: not found in provider data between ${start.toISOString()} and ${end.toISOString()}`
@@ -408,7 +422,9 @@ const checkTransactionsByDateRange = async (
                 }
                 await deleteTransaction(
                   txn.transaction.provider_id,
-                  PROCESS_NAME
+                  PROCESS_NAME,
+                  undefined,
+                  metrics
                 );
                 await notify(
                   ALERT_LEVEL.WARN,
@@ -551,6 +567,7 @@ export const handler = async () => {
         missingCategories: Array.from(metrics.errors.missingCategories),
         missingTags: Array.from(metrics.errors.missingTags),
       },
+      changes: summariseTransactionChanges(metrics.changes),
       stats: {
         total: `${totalTime}ms`,
         avg: `${avgPageTime}ms`,

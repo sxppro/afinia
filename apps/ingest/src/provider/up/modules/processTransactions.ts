@@ -6,6 +6,7 @@ import {
   ProcessTransactionsMetrics,
   upsertTransactions,
 } from '../common/transaction';
+import { summariseTransactionChanges } from '../utils/changes';
 import { upClient } from '../utils/clients';
 import { ALERT_LEVEL, DEFAULT_PAGE_SIZE } from '../utils/constants';
 import { getNextPage, isRateLimitReached } from '../utils/fetch';
@@ -94,6 +95,7 @@ export const processTransactions = async (): Promise<boolean> => {
         missingCategories: Array.from(metrics.errors.missingCategories),
         missingTags: Array.from(metrics.errors.missingTags),
       },
+      changes: summariseTransactionChanges(metrics.changes),
       stats: {
         total: `${totalTime}ms`,
         avg: `${avgPageTime}ms`,
@@ -139,7 +141,7 @@ export const processTransaction = async (
 
   try {
     if (operation === 'delete') {
-      await deleteTransaction(transactionId, PROCESS_NAME);
+      await deleteTransaction(transactionId, PROCESS_NAME, undefined, metrics);
       await notify(ALERT_LEVEL.WARN, `Transaction deleted: ${transactionId}`);
       metrics.endTime = Date.now();
       return metrics;
@@ -184,6 +186,7 @@ export const processTransaction = async (
       metrics.pages = retryMetrics.pages;
       metrics.transactions = retryMetrics.transactions;
       metrics.errors = retryMetrics.errors;
+      metrics.changes.push(...retryMetrics.changes);
     }
 
     metrics.endTime = Date.now();

@@ -7,6 +7,7 @@ import {
   hasMissingData,
   upsertTransactions,
 } from '../common/transaction';
+import { summariseTransactionChanges } from '../utils/changes';
 import { upClient } from '../utils/clients';
 import { ALERT_LEVEL, DEFAULT_PAGE_SIZE } from '../utils/constants';
 import { getNextPage, isRateLimitReached } from '../utils/fetch';
@@ -123,6 +124,7 @@ export const handler = async () => {
       metrics.pages = retryMetrics.pages;
       metrics.transactions = retryMetrics.transactions;
       metrics.errors = retryMetrics.errors;
+      metrics.changes.push(...retryMetrics.changes);
     }
 
     metrics.endTime = Date.now();
@@ -148,6 +150,7 @@ export const handler = async () => {
         missingCategories: Array.from(metrics.errors.missingCategories),
         missingTags: Array.from(metrics.errors.missingTags),
       },
+      changes: summariseTransactionChanges(metrics.changes),
       stats: {
         total: `${totalTime}ms`,
         avg: `${avgPageTime}ms`,

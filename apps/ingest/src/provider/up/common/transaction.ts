@@ -10,7 +10,19 @@ import {
   transactionTable,
   transactionTagTable,
 } from 'afinia-common/schema';
-import { and, eq, InferInsertModel, notInArray } from 'drizzle-orm';
+import {
+  and,
+  eq,
+  inArray,
+  InferInsertModel,
+  isNull,
+  notInArray,
+} from 'drizzle-orm';
+import {
+  detectTransactionChanges,
+  summariseTransactionChanges,
+  TransactionChange,
+} from '../utils/changes';
 import { ALERT_LEVEL } from '../utils/constants';
 import { notify } from '../utils/notify';
 import { buildConflictUpdateColumns } from '../utils/upsert';
@@ -30,6 +42,12 @@ export interface ProcessTransactionsMetrics {
     missingCategories: Set<string>;
     missingTags: Set<string>;
   };
+  /**
+   * Transactions that were created, deleted or changed in a way
+   * that alters calculations derived from them.
+   * Accumulates across pages and retries.
+   */
+  changes: TransactionChange[];
   startTime: number;
   endTime?: number;
 }
@@ -63,6 +81,7 @@ export const emptyMetrics = (): ProcessTransactionsMetrics => ({
     missingCategories: new Set<string>(),
     missingTags: new Set<string>(),
   },
+  changes: [],
   startTime: Date.now(),
 });
 
@@ -210,7 +229,28 @@ export const upsertTransactions = async (
   }
 
   try {
-    await db.transaction(async (tx) => {
+    const changes = await db.transaction(async (tx) => {
+      /**
+       * Snapshot existing transactions to detect material changes
+       */
+      const existingTx = await tx
+        .select({
+          provider_id: transactionTable.provider_id,
+          value_in_base_units: transactionTable.value_in_base_units,
+          category_id: transactionTable.category_id,
+          description: transactionTable.description,
+          type: transactionTable.type,
+          is_categorizable: transactionTable.is_categorizable,
+          deleted_at: transactionTable.deleted_at,
+        })
+        .from(transactionTable)
+        .where(
+          inArray(
+            transactionTable.provider_id,
+            transformedTx.map(({ provider_id }) => provider_id)
+          )
+        );
+
       /**
        * Insert transactions
        */
@@ -402,7 +442,18 @@ export const upsertTransactions = async (
           });
       }
       metrics.transactions.processed += insertedTx.length;
+
+      return detectTransactionChanges(existingTx, transformedTx);
     });
+
+    // Recorded only once the transaction has committed
+    if (changes.length > 0) {
+      metrics.changes.push(...changes);
+      console.log(
+        `[${processName}] Detected ${changes.length} changed transaction${changes.length > 1 ? 's' : ''}: page ${page}`,
+        summariseTransactionChanges(changes)
+      );
+    }
   } catch (error) {
     console.error(`Error inserting transactions on page ${page}:`, {
       error: error instanceof Error ? error.message : error,
@@ -423,14 +474,27 @@ export const upsertTransactions = async (
  * Delete transaction from database
  * @param transactionId - Transaction provider ID
  * @param processName - Process name
+ * @param deletedAt - Deletion time, defaults to now
+ * @param metrics - Metrics to record the deletion against
  * @returns
  */
 export const deleteTransaction = async (
   transactionId: string,
   processName: string,
-  deletedAt?: Date
+  deletedAt?: Date,
+  metrics?: ProcessTransactionsMetrics
 ) => {
   const now = new Date();
+  // Only a transaction that is not already deleted is a material change
+  const active = await db
+    .select({ provider_id: transactionTable.provider_id })
+    .from(transactionTable)
+    .where(
+      and(
+        eq(transactionTable.provider_id, transactionId),
+        isNull(transactionTable.deleted_at)
+      )
+    );
   const res = await db
     .update(transactionTable)
     .set({
@@ -440,6 +504,18 @@ export const deleteTransaction = async (
     })
     .where(eq(transactionTable.provider_id, transactionId))
     .returning();
+
+  if (active.length > 0 && res.length > 0) {
+    const change: TransactionChange = {
+      providerId: transactionId,
+      kinds: ['deleted'],
+    };
+    metrics?.changes.push(change);
+    console.log(
+      `[${processName}] Detected 1 changed transaction`,
+      summariseTransactionChanges([change])
+    );
+  }
 
   console.log(
     `Deleted ${res.length} transaction${res.length > 1 ? 's' : ''}: ${res.map((r) => r.provider_id).join(', ')}`
