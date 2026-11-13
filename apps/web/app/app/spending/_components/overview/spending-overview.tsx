@@ -8,7 +8,7 @@ import {
   startOfMonth,
   subMonths,
 } from 'date-fns';
-import { cacheLife, cacheTag } from 'next/cache';
+import { connection } from 'next/server';
 import { Suspense } from 'react';
 import CategoryBreakdown, {
   CategoryBreakdownSkeleton,
@@ -19,13 +19,9 @@ import RecurringPayments, {
 import SpendingTotal, { SpendingTotalSkeleton } from './spending-total';
 import TopMerchants, { TopMerchantsSkeleton } from './top-merchants';
 
-/**
- * Cached as one unit so every section shares the same `today`
- */
 const SpendingOverview = async () => {
-  'use cache';
-  cacheLife('spending');
-  cacheTag('spending');
+  // Data fetching is only done at request time
+  await connection();
   const today = getStartOfDay();
   const currentStart = startOfMonth(today);
   const currentRange = { start: currentStart, end: endOfDay(today) };

@@ -2,8 +2,10 @@ import SpendingByHourHeatmapChart from '@/components/vis/spending/spending-by-ho
 import { getStartOfDay } from '@/lib/dateTime';
 import { getSpendingByHourAndWeekday } from '@/lib/db/spending';
 import { endOfDay, startOfMonth, subMonths } from 'date-fns';
+import { connection } from 'next/server';
 
 const SpendingHourly = async () => {
+  await connection();
   const today = getStartOfDay();
   const cells = await getSpendingByHourAndWeekday({
     start: startOfMonth(subMonths(today, 11)),
