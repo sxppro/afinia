@@ -5,8 +5,7 @@ import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import React, { ViewTransition } from 'react';
 
 /**
- * Auth is enforced in proxy.ts (full session validation) so this layout
- * stays free of request-time reads and can be prerendered.
+ * Avoid request-time reads so this can be prerendered
  */
 const AppLayout = ({
   children,

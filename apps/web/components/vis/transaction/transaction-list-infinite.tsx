@@ -8,14 +8,8 @@ import {
   TransactionCursor,
 } from '@/lib/actions/transaction';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
-import { TransactionRow } from '@/lib/types';
-import {
-  Fragment,
-  useCallback,
-  useRef,
-  useState,
-  useTransition,
-} from 'react';
+import { TransactionCategoryInfo, TransactionRow } from '@/lib/types';
+import { Fragment, useCallback, useRef, useState, useTransition } from 'react';
 import { useInView } from 'react-intersection-observer';
 import TransactionItem from './transaction-item';
 
@@ -81,6 +75,20 @@ const TransactionListInfinite = ({
     }
   }, [options, pageSize, startTransition]);
 
+  // Update transaction category in client state
+  const handleCategoryUpdated = useCallback(
+    (transactionId: number, categoryInfo: TransactionCategoryInfo) => {
+      setTransactions((prev) =>
+        prev.map((transaction) =>
+          transaction.transaction_id === transactionId
+            ? { ...transaction, ...categoryInfo }
+            : transaction
+        )
+      );
+    },
+    []
+  );
+
   const { ref } = useInView({
     rootMargin: '96px',
     onChange: (inView) => {
@@ -92,7 +100,10 @@ const TransactionListInfinite = ({
     <>
       {transactions.map((transaction, i) => (
         <Fragment key={transaction.transaction_id}>
-          <TransactionItem transaction={transaction} />
+          <TransactionItem
+            transaction={transaction}
+            onCategoryUpdated={handleCategoryUpdated}
+          />
           {/* Hide last separator */}
           {i < transactions.length - 1 && <Separator />}
         </Fragment>

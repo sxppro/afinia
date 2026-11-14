@@ -20,7 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getTransactionDetailById } from '@/lib/actions/transaction';
 import { siteConfig } from '@/lib/siteConfig';
 import { capitalise } from '@/lib/string';
-import { TransactionRow } from '@/lib/types';
+import { TransactionCategoryInfo, TransactionRow } from '@/lib/types';
 import { cn, colours, formatCurrency } from '@/lib/ui';
 import { format } from 'date-fns';
 import { ExternalLink, SquarePen } from 'lucide-react';
@@ -32,8 +32,13 @@ import TransactionEditCategory from './transaction-edit-category';
 const TransactionItemDetails = ({
   children,
   transaction,
+  onCategoryUpdated,
 }: {
   transaction: TransactionRow;
+  onCategoryUpdated?: (
+    transactionId: number,
+    categoryInfo: TransactionCategoryInfo
+  ) => void;
 } & PropsWithChildren) => {
   const {
     card_purchase_method,
@@ -155,7 +160,7 @@ const TransactionItemDetails = ({
           </div>
           <div>
             <DrawerTitle className="text-start text-xl font-bold">
-              {description ? (
+              {description && is_categorizable ? (
                 <Link
                   href={`${siteConfig.baseLinks.merchants}/${encodeURIComponent(description)}`}
                   className="underline underline-offset-2"
@@ -338,7 +343,10 @@ const TransactionItemDetails = ({
               <TransactionEditCategory
                 initialCategory={categoryInfo.category_id}
                 transaction={transaction}
-                onCategoryUpdated={setCategoryInfo}
+                onCategoryUpdated={(info) => {
+                  setCategoryInfo(info);
+                  onCategoryUpdated?.(transaction_id, info);
+                }}
               />
             )}
             {deep_link_url && (

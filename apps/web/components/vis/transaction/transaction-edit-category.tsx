@@ -20,7 +20,7 @@ import {
 import { RadioGroup, RadioGroupItemTick } from '@/components/ui/radio-group';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
-import { TransactionRow } from '@/lib/types';
+import { TransactionCategoryInfo, TransactionRow } from '@/lib/types';
 import { cn, colours } from '@/lib/ui';
 import { useTRPC } from '@/trpc/client';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -32,12 +32,7 @@ import { toast } from 'sonner';
 interface TransactionItemCategoryProps {
   initialCategory: string | null;
   transaction: TransactionRow;
-  onCategoryUpdated: (info: {
-    category_id: string;
-    category: string;
-    category_parent: string;
-    category_parent_id: string;
-  }) => void;
+  onCategoryUpdated: (info: TransactionCategoryInfo) => void;
 }
 
 const TransactionEditCategory = ({
