@@ -75,6 +75,12 @@ const TransactionEditCategory = ({
     })
   );
 
+  // Reset selected category every time drawer is opened
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) setSelectedCategory(initialCategory);
+    setOpen(nextOpen);
+  };
+
   const handleSave = () => {
     if (!selectedCategory) return;
     reassignCategory.mutate({
@@ -85,7 +91,11 @@ const TransactionEditCategory = ({
   };
 
   return (
-    <DrawerNested open={open} onOpenChange={setOpen} repositionInputs={false}>
+    <DrawerNested
+      open={open}
+      onOpenChange={handleOpenChange}
+      repositionInputs={false}
+    >
       <DrawerTrigger asChild>
         <Button size="lg" className="rounded-lg">
           Edit Category

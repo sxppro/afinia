@@ -64,12 +64,24 @@ const TransactionItemDetails = ({
   const [open, setOpen] = useState(false);
   const [showForeignAmount, setShowForeignAmount] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-  const [categoryInfo, setCategoryInfo] = useState({
+  // Local category override for immediate category edit
+  const [categoryOverride, setCategoryOverride] =
+    useState<TransactionCategoryInfo | null>(null);
+  // Last received category from data fetch
+  const [syncedCategoryId, setSyncedCategoryId] = useState(
+    transaction.category_id
+  );
+  // Reset local override if new category is received
+  if (transaction.category_id !== syncedCategoryId) {
+    setSyncedCategoryId(transaction.category_id);
+    setCategoryOverride(null);
+  }
+  const categoryInfo: TransactionCategoryInfo = categoryOverride ?? {
     category_id: transaction.category_id,
     category: transaction.category,
     category_parent: transaction.category_parent,
     category_parent_id: transaction.category_parent_id,
-  });
+  };
 
   const hasTags =
     transactionDetails?.tags && transactionDetails?.tags.length > 0;
@@ -344,7 +356,7 @@ const TransactionItemDetails = ({
                 initialCategory={categoryInfo.category_id}
                 transaction={transaction}
                 onCategoryUpdated={(info) => {
-                  setCategoryInfo(info);
+                  setCategoryOverride(info);
                   onCategoryUpdated?.(transaction_id, info);
                 }}
               />
