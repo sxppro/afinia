@@ -15,7 +15,7 @@ const AppLayout = ({
 }>) => {
   return (
     <TRPCReactProvider>
-      <ViewTransition>
+      <ViewTransition default={{ refresh: 'none', default: 'auto' }}>
         <NuqsAdapter>
           <BalanceVisibilityProvider>
             <div className="min-h-screen overscroll-none p-3">{children}</div>

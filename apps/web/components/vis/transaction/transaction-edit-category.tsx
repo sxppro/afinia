@@ -25,7 +25,8 @@ import { cn, colours } from '@/lib/ui';
 import { useTRPC } from '@/trpc/client';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Loader2, PencilIcon, X } from 'lucide-react';
-import { Fragment, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { addTransitionType, Fragment, startTransition, useState } from 'react';
 import { toast } from 'sonner';
 
 interface TransactionItemCategoryProps {
@@ -49,6 +50,7 @@ const TransactionEditCategory = ({
     initialCategory
   );
   const trpc = useTRPC();
+  const router = useRouter();
 
   // API
   const { data: categoryGroups, isLoading } = useQuery(
@@ -66,6 +68,11 @@ const TransactionEditCategory = ({
           category_parent_id: data.category_parent_id,
         });
         setOpen(false);
+        // Refresh to re-render server components
+        startTransition(() => {
+          addTransitionType('refresh');
+          router.refresh();
+        });
       },
       onError: () => {
         toast.error('Failed to update transaction category');
