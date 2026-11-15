@@ -26,3 +26,11 @@ export type TransactionRow = Awaited<
 >['transactions'][number];
 
 export type SearchParam = string | string[] | undefined;
+
+/**
+ * Fields returned after reassigning a transaction's category
+ */
+export type TransactionCategoryInfo = Pick<
+  TransactionRow,
+  'category_id' | 'category' | 'category_parent' | 'category_parent_id'
+>;

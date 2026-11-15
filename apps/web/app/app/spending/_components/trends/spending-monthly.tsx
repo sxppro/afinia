@@ -13,8 +13,10 @@ import {
   startOfMonth,
   subMonths,
 } from 'date-fns';
+import { connection } from 'next/server';
 
 const SpendingMonthly = async () => {
+  await connection();
   const today = getStartOfDay();
   // Last 12 months
   const range = {

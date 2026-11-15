@@ -8,15 +8,8 @@ import {
   TransactionCursor,
 } from '@/lib/actions/transaction';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
-import { TransactionRow } from '@/lib/types';
-import {
-  Fragment,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useTransition,
-} from 'react';
+import { TransactionCategoryInfo, TransactionRow } from '@/lib/types';
+import { Fragment, useCallback, useRef, useState, useTransition } from 'react';
 import { useInView } from 'react-intersection-observer';
 import TransactionItem from './transaction-item';
 
@@ -47,7 +40,6 @@ const TransactionListInfinite = ({
 
   // Hooks
   const [isLoading, startTransition] = useTransition();
-  const { ref, inView } = useInView({ rootMargin: '96px' });
 
   const loadMore = useCallback(async () => {
     if (!hasMoreRef.current || inFlightLoadRef.current) return;
@@ -83,18 +75,35 @@ const TransactionListInfinite = ({
     }
   }, [options, pageSize, startTransition]);
 
-  // Effects
-  useEffect(() => {
-    if (inView) {
-      loadMore();
-    }
-  }, [inView, loadMore]);
+  // Update transaction category in client state
+  const handleCategoryUpdated = useCallback(
+    (transactionId: number, categoryInfo: TransactionCategoryInfo) => {
+      setTransactions((prev) =>
+        prev.map((transaction) =>
+          transaction.transaction_id === transactionId
+            ? { ...transaction, ...categoryInfo }
+            : transaction
+        )
+      );
+    },
+    []
+  );
+
+  const { ref } = useInView({
+    rootMargin: '96px',
+    onChange: (inView) => {
+      if (inView) loadMore();
+    },
+  });
 
   return (
     <>
       {transactions.map((transaction, i) => (
         <Fragment key={transaction.transaction_id}>
-          <TransactionItem transaction={transaction} />
+          <TransactionItem
+            transaction={transaction}
+            onCategoryUpdated={handleCategoryUpdated}
+          />
           {/* Hide last separator */}
           {i < transactions.length - 1 && <Separator />}
         </Fragment>

@@ -20,23 +20,19 @@ import {
 import { RadioGroup, RadioGroupItemTick } from '@/components/ui/radio-group';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
-import { TransactionRow } from '@/lib/types';
+import { TransactionCategoryInfo, TransactionRow } from '@/lib/types';
 import { cn, colours } from '@/lib/ui';
 import { useTRPC } from '@/trpc/client';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Loader2, PencilIcon, X } from 'lucide-react';
-import { Fragment, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { addTransitionType, Fragment, startTransition, useState } from 'react';
 import { toast } from 'sonner';
 
 interface TransactionItemCategoryProps {
   initialCategory: string | null;
   transaction: TransactionRow;
-  onCategoryUpdated: (info: {
-    category_id: string;
-    category: string;
-    category_parent: string;
-    category_parent_id: string;
-  }) => void;
+  onCategoryUpdated: (info: TransactionCategoryInfo) => void;
 }
 
 const TransactionEditCategory = ({
@@ -49,6 +45,7 @@ const TransactionEditCategory = ({
     initialCategory
   );
   const trpc = useTRPC();
+  const router = useRouter();
 
   // API
   const { data: categoryGroups, isLoading } = useQuery(
@@ -66,12 +63,23 @@ const TransactionEditCategory = ({
           category_parent_id: data.category_parent_id,
         });
         setOpen(false);
+        // Refresh to re-render server components
+        startTransition(() => {
+          addTransitionType('refresh');
+          router.refresh();
+        });
       },
       onError: () => {
         toast.error('Failed to update transaction category');
       },
     })
   );
+
+  // Reset selected category every time drawer is opened
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) setSelectedCategory(initialCategory);
+    setOpen(nextOpen);
+  };
 
   const handleSave = () => {
     if (!selectedCategory) return;
@@ -83,7 +91,11 @@ const TransactionEditCategory = ({
   };
 
   return (
-    <DrawerNested open={open} onOpenChange={setOpen} repositionInputs={false}>
+    <DrawerNested
+      open={open}
+      onOpenChange={handleOpenChange}
+      repositionInputs={false}
+    >
       <DrawerTrigger asChild>
         <Button size="lg" className="rounded-lg">
           Edit Category

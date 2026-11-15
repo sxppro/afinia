@@ -20,7 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getTransactionDetailById } from '@/lib/actions/transaction';
 import { siteConfig } from '@/lib/siteConfig';
 import { capitalise } from '@/lib/string';
-import { TransactionRow } from '@/lib/types';
+import { TransactionCategoryInfo, TransactionRow } from '@/lib/types';
 import { cn, colours, formatCurrency } from '@/lib/ui';
 import { format } from 'date-fns';
 import { ExternalLink, SquarePen } from 'lucide-react';
@@ -32,8 +32,13 @@ import TransactionEditCategory from './transaction-edit-category';
 const TransactionItemDetails = ({
   children,
   transaction,
+  onCategoryUpdated,
 }: {
   transaction: TransactionRow;
+  onCategoryUpdated?: (
+    transactionId: number,
+    categoryInfo: TransactionCategoryInfo
+  ) => void;
 } & PropsWithChildren) => {
   const {
     card_purchase_method,
@@ -59,12 +64,24 @@ const TransactionItemDetails = ({
   const [open, setOpen] = useState(false);
   const [showForeignAmount, setShowForeignAmount] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-  const [categoryInfo, setCategoryInfo] = useState({
+  // Local category override for immediate category edit
+  const [categoryOverride, setCategoryOverride] =
+    useState<TransactionCategoryInfo | null>(null);
+  // Last received category from data fetch
+  const [syncedCategoryId, setSyncedCategoryId] = useState(
+    transaction.category_id
+  );
+  // Reset local override if new category is received
+  if (transaction.category_id !== syncedCategoryId) {
+    setSyncedCategoryId(transaction.category_id);
+    setCategoryOverride(null);
+  }
+  const categoryInfo: TransactionCategoryInfo = categoryOverride ?? {
     category_id: transaction.category_id,
     category: transaction.category,
     category_parent: transaction.category_parent,
     category_parent_id: transaction.category_parent_id,
-  });
+  };
 
   const hasTags =
     transactionDetails?.tags && transactionDetails?.tags.length > 0;
@@ -155,7 +172,7 @@ const TransactionItemDetails = ({
           </div>
           <div>
             <DrawerTitle className="text-start text-xl font-bold">
-              {description ? (
+              {description && is_categorizable ? (
                 <Link
                   href={`${siteConfig.baseLinks.merchants}/${encodeURIComponent(description)}`}
                   className="underline underline-offset-2"
@@ -338,7 +355,10 @@ const TransactionItemDetails = ({
               <TransactionEditCategory
                 initialCategory={categoryInfo.category_id}
                 transaction={transaction}
-                onCategoryUpdated={setCategoryInfo}
+                onCategoryUpdated={(info) => {
+                  setCategoryOverride(info);
+                  onCategoryUpdated?.(transaction_id, info);
+                }}
               />
             )}
             {deep_link_url && (

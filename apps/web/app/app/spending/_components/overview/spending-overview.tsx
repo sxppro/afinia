@@ -8,6 +8,7 @@ import {
   startOfMonth,
   subMonths,
 } from 'date-fns';
+import { connection } from 'next/server';
 import { Suspense } from 'react';
 import CategoryBreakdown, {
   CategoryBreakdownSkeleton,
@@ -19,6 +20,8 @@ import SpendingTotal, { SpendingTotalSkeleton } from './spending-total';
 import TopMerchants, { TopMerchantsSkeleton } from './top-merchants';
 
 const SpendingOverview = async () => {
+  // Data fetching is only done at request time
+  await connection();
   const today = getStartOfDay();
   const currentStart = startOfMonth(today);
   const currentRange = { start: currentStart, end: endOfDay(today) };

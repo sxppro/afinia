@@ -69,7 +69,7 @@ const CategoryBreakdown = async ({
     getSpendingByCategory(range),
     getSpendingByCategory(previousRange),
   ]);
-  const subCategorySpendingQuery = (category: string) =>
+  const subCategorySpendingQuery = async (category: string) =>
     getExternalTransactions({
       select: {
         href: sql<string>`CONCAT('${sql.raw(

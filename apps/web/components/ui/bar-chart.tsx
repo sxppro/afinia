@@ -149,6 +149,7 @@ interface ScrollButtonProps {
 const ScrollButton = ({ icon, onClick, disabled }: ScrollButtonProps) => {
   const Icon = icon;
   const [isPressed, setIsPressed] = React.useState(false);
+  const [prevDisabled, setPrevDisabled] = React.useState(disabled);
   const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
 
   React.useEffect(() => {
@@ -162,12 +163,11 @@ const ScrollButton = ({ icon, onClick, disabled }: ScrollButtonProps) => {
     return () => clearInterval(intervalRef.current as NodeJS.Timeout);
   }, [isPressed, onClick]);
 
-  React.useEffect(() => {
-    if (disabled) {
-      clearInterval(intervalRef.current as NodeJS.Timeout);
-      setIsPressed(false);
-    }
-  }, [disabled]);
+  // Stop auto-scrolling when disabled
+  if (disabled !== prevDisabled) {
+    setPrevDisabled(disabled);
+    if (disabled) setIsPressed(false);
+  }
 
   return (
     <button

@@ -17,6 +17,9 @@
   --color-up-uncategorised: oklch(70.347% 0.03585 255.301);
   /* teal-600 */
   --color-up-transfer: oklch(60% 0.118 184.704);
+
+  /* Custom bezier */
+  --ease-out-nice: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @theme inline {
@@ -140,6 +143,55 @@
 @media (prefers-reduced-motion: no-preference) {
   @view-transition {
     navigation: auto;
+  }
+}
+
+/**
+ * Directional slides for same level navigations, such as tabs.
+ * Use with Link transitionTypes and ViewTransition enter/exit.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(.nav-forward) {
+    --vt-slide-offset: -60px;
+    animation:
+      100ms ease-in both vt-fade reverse,
+      300ms var(--ease-out-nice) both vt-slide reverse;
+  }
+  ::view-transition-new(.nav-forward) {
+    --vt-slide-offset: 60px;
+    animation:
+      180ms ease-out 60ms both vt-fade,
+      300ms var(--ease-out-nice) both vt-slide;
+  }
+  ::view-transition-old(.nav-back) {
+    --vt-slide-offset: 60px;
+    animation:
+      100ms ease-in both vt-fade reverse,
+      300ms var(--ease-out-nice) both vt-slide reverse;
+  }
+  ::view-transition-new(.nav-back) {
+    --vt-slide-offset: -60px;
+    animation:
+      180ms ease-out 60ms both vt-fade,
+      300ms var(--ease-out-nice) both vt-slide;
+  }
+}
+
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes vt-slide {
+  from {
+    translate: var(--vt-slide-offset);
+  }
+  to {
+    translate: 0;
   }
 }
 

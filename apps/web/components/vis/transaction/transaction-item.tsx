@@ -1,14 +1,23 @@
 import CategoryIconOrInitial from '@/components/icons/category-icon-or-initial';
 import { TZ } from '@/lib/constants';
 import { siteConfig } from '@/lib/siteConfig';
-import { TransactionRow } from '@/lib/types';
+import { TransactionCategoryInfo, TransactionRow } from '@/lib/types';
 import { cn, colours, formatCurrency } from '@/lib/ui';
 import { TZDateMini } from '@date-fns/tz';
 import { format, isThisYear } from 'date-fns';
 import Link from 'next/link';
 import TransactionItemDetails from './transaction-item-details';
 
-const TransactionItem = ({ transaction }: { transaction: TransactionRow }) => {
+const TransactionItem = ({
+  transaction,
+  onCategoryUpdated,
+}: {
+  transaction: TransactionRow;
+  onCategoryUpdated?: (
+    transactionId: number,
+    categoryInfo: TransactionCategoryInfo
+  ) => void;
+}) => {
   const {
     description,
     card_number_suffix,
@@ -48,7 +57,10 @@ const TransactionItem = ({ transaction }: { transaction: TransactionRow }) => {
           />
         </span>
       </Link>
-      <TransactionItemDetails transaction={transaction}>
+      <TransactionItemDetails
+        transaction={transaction}
+        onCategoryUpdated={onCategoryUpdated}
+      >
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex gap-4">
             <p className="truncate font-medium">{description}</p>
