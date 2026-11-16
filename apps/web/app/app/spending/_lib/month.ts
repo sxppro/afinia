@@ -17,8 +17,12 @@ import {
   subMonths,
   type Interval,
 } from 'date-fns';
+import { createLoader, parseAsString } from 'nuqs/server';
 
 const MONTH_FORMAT = 'yyyy-MM';
+
+/** Selected month on spending overview */
+export const monthLoader = createLoader({ month: parseAsString });
 
 /**
  * Resolves the selected month clamped between

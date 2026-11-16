@@ -1,11 +1,13 @@
 import { Button } from '@/components/ui/button';
-import { getServerSession } from '@/lib/auth/session';
 import { siteConfig } from '@/lib/siteConfig';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
-const NotFoundPage = async () => {
-  const session = await getServerSession();
+/**
+ * This page must stay free of request-time reads so pages
+ * can be prerendered
+ */
+const NotFoundPage = () => {
   return (
     <div className="flex h-screen flex-col items-center justify-center">
       <p className="mt-6 text-4xl font-semibold sm:text-5xl">404</p>
@@ -20,11 +22,7 @@ const NotFoundPage = async () => {
         variant="ghost"
         nativeButton={false}
         render={
-          <Link
-            href={
-              session ? siteConfig.baseLinks.appHome : siteConfig.baseLinks.home
-            }
-          >
+          <Link href={siteConfig.baseLinks.appHome}>
             Go to the home page
             <ArrowRight
               className="ml-1 size-5 text-gray-900 dark:text-gray-50"

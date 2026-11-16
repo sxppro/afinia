@@ -1,8 +1,13 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getServerSession } from '@/lib/auth/session';
 import { getGreeting, getInitials } from '@/lib/ui';
+import { cacheLife } from 'next/cache';
 
 const UserInfo = async () => {
+  // Browser cache
+  'use cache: private';
+  cacheLife({ stale: 300 });
+
   const session = await getServerSession();
 
   return (

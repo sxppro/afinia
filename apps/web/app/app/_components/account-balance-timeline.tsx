@@ -8,6 +8,7 @@ import {
   getEarliestAccountCreatedAt,
 } from '@/lib/db/account';
 import { formatDistanceStrict } from 'date-fns';
+import { connection } from 'next/server';
 import { Suspense } from 'react';
 
 const AccountBalanceTimeline = async ({
@@ -15,6 +16,7 @@ const AccountBalanceTimeline = async ({
 }: {
   searchParams: Promise<{ range?: string }>;
 }) => {
+  await connection();
   // Determine when account was created for lower bound
   const [{ range = '1m' }, { date: earliestAccountCreatedAt }] =
     await Promise.all([searchParams, getEarliestAccountCreatedAt()]);

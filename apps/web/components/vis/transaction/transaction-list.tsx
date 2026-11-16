@@ -1,5 +1,6 @@
 import { Separator } from '@/components/ui/separator';
 import { getTransactionsPaginated } from '@/lib/actions/transaction';
+import { connection } from 'next/server';
 import { Fragment } from 'react';
 import TransactionItem from './transaction-item';
 import TransactionListInfinite from './transaction-list-infinite';
@@ -11,6 +12,7 @@ const TransactionList = async ({
   isInfinite?: boolean;
   options: Parameters<typeof getTransactionsPaginated>[0];
 }) => {
+  await connection();
   const { transactions, hasMore } = await getTransactionsPaginated(options);
 
   if (transactions.length === 0) {
