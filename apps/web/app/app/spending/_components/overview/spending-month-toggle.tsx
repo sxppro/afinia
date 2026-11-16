@@ -44,8 +44,10 @@ const SpendingMonthToggle = ({
       })
       .withDefault(currentMonth)
   );
+  // Only calculated once on mount
+  const [startIndex] = useState(() => Math.max(months.indexOf(selected), 0));
   const [emblaRef, emblaApi] = useEmblaCarousel({
-    startIndex: Math.max(months.indexOf(selected), 0),
+    startIndex,
     align: 'center',
   });
   const [canScrollPrev, setCanScrollPrev] = useState(false);

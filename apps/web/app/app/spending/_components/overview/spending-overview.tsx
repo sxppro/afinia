@@ -1,6 +1,7 @@
 import { Separator } from '@/components/ui/separator';
 import { getStartOfDay } from '@/lib/dateTime';
 import { isSameMonth, type Interval } from 'date-fns';
+import { connection } from 'next/server';
 import { Suspense } from 'react';
 import CategoryBreakdown, {
   CategoryBreakdownSkeleton,
@@ -20,6 +21,8 @@ const SpendingOverview = async ({
   previousRange: Interval<Date, Date>;
   monthLabel: string;
 }) => {
+  // Data fetching is only done at request time
+  await connection();
   const isCurrentMonth = isSameMonth(range.start, getStartOfDay());
   const comparisonLabel = isCurrentMonth
     ? 'vs same time previous month'
@@ -31,7 +34,6 @@ const SpendingOverview = async ({
         <SpendingTotal
           range={range}
           previousRange={previousRange}
-          monthLabel={monthLabel}
           comparisonLabel={comparisonLabel}
         />
       </Suspense>
