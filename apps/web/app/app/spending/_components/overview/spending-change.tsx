@@ -1,7 +1,7 @@
 import { cn } from '@/lib/ui';
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react';
 
-const SpendingChange = ({ value }: { value: number }) => {
+const SpendingChange = ({ value, label }: { value: number; label: string }) => {
   const Icon = value > 0 ? TrendingUp : value < 0 ? TrendingDown : Minus;
   const textColour =
     value > 0
@@ -21,7 +21,7 @@ const SpendingChange = ({ value }: { value: number }) => {
         <Icon className="size-5" />
         {Math.abs(value).toFixed(0)}%
       </span>
-      <p>vs same time previous month</p>
+      <p>{label}</p>
     </div>
   );
 };

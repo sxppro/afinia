@@ -21,6 +21,9 @@ const SpendingOverview = async ({
   monthLabel: string;
 }) => {
   const isCurrentMonth = isSameMonth(range.start, getStartOfDay());
+  const comparisonLabel = isCurrentMonth
+    ? 'vs same time previous month'
+    : 'vs previous month';
 
   return (
     <div className="flex flex-col gap-4">
@@ -29,11 +32,16 @@ const SpendingOverview = async ({
           range={range}
           previousRange={previousRange}
           monthLabel={monthLabel}
+          comparisonLabel={comparisonLabel}
         />
       </Suspense>
       <Separator />
       <Suspense fallback={<CategoryBreakdownSkeleton />}>
-        <CategoryBreakdown range={range} previousRange={previousRange} />
+        <CategoryBreakdown
+          range={range}
+          previousRange={previousRange}
+          comparisonLabel={comparisonLabel}
+        />
       </Suspense>
       <Separator />
       <Suspense fallback={<TopMerchantsSkeleton />}>

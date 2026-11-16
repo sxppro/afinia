@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getSpendingByMerchant, getSpendingTotal } from '@/lib/db/spending';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn, colours, formatCurrency } from '@/lib/ui';
-import { Interval } from 'date-fns';
+import { format, Interval } from 'date-fns';
 import Link from 'next/link';
 
 const TopMerchants = async ({
@@ -49,7 +49,7 @@ const TopMerchants = async ({
             />
             <div className="min-w-0">
               <Link
-                href={`${siteConfig.baseLinks.merchants}/${encodeURIComponent(merchant)}`}
+                href={`${siteConfig.baseLinks.merchants}/${encodeURIComponent(merchant)}?month=${format(range.start, 'yyyy-MM')}`}
               >
                 <p className="font-medium underline underline-offset-4">
                   {merchant}

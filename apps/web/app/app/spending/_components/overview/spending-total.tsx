@@ -13,10 +13,12 @@ const SpendingTotal = async ({
   range,
   previousRange,
   monthLabel,
+  comparisonLabel,
 }: {
   range: Interval<Date, Date>;
   previousRange: Interval<Date, Date>;
   monthLabel: string;
+  comparisonLabel: string;
 }) => {
   const [categories, previousCategories, days] = await Promise.all([
     getSpendingByCategory(range),
@@ -46,7 +48,7 @@ const SpendingTotal = async ({
           value={total}
           options={{ signDisplay: 'never' }}
         />
-        <SpendingChange value={change} />
+        <SpendingChange value={change} label={comparisonLabel} />
       </section>
 
       <Separator />
