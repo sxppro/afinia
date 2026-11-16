@@ -51,6 +51,8 @@ const SpendingMonthToggle = ({
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
 
+  const activeMonth = months.includes(month) ? month : selected;
+
   // Disable back/forward buttons when at start/end of carousel
   useEffect(() => {
     if (!emblaApi) return;
@@ -74,7 +76,7 @@ const SpendingMonthToggle = ({
 
     const onSelect = () => {
       const next = months[emblaApi.selectedScrollSnap()];
-      if (!next || next === month) return;
+      if (!next || next === activeMonth) return;
 
       setMonth(next);
     };
@@ -84,18 +86,18 @@ const SpendingMonthToggle = ({
     return () => {
       emblaApi.off('select', onSelect);
     };
-  }, [emblaApi, months, month, setMonth]);
+  }, [emblaApi, months, activeMonth, setMonth]);
 
   // Set carousel slide from external URL changes
   useEffect(() => {
     if (!emblaApi) return;
 
-    const index = months.indexOf(month);
+    const index = months.indexOf(activeMonth);
     // Scroll to the month if it's not the currently selected month
     if (index !== -1 && index !== emblaApi.selectedScrollSnap()) {
       emblaApi.scrollTo(index);
     }
-  }, [emblaApi, months, month]);
+  }, [emblaApi, months, activeMonth]);
 
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
@@ -122,7 +124,7 @@ const SpendingMonthToggle = ({
               <div
                 key={slide}
                 className="min-w-0 shrink-0 grow-0 basis-full text-center font-medium select-none"
-                aria-hidden={slide !== month}
+                aria-hidden={slide !== activeMonth}
               >
                 {formatMonthLabel(slide)}
               </div>
