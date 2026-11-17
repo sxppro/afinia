@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/ui';
 import { format, parse } from 'date-fns';
 import useEmblaCarousel from 'embla-carousel-react';
@@ -118,10 +119,14 @@ const SpendingMonthToggle = ({
           <ChevronLeft className="size-5" />
         </Button>
         <div
-          className="flex-1 cursor-grab overflow-hidden active:cursor-grabbing"
+          className="relative flex-1 cursor-grab overflow-hidden active:cursor-grabbing"
           ref={emblaRef}
         >
-          <div className="flex touch-pan-y" aria-live="polite">
+          <div
+            // Hidden until embla hydrates
+            className={cn('flex touch-pan-y', !emblaApi && 'invisible')}
+            aria-live="polite"
+          >
             {months.map((slide) => (
               <div
                 key={slide}
@@ -132,6 +137,9 @@ const SpendingMonthToggle = ({
               </div>
             ))}
           </div>
+          {!emblaApi ? (
+            <Skeleton className="absolute inset-0 m-auto h-5 w-32" />
+          ) : null}
         </div>
         <Button
           variant="outline"
