@@ -61,9 +61,11 @@ const CategoryDelta = ({
 const CategoryBreakdown = async ({
   range,
   previousRange,
+  comparisonLabel,
 }: {
   range: Interval<Date, Date>;
   previousRange: Interval<Date, Date>;
+  comparisonLabel: string;
 }) => {
   const [categorySpending, previousCategorySpending] = await Promise.all([
     getSpendingByCategory(range),
@@ -100,7 +102,7 @@ const CategoryBreakdown = async ({
       <div>
         <h2 className="text-xl font-semibold">Category Breakdown</h2>
         <p className="text-muted-foreground text-sm">
-          Your spending by category vs same time last month
+          Your spending by category {comparisonLabel}
         </p>
       </div>
       <CategoryBar
@@ -175,7 +177,7 @@ export const CategoryBreakdownSkeleton = () => (
     <div>
       <h2 className="text-xl font-semibold">Category Breakdown</h2>
       <p className="text-muted-foreground text-sm">
-        Your spending by category vs same time last month
+        Your spending by category vs same time previous month
       </p>
     </div>
     <Skeleton className="h-4 w-full rounded-full" />
