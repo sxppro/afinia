@@ -1,6 +1,7 @@
 import { categoryTable } from 'afinia-common/schema';
 import { eq, isNotNull, isNull } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
+import { cacheLife } from 'next/cache';
 import { db } from './client';
 
 export const getCategoryById = (id: string) => {
@@ -14,6 +15,18 @@ export const getCategoryById = (id: string) => {
       categoryParent,
       eq(categoryTable.category_parent_id, categoryParent.category_id)
     );
+};
+
+/**
+ * Retrieves a category and its parent
+ * Cached for 1 hour
+ * @returns category row, or null if not found
+ */
+export const getCategoryDetails = async (id: string) => {
+  'use cache';
+  cacheLife('hours');
+  const [row] = await getCategoryById(id);
+  return row ?? null;
 };
 
 /**
