@@ -7,7 +7,13 @@ import { connection } from 'next/server';
 /**
  * Spending heatmap by day of week and hour over 12 months
  */
-const SpendingHourly = async ({ category }: { category?: string }) => {
+const SpendingHourly = async ({
+  category,
+  colour,
+}: {
+  category?: string;
+  colour?: string;
+}) => {
   await connection();
   const today = getStartOfDay();
   const cells = await getSpendingByHourAndWeekday({
@@ -18,7 +24,7 @@ const SpendingHourly = async ({ category }: { category?: string }) => {
     category,
   });
 
-  return <SpendingByHourHeatmapChart cells={cells} />;
+  return <SpendingByHourHeatmapChart cells={cells} colour={colour} />;
 };
 
 export default SpendingHourly;

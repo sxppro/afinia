@@ -144,6 +144,44 @@ export const heatmapColours = [
   'bg-blue-700 dark:bg-blue-300',
 ] as const;
 
+export const categoryHeatmapColours: Record<string, readonly string[]> = {
+  'good-life': [
+    'bg-up-good-life/20',
+    'bg-up-good-life/40',
+    'bg-up-good-life/60',
+    'bg-up-good-life/80',
+    'bg-up-good-life',
+  ],
+  home: [
+    'bg-up-home/20',
+    'bg-up-home/40',
+    'bg-up-home/60',
+    'bg-up-home/80',
+    'bg-up-home',
+  ],
+  personal: [
+    'bg-up-personal/20',
+    'bg-up-personal/40',
+    'bg-up-personal/60',
+    'bg-up-personal/80',
+    'bg-up-personal',
+  ],
+  transport: [
+    'bg-up-transport/20',
+    'bg-up-transport/40',
+    'bg-up-transport/60',
+    'bg-up-transport/80',
+    'bg-up-transport',
+  ],
+  uncategorised: [
+    'bg-up-uncategorised/20',
+    'bg-up-uncategorised/40',
+    'bg-up-uncategorised/60',
+    'bg-up-uncategorised/80',
+    'bg-up-uncategorised',
+  ],
+};
+
 /**
  * Colour for cells with no value
  */
@@ -171,9 +209,13 @@ export const getHeatmapThresholds = (
 /**
  * Maps a value to a heatmap colour using thresholds from `getHeatmapThresholds`
  */
-export const getHeatmapColour = (value: number, thresholds: number[]) => {
+export const getHeatmapColour = (
+  value: number,
+  thresholds: number[],
+  palette: readonly string[] = heatmapColours
+) => {
   if (value <= 0) return heatmapEmptyColour;
   // Values above every threshold (-1) go in the darkest bucket
   const level = thresholds.findIndex((threshold) => value <= threshold);
-  return heatmapColours[level === -1 ? thresholds.length : level];
+  return palette[level === -1 ? thresholds.length : level];
 };

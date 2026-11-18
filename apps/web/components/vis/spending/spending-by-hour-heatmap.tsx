@@ -1,6 +1,11 @@
 'use client';
 
-import { getHeatmapColour, getHeatmapThresholds } from '@/lib/chart';
+import {
+  categoryHeatmapColours,
+  getHeatmapColour,
+  getHeatmapThresholds,
+  heatmapColours,
+} from '@/lib/chart';
 import { formatCurrency } from '@/lib/ui';
 import Heatmap from './heatmap';
 
@@ -11,7 +16,9 @@ const formatHour = (hour: number) =>
 
 const SpendingByHourHeatmap = ({
   cells,
+  colour,
 }: {
+  colour?: string;
   cells: {
     weekday: number;
     hour: number;
@@ -19,6 +26,7 @@ const SpendingByHourHeatmap = ({
     transactions: number;
   }[];
 }) => {
+  const palette = (colour && categoryHeatmapColours[colour]) || heatmapColours;
   const thresholds = getHeatmapThresholds(cells.map(({ value }) => value));
   const cellByKey = new Map(
     cells.map((cell) => [`${cell.weekday}-${cell.hour}`, cell])
@@ -34,7 +42,7 @@ const SpendingByHourHeatmap = ({
 
       return {
         key: weekdayName,
-        color: getHeatmapColour(value, thresholds),
+        color: getHeatmapColour(value, thresholds, palette),
         tooltip: `${weekdayName} ${formatHour(hour)} · ${formatCurrency(value, { baseUnits: true })} across ${transactions} transaction${transactions === 1 ? '' : 's'}`,
       };
     }),

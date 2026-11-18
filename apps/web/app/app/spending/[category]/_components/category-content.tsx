@@ -138,7 +138,10 @@ const CategoryContent = async ({
           </p>
         </div>
         <Suspense fallback={<Skeleton className="h-80 w-full" />}>
-          <SpendingHourly category={category.category_id} />
+          <SpendingHourly
+            category={category.category_id}
+            colour={category_parent?.category_id ?? category.category_id}
+          />
         </Suspense>
       </div>
       <Separator />
