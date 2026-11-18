@@ -25,6 +25,15 @@ const CategoryContentSkeleton = () => (
       <h2 className="text-xl font-semibold">Categories</h2>
       <Skeleton className="h-24 w-full" />
     </div>
+    <div className="flex flex-col gap-2">
+      <div>
+        <h2 className="text-xl font-semibold">
+          Spending patterns by hour and day of week
+        </h2>
+        <p className="text-muted-foreground text-sm">Based on last 12 months</p>
+      </div>
+      <Skeleton className="h-80 w-full" />
+    </div>
     <Separator />
     <div className="flex flex-col gap-2">
       <h2 className="text-xl font-semibold">Transactions</h2>

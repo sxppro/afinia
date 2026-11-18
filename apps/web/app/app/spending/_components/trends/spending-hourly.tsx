@@ -4,12 +4,18 @@ import { getSpendingByHourAndWeekday } from '@/lib/db/spending';
 import { endOfDay, startOfMonth, subMonths } from 'date-fns';
 import { connection } from 'next/server';
 
-const SpendingHourly = async () => {
+/**
+ * Spending heatmap by day of week and hour over 12 months
+ */
+const SpendingHourly = async ({ category }: { category?: string }) => {
   await connection();
   const today = getStartOfDay();
   const cells = await getSpendingByHourAndWeekday({
-    start: startOfMonth(subMonths(today, 11)),
-    end: endOfDay(today),
+    range: {
+      start: startOfMonth(subMonths(today, 11)),
+      end: endOfDay(today),
+    },
+    category,
   });
 
   return <SpendingByHourHeatmapChart cells={cells} />;

@@ -37,8 +37,8 @@ const SpendingTrends = () => (
     </Section>
     <Separator />
     <Section
-      title="When you spend"
-      description="Total spending by weekday and hour over 12 months"
+      title="Spending patterns by hour and day of week"
+      description="Based on last 12 months"
       fallbackClassName="h-80 w-full"
     >
       <SpendingHourly />

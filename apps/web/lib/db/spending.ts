@@ -209,9 +209,13 @@ export const getSpendingByCategoryAndMonth = (
  * Groups net spending by ISO weekday (1 = Monday) and hour of day (in TZ).
  * @returns One row per weekday and hour that has spending
  */
-export const getSpendingByHourAndWeekday = (
-  range: Prettify<Partial<Interval<Date, Date>>>
-) => {
+export const getSpendingByHourAndWeekday = ({
+  range,
+  category,
+}: {
+  range: Prettify<Partial<Interval<Date, Date>>>;
+  category?: string;
+}) => {
   // TZ is inlined so the SELECT and GROUP BY expressions match
   const tz = sql.raw(`'${TZ}'`);
   const localCreatedAt = sql`(${transactionSpendingTable.created_at} AT TIME ZONE ${tz})`;
@@ -229,7 +233,17 @@ export const getSpendingByHourAndWeekday = (
           .as('transactions'),
     })
     .from(transactionSpendingTable)
-    .where(createdWithin(range))
+    .where(
+      and(
+        createdWithin(range),
+        category
+          ? or(
+              eq(transactionSpendingTable.category_id, category),
+              eq(transactionSpendingTable.category_parent_id, category)
+            )
+          : undefined
+      )
+    )
     .groupBy(weekday, hour)
     .having(gt(spendingAmount, 0));
 };

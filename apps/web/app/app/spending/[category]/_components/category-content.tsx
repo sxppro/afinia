@@ -21,6 +21,7 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { connection } from 'next/server';
 import { Suspense } from 'react';
+import SpendingHourly from '../../_components/trends/spending-hourly';
 
 const CategoryContent = async ({
   params,
@@ -129,6 +130,17 @@ const CategoryContent = async ({
           </Suspense>
         </div>
       )}
+      <div className="flex flex-col gap-2">
+        <div>
+          <h2 className="text-xl font-semibold">Spending patterns</h2>
+          <p className="text-muted-foreground text-sm">
+            By hour and day of week, based on last 12 months
+          </p>
+        </div>
+        <Suspense fallback={<Skeleton className="h-80 w-full" />}>
+          <SpendingHourly category={category.category_id} />
+        </Suspense>
+      </div>
       <Separator />
       <div className="flex flex-col gap-2">
         <h2 className="text-xl font-semibold">Transactions</h2>
