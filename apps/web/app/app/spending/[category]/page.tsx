@@ -10,8 +10,10 @@ import CategoryTitle from './_components/category-title';
 
 const CategorySpendingPage = ({
   params,
+  searchParams,
 }: {
   params: Promise<{ category: string }>;
+  searchParams: Promise<{ heatmap?: string | string[] }>;
 }) => (
   <div className="flex flex-col gap-4">
     <div className="flex items-center gap-4">
@@ -31,7 +33,7 @@ const CategorySpendingPage = ({
       </Suspense>
     </div>
     <Suspense fallback={<CategoryContentSkeleton />}>
-      <CategoryContent params={params} />
+      <CategoryContent params={params} searchParams={searchParams} />
     </Suspense>
   </div>
 );

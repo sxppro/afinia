@@ -25,8 +25,10 @@ import SpendingHourly from '../../_components/trends/spending-hourly';
 
 const CategoryContent = async ({
   params,
+  searchParams,
 }: {
   params: Promise<{ category: string }>;
+  searchParams: Promise<{ heatmap?: string | string[] }>;
 }) => {
   const { category: categoryId } = await params;
   const categoryDetails = categoryId
@@ -130,15 +132,17 @@ const CategoryContent = async ({
           </Suspense>
         </div>
       )}
+      <Separator />
       <div className="flex flex-col gap-2">
         <div>
           <h2 className="text-xl font-semibold">Spending patterns</h2>
           <p className="text-muted-foreground text-sm">
-            By hour and day of week, based on last 12 months
+            By hour and day of week
           </p>
         </div>
-        <Suspense fallback={<Skeleton className="h-80 w-full" />}>
+        <Suspense fallback={<Skeleton className="h-88 w-full" />}>
           <SpendingHourly
+            searchParams={searchParams}
             category={category.category_id}
             colour={category_parent?.category_id ?? category.category_id}
           />
