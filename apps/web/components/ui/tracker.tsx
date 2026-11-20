@@ -11,9 +11,6 @@ interface TrackerBlockProps {
   key?: string | number;
   color?: string;
   tooltip?: React.ReactNode;
-  /**
-   * Accessible label, required when `tooltip` is not a string
-   */
   ariaLabel?: string;
   hoverEffect?: boolean;
   defaultBackgroundColor?: string;
@@ -38,7 +35,7 @@ const Block = ({
   const blockClassName =
     'size-full overflow-hidden px-[0.5px] transition first:rounded-l-[4px] first:pl-0 last:rounded-r-[4px] last:pr-0 sm:px-px';
 
-  // Blocks without a tooltip (e.g. padding) aren't interactive
+  // Blocks without a tooltip aren't interactive
   if (tooltip === undefined || tooltip === null) {
     return <div className={blockClassName}>{fill}</div>;
   }

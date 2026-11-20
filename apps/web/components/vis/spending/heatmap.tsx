@@ -4,25 +4,14 @@ import { Tracker, TrackerBlockProps } from '@/components/ui/tracker';
 import { heatmapEmptyColour } from '@/lib/chart';
 import { cn } from '@/lib/ui';
 
-/**
- * Grid of `Tracker` rows with labels down the left and along the top
- */
 const Heatmap = ({
   rows,
   columnLabels,
-  centerColumnLabels = false,
   rowClassName = 'h-4',
   className,
 }: {
   rows: { label?: string; blocks: TrackerBlockProps[] }[];
-  /**
-   * One entry per column, `undefined` for columns without a label
-   */
   columnLabels: (string | undefined)[];
-  /**
-   * Centre labels over their column, rather than letting them overflow right
-   */
-  centerColumnLabels?: boolean;
   rowClassName?: string;
   className?: string;
 }) => (
@@ -33,10 +22,7 @@ const Heatmap = ({
         {columnLabels.map((label, index) => (
           <div
             key={index}
-            className={cn(
-              'text-muted-foreground min-w-0 flex-1 overflow-visible text-[10px] whitespace-nowrap',
-              centerColumnLabels && 'text-center'
-            )}
+            className="text-muted-foreground min-w-0 flex-1 overflow-visible text-center text-[10px] whitespace-nowrap"
           >
             {label}
           </div>
