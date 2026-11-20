@@ -75,7 +75,7 @@ export const SpendingTotalSkeleton = () => (
   <>
     <section>
       <p className="text-muted-foreground text-lg font-medium">This month</p>
-      <Skeleton className="my-1 h-10 w-40" />
+      <Skeleton className="my-1 h-12 w-40" />
       <Skeleton className="h-5 w-48" />
     </section>
     <Separator />
