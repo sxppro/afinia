@@ -30,7 +30,7 @@ const CategoryContentSkeleton = () => (
         <h2 className="text-xl font-semibold">Spending patterns</h2>
         <p className="text-muted-foreground text-sm">By hour and day of week</p>
       </div>
-      <Skeleton className="h-88 w-full" />
+      <Skeleton className="h-96 w-full" />
     </div>
     <Separator />
     <div className="flex flex-col gap-2">

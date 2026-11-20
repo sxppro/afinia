@@ -140,7 +140,7 @@ const CategoryContent = async ({
             By hour and day of week
           </p>
         </div>
-        <Suspense fallback={<Skeleton className="h-88 w-full" />}>
+        <Suspense fallback={<Skeleton className="h-96 w-full" />}>
           <SpendingHourly
             searchParams={searchParams}
             category={category.category_id}

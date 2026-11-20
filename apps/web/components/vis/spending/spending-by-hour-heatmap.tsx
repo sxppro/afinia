@@ -8,6 +8,7 @@ import {
 } from '@/lib/chart';
 import { formatCurrency } from '@/lib/ui';
 import Heatmap from './heatmap';
+import HeatmapLegend from './heatmap-legend';
 
 const weekdayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -27,7 +28,8 @@ const SpendingByHourHeatmap = ({
   }[];
 }) => {
   const palette = (colour && categoryHeatmapColours[colour]) || heatmapColours;
-  const thresholds = getHeatmapThresholds(cells.map(({ value }) => value));
+  const values = cells.map(({ value }) => value);
+  const thresholds = getHeatmapThresholds(values, palette.length);
   const cellByKey = new Map(
     cells.map((cell) => [`${cell.weekday}-${cell.hour}`, cell])
   );
@@ -49,13 +51,23 @@ const SpendingByHourHeatmap = ({
   }));
 
   return (
-    <Heatmap
-      className="gap-[1px]"
-      rows={rows}
-      columnLabels={weekdayNames}
-      centerColumnLabels
-      rowClassName="h-3"
-    />
+    <div className="flex flex-col gap-3">
+      <Heatmap
+        className="gap-[1px]"
+        rows={rows}
+        columnLabels={weekdayNames}
+        rowClassName="h-3"
+      />
+      {values.length > 0 && (
+        <HeatmapLegend
+          palette={palette}
+          thresholds={thresholds}
+          min={Math.min(...values)}
+          max={Math.max(...values)}
+          formatValue={(value) => formatCurrency(value, { baseUnits: true })}
+        />
+      )}
+    </div>
   );
 };
 

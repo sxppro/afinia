@@ -193,7 +193,7 @@ export const heatmapEmptyColour = 'bg-gray-100 dark:bg-gray-800';
  */
 export const getHeatmapThresholds = (
   values: number[],
-  buckets = heatmapColours.length
+  buckets: number = heatmapColours.length
 ) => {
   const sorted = values.filter((value) => value > 0).sort((a, b) => a - b);
   if (sorted.length === 0) return [];

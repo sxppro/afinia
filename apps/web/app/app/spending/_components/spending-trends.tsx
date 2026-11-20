@@ -43,7 +43,7 @@ const SpendingTrends = ({
     <Section
       title="Spending patterns"
       description="By time of day and day of week"
-      fallbackClassName="h-80 w-full"
+      fallbackClassName="h-96 w-full"
     >
       <SpendingHourly searchParams={searchParams} />
     </Section>
