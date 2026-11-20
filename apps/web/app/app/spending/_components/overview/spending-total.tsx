@@ -77,7 +77,7 @@ const SpendingTotal = async ({
 export const SpendingTotalSkeleton = () => (
   <>
     <section>
-      <Skeleton className="my-1 h-10 w-40" />
+      <Skeleton className="my-1 h-12 w-40" />
       <Skeleton className="h-5 w-48" />
     </section>
     <Separator />
