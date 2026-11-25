@@ -12,9 +12,11 @@ import SpendingChange from './spending-change';
 const SpendingTotal = async ({
   range,
   previousRange,
+  comparisonLabel,
 }: {
   range: Interval<Date, Date>;
   previousRange: Interval<Date, Date>;
+  comparisonLabel: string;
 }) => {
   const [categories, previousCategories, days] = await Promise.all([
     getSpendingByCategory(range),
@@ -36,13 +38,14 @@ const SpendingTotal = async ({
   return (
     <>
       <section>
-        <p className="text-muted-foreground text-lg font-medium">This month</p>
         <CurrencyFlow
           className="text-4xl/tight font-semibold"
           value={total}
           options={{ signDisplay: 'never' }}
         />
-        <SpendingChange value={change} />
+        {previousTotal > 0 ? (
+          <SpendingChange value={change} label={comparisonLabel} />
+        ) : null}
       </section>
 
       <Separator />
@@ -74,8 +77,7 @@ const SpendingTotal = async ({
 export const SpendingTotalSkeleton = () => (
   <>
     <section>
-      <p className="text-muted-foreground text-lg font-medium">This month</p>
-      <Skeleton className="my-1 h-10 w-40" />
+      <Skeleton className="my-1 h-12 w-40" />
       <Skeleton className="h-5 w-48" />
     </section>
     <Separator />
