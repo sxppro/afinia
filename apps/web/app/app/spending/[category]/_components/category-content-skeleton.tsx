@@ -1,6 +1,8 @@
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SpendingByCategorySkeleton } from '@/components/vis/category/spending-by-category';
 import { SMALL_PAGE_SIZE } from '@/lib/constants';
+import { SpendingHourlySkeleton } from '../../_components/trends/spending-hourly';
 
 const CategoryContentSkeleton = () => (
   <>
@@ -23,14 +25,15 @@ const CategoryContentSkeleton = () => (
     </div>
     <div className="flex flex-col gap-2">
       <h2 className="text-xl font-semibold">Categories</h2>
-      <Skeleton className="h-24 w-full" />
+      <SpendingByCategorySkeleton />
     </div>
+    <Separator />
     <div className="flex flex-col gap-2">
       <div>
         <h2 className="text-xl font-semibold">Spending patterns</h2>
         <p className="text-muted-foreground text-sm">By hour and day of week</p>
       </div>
-      <Skeleton className="h-104 w-full" />
+      <SpendingHourlySkeleton />
     </div>
     <Separator />
     <div className="flex flex-col gap-2">

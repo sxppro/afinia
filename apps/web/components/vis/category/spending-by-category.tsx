@@ -1,7 +1,8 @@
 'use client';
 
 import { BarList, BarListProps } from '@/components/ui/bar-list';
-import { colours, formatCurrency } from '@/lib/ui';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn, colours, formatCurrency } from '@/lib/ui';
 import { use } from 'react';
 
 const SpendingByCategory = ({
@@ -34,5 +35,18 @@ const SpendingByCategory = ({
     />
   );
 };
+
+export const SpendingByCategorySkeleton = () => (
+  <div className="flex flex-col gap-1.5">
+    {['w-full', 'w-2/3', 'w-1/3'].map((width) => (
+      <div key={width} className="flex items-center gap-6">
+        <div className="flex-1">
+          <Skeleton className={cn('h-8 rounded-sm', width)} />
+        </div>
+        <Skeleton className="h-4 w-12" />
+      </div>
+    ))}
+  </div>
+);
 
 export default SpendingByCategory;

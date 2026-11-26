@@ -1,7 +1,9 @@
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ReactNode, Suspense } from 'react';
-import SpendingHourly from './trends/spending-hourly';
+import SpendingHourly, {
+  SpendingHourlySkeleton,
+} from './trends/spending-hourly';
 import SpendingMonthly from './trends/spending-monthly';
 import SpendingPace from './trends/spending-pace';
 
@@ -9,11 +11,13 @@ const Section = ({
   title,
   description,
   fallbackClassName,
+  fallback,
   children,
 }: {
   title: string;
   description?: string;
-  fallbackClassName: string;
+  fallbackClassName?: string;
+  fallback?: ReactNode;
   children: ReactNode;
 }) => (
   <section>
@@ -21,7 +25,7 @@ const Section = ({
     {description && (
       <p className="text-muted-foreground mb-2 text-sm">{description}</p>
     )}
-    <Suspense fallback={<Skeleton className={fallbackClassName} />}>
+    <Suspense fallback={fallback ?? <Skeleton className={fallbackClassName} />}>
       {children}
     </Suspense>
   </section>
@@ -46,7 +50,7 @@ const SpendingTrends = ({
     <Section
       title="Spending patterns"
       description="By time of day and day of week"
-      fallbackClassName="h-105 w-full"
+      fallback={<SpendingHourlySkeleton />}
     >
       <SpendingHourly searchParams={searchParams} />
     </Section>

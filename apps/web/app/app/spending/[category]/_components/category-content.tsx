@@ -2,7 +2,9 @@ import CategoryIcon from '@/components/icons/category-icon';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import SpendingAverage from '@/components/vis/category/spending-average';
-import SpendingByCategory from '@/components/vis/category/spending-by-category';
+import SpendingByCategory, {
+  SpendingByCategorySkeleton,
+} from '@/components/vis/category/spending-by-category';
 import SpendingByDay from '@/components/vis/category/spending-by-day';
 import SpendingTotal from '@/components/vis/category/spending-total';
 import TransactionList from '@/components/vis/transaction/transaction-list';
@@ -19,7 +21,9 @@ import { lt, sql, sum } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 import { connection } from 'next/server';
 import { Suspense } from 'react';
-import SpendingHourly from '../../_components/trends/spending-hourly';
+import SpendingHourly, {
+  SpendingHourlySkeleton,
+} from '../../_components/trends/spending-hourly';
 import { monthLoader, resolveSpendingMonth } from '../../_lib/month';
 import CategoryMonthCarousel from './category-month-carousel';
 
@@ -129,7 +133,7 @@ const CategoryContent = async ({
         }
         categories={
           category_parent ? null : (
-            <Suspense fallback={<Skeleton className="h-24 w-full" />}>
+            <Suspense fallback={<SpendingByCategorySkeleton />}>
               <SpendingByCategory
                 category={category.category_id}
                 dataFetch={subCategorySpendingFetch}
@@ -146,7 +150,7 @@ const CategoryContent = async ({
             By hour and day of week
           </p>
         </div>
-        <Suspense fallback={<Skeleton className="h-105 w-full" />}>
+        <Suspense fallback={<SpendingHourlySkeleton />}>
           <SpendingHourly
             searchParams={searchParams}
             category={category.category_id}
