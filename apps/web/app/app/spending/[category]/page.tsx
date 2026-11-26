@@ -13,7 +13,11 @@ const CategorySpendingPage = ({
   searchParams,
 }: {
   params: Promise<{ category: string }>;
-  searchParams: Promise<{ heatmap?: string | string[] }>;
+  searchParams: Promise<{
+    month?: string | string[];
+    heatmap?: string | string[];
+    heatmapView?: string | string[];
+  }>;
 }) => (
   <div className="flex flex-col gap-4">
     <div className="flex items-center gap-4">

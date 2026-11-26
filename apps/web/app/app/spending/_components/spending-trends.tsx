@@ -30,7 +30,10 @@ const Section = ({
 const SpendingTrends = ({
   searchParams,
 }: {
-  searchParams: Promise<{ heatmap?: string | string[] }>;
+  searchParams: Promise<{
+    heatmap?: string | string[];
+    heatmapView?: string | string[];
+  }>;
 }) => (
   <div className="flex flex-col gap-6">
     <Section
@@ -43,7 +46,7 @@ const SpendingTrends = ({
     <Section
       title="Spending patterns"
       description="By time of day and day of week"
-      fallbackClassName="h-96 w-full"
+      fallbackClassName="h-105 w-full"
     >
       <SpendingHourly searchParams={searchParams} />
     </Section>

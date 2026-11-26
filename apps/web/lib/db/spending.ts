@@ -25,6 +25,12 @@ import { db } from './client';
  */
 const SPENDING_OFFSET_TYPES = ['Refund'];
 
+export const CARD_PURCHASE_TYPES = [
+  'Purchase',
+  'EFTPOS Purchase',
+  'International Purchase',
+];
+
 /**
  * Net spending as a positive amount in base units.
  * Outflows are offset by refunds, categorised inflows and inflows from
@@ -212,9 +218,11 @@ export const getSpendingByCategoryAndMonth = (
 export const getSpendingByHourAndWeekday = ({
   range,
   category,
+  transactionTypes,
 }: {
   range: Prettify<Partial<Interval<Date, Date>>>;
   category?: string;
+  transactionTypes?: string[];
 }) => {
   // TZ is inlined so the SELECT and GROUP BY expressions match
   const tz = sql.raw(`'${TZ}'`);
@@ -241,6 +249,9 @@ export const getSpendingByHourAndWeekday = ({
               eq(transactionSpendingTable.category_id, category),
               eq(transactionSpendingTable.category_parent_id, category)
             )
+          : undefined,
+        transactionTypes
+          ? inArray(transactionSpendingTable.type, transactionTypes)
           : undefined
       )
     )

@@ -18,8 +18,10 @@ const formatHour = (hour: number) =>
 const SpendingByHourHeatmap = ({
   cells,
   colour,
+  emptyMessage = 'No spending data',
 }: {
   colour?: string;
+  emptyMessage?: string;
   cells: {
     weekday: number;
     hour: number;
@@ -50,6 +52,14 @@ const SpendingByHourHeatmap = ({
     }),
   }));
 
+  if (values.length === 0) {
+    return (
+      <p className="text-muted-foreground w-full rounded border border-dashed p-4 text-center text-sm">
+        {emptyMessage}
+      </p>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-3">
       <Heatmap
@@ -58,15 +68,13 @@ const SpendingByHourHeatmap = ({
         columnLabels={weekdayNames}
         rowClassName="h-3"
       />
-      {values.length > 0 && (
-        <HeatmapLegend
-          palette={palette}
-          thresholds={thresholds}
-          min={Math.min(...values)}
-          max={Math.max(...values)}
-          formatValue={(value) => formatCurrency(value, { baseUnits: true })}
-        />
-      )}
+      <HeatmapLegend
+        palette={palette}
+        thresholds={thresholds}
+        min={Math.min(...values)}
+        max={Math.max(...values)}
+        formatValue={(value) => formatCurrency(value, { baseUnits: true })}
+      />
     </div>
   );
 };

@@ -2,11 +2,16 @@ import DateRangePicker from '@/components/misc/date-range-picker';
 import SpendingByHourHeatmapChart from '@/components/vis/spending/spending-by-hour-heatmap';
 import { getDateRange, getStartOfDay } from '@/lib/dateTime';
 import { getEarliestAccountCreatedAt } from '@/lib/db/account';
-import { getSpendingByHourAndWeekday } from '@/lib/db/spending';
+import {
+  CARD_PURCHASE_TYPES,
+  getSpendingByHourAndWeekday,
+} from '@/lib/db/spending';
 import { subYears } from 'date-fns';
 import { connection } from 'next/server';
+import SpendingHourlyTabs from './spending-hourly-tabs';
 
-const QUERY_PARAM = 'heatmap';
+// Range options
+const RANGE_PARAM = 'heatmap';
 const RANGE_DEFAULT = '1y';
 const RANGE_OPTIONS = [
   { label: '3M', value: '3m' },
@@ -15,20 +20,37 @@ const RANGE_OPTIONS = [
   { label: 'ALL', value: 'all' },
 ];
 
-const parseHeatmapRange = (value?: string) =>
-  value && RANGE_OPTIONS.some((option) => option.value === value)
+// View options
+const VIEW_PARAM = 'heatmapView';
+const VIEW_DEFAULT = 'card';
+const VIEW_OPTIONS = [
+  { label: 'Card transactions', value: 'card' },
+  { label: 'All transactions', value: 'all' },
+];
+
+const parseOption = (
+  param: string | string[] | undefined,
+  options: { value: string }[],
+  fallback: string
+) => {
+  const value = Array.isArray(param) ? param[0] : param;
+  return value && options.some((option) => option.value === value)
     ? value
-    : RANGE_DEFAULT;
+    : fallback;
+};
 
 /**
- * Spending heatmap by day of week and hour, with range buttons
+ * Spending heatmap by day of week and hour, with view tabs and range buttons
  */
 const SpendingHourly = async ({
   searchParams,
   category,
   colour,
 }: {
-  searchParams: Promise<{ [QUERY_PARAM]?: string | string[] }>;
+  searchParams: Promise<{
+    [RANGE_PARAM]?: string | string[];
+    [VIEW_PARAM]?: string | string[];
+  }>;
   category?: string;
   colour?: string;
 }) => {
@@ -37,24 +59,52 @@ const SpendingHourly = async ({
     searchParams,
     getEarliestAccountCreatedAt(),
   ]);
-  const param = params[QUERY_PARAM];
+  const rangeOption = parseOption(
+    params[RANGE_PARAM],
+    RANGE_OPTIONS,
+    RANGE_DEFAULT
+  );
+  const viewOption = parseOption(
+    params[VIEW_PARAM],
+    VIEW_OPTIONS,
+    VIEW_DEFAULT
+  );
   const range = getDateRange(
-    parseHeatmapRange(Array.isArray(param) ? param[0] : param),
+    rangeOption,
     earliest?.date ?? subYears(getStartOfDay(), 1)
   );
-  const cells = await getSpendingByHourAndWeekday({ range, category });
+  const cardOnly = viewOption === 'card';
+  const cells = await getSpendingByHourAndWeekday({
+    range,
+    category,
+    transactionTypes: cardOnly ? CARD_PURCHASE_TYPES : undefined,
+  });
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="w-full">
-        <SpendingByHourHeatmapChart cells={cells} colour={colour} />
+    <SpendingHourlyTabs
+      queryKey={VIEW_PARAM}
+      defaultValue={VIEW_DEFAULT}
+      options={VIEW_OPTIONS}
+    >
+      <div className="flex flex-col items-center gap-2">
+        <div className="w-full">
+          <SpendingByHourHeatmapChart
+            cells={cells}
+            colour={colour}
+            emptyMessage={
+              cardOnly
+                ? 'No card transactions in this period'
+                : 'No spending in this period'
+            }
+          />
+        </div>
+        <DateRangePicker
+          queryKey={RANGE_PARAM}
+          defaultValue={RANGE_DEFAULT}
+          options={RANGE_OPTIONS}
+        />
       </div>
-      <DateRangePicker
-        queryKey={QUERY_PARAM}
-        defaultValue={RANGE_DEFAULT}
-        options={RANGE_OPTIONS}
-      />
-    </div>
+    </SpendingHourlyTabs>
   );
 };
 

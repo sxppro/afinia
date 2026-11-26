@@ -6,7 +6,10 @@ import SpendingViewTransition from '../../_components/spending-view-transition';
 const SpendingTrendsPage = ({
   searchParams,
 }: {
-  searchParams: Promise<{ heatmap?: string | string[] }>;
+  searchParams: Promise<{
+    heatmap?: string | string[];
+    heatmapView?: string | string[];
+  }>;
 }) => (
   <SpendingViewTransition>
     <Suspense fallback={<Skeleton className="h-72 w-full" />}>
