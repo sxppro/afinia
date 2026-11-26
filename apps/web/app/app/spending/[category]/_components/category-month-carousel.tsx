@@ -122,24 +122,26 @@ const CategoryMonthCarousel = ({
           <p className="font-medium" aria-live="polite">
             {formatMonthLabel(months[selectedIndex] ?? selected)}
           </p>
-          <div>
+          <div className="flex items-center gap-1">
             <Button
-              variant="ghost"
-              className="has-[>svg]:px-1"
+              variant="outline"
+              size="icon-sm"
+              className="rounded-full has-[>svg]:px-1"
               aria-label="Previous month"
               disabled={!canScrollPrev}
               onClick={scrollPrev}
             >
-              <ArrowLeft className="size-5" />
+              <ArrowLeft className="size-4" />
             </Button>
             <Button
-              variant="ghost"
-              className="has-[>svg]:px-1"
+              variant="outline"
+              size="icon-sm"
+              className="rounded-full has-[>svg]:px-1"
               aria-label="Next month"
               disabled={!canScrollNext}
               onClick={scrollNext}
             >
-              <ArrowRight className="size-5" />
+              <ArrowRight className="size-4" />
             </Button>
           </div>
         </div>
