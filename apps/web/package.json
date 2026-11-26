@@ -23,6 +23,7 @@
     "class-variance-authority": "^0.7.1",
     "client-only": "^0.0.1",
     "clsx": "^2.1.1",
+    "cn": "^0.5.2",
     "date-fns": "catalog:",
     "drizzle-orm": "catalog:",
     "embla-carousel-react": "^8.6.0",
