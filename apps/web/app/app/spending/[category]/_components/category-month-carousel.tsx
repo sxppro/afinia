@@ -2,30 +2,24 @@
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SpendingByCategorySkeleton } from '@/components/vis/category/spending-by-category';
 import { cn } from '@/lib/ui';
 import { format, parse } from 'date-fns';
 import useEmblaCarousel from 'embla-carousel-react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { parseAsString, useQueryState } from 'nuqs';
-import {
-  ReactNode,
-  useCallback,
-  useEffect,
-  useState,
-  useTransition,
-} from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 
 const formatMonthLabel = (month: string) =>
   format(parse(month, 'yyyy-MM', new Date()), 'MMMM yyyy');
 
-const CategoryMonthCarousel = ({
-  months,
-  selected,
-  currentMonth,
-  total,
-  chart,
-  categories,
-}: {
+interface CategoryMonthContent {
+  total: ReactNode;
+  chart: ReactNode;
+  categories?: ReactNode;
+}
+
+interface CategoryMonthCarouselProps {
   /** Every selectable month (yyyy-MM), oldest first */
   months: string[];
   /** Selected month (yyyy-MM) */
@@ -35,8 +29,16 @@ const CategoryMonthCarousel = ({
   total: ReactNode;
   chart: ReactNode;
   categories?: ReactNode;
-}) => {
-  const [isPending, startTransition] = useTransition();
+}
+
+const CategoryMonthCarousel = ({
+  months,
+  selected,
+  currentMonth,
+  total,
+  chart,
+  categories,
+}: CategoryMonthCarouselProps) => {
   const [month, setMonth] = useQueryState(
     'month',
     parseAsString
@@ -44,22 +46,41 @@ const CategoryMonthCarousel = ({
         history: 'replace',
         scroll: false,
         shallow: false,
-        startTransition,
         clearOnDefault: true,
       })
       .withDefault(currentMonth)
   );
   // Only calculated once on mount
   const [startIndex] = useState(() => Math.max(months.indexOf(selected), 0));
+  const [selectedIndex, setSelectedIndex] = useState(startIndex);
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
+  // Track whether server re=rendered or not based on props
+  const [synced, setSynced] = useState({ selected, chart });
+  /**
+   * 'Cache' of server-rendered content for visited months,
+   * saved so revisiting one shows it immediately while server re-renders
+   */
+  const [rendered, setRendered] = useState<
+    Record<string, CategoryMonthContent>
+  >(() => ({ [selected]: { total, chart, categories } }));
+
   const [emblaRef, emblaApi] = useEmblaCarousel({
     startIndex,
     align: 'center',
   });
-  const [selectedIndex, setSelectedIndex] = useState(startIndex);
-  const [canScrollPrev, setCanScrollPrev] = useState(false);
-  const [canScrollNext, setCanScrollNext] = useState(false);
 
   const activeMonth = months.includes(month) ? month : selected;
+  const displayedMonth = months[selectedIndex] ?? selected;
+
+  // If there's a new month or re-render, cache the new month
+  if (synced.selected !== selected || synced.chart !== chart) {
+    setSynced({ selected, chart });
+    setRendered((prev) => ({
+      ...prev,
+      [selected]: { total, chart, categories },
+    }));
+  }
 
   // Track the slide and disable back/forward buttons at either end
   useEffect(() => {
@@ -110,17 +131,12 @@ const CategoryMonthCarousel = ({
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
 
-  const pendingClassName = cn(
-    'transition-opacity ease-out',
-    isPending && 'opacity-60'
-  );
-
   return (
     <>
       <div>
         <div className="flex items-center justify-between">
           <p className="font-medium" aria-live="polite">
-            {formatMonthLabel(months[selectedIndex] ?? selected)}
+            {formatMonthLabel(displayedMonth)}
           </p>
           <div className="flex items-center gap-1">
             <Button
@@ -145,8 +161,10 @@ const CategoryMonthCarousel = ({
             </Button>
           </div>
         </div>
-        <div className={cn('flex h-10 items-end gap-1 pb-1', pendingClassName)}>
-          {total}
+        <div className="flex h-10 items-end gap-1 pb-1">
+          {rendered[displayedMonth]?.total ?? (
+            <Skeleton className="h-full w-24" />
+          )}
         </div>
         <div
           className="relative cursor-grab overflow-hidden active:cursor-grabbing"
@@ -160,11 +178,7 @@ const CategoryMonthCarousel = ({
                 className="min-w-0 shrink-0 grow-0 basis-full"
                 aria-hidden={slide !== activeMonth}
               >
-                {slide === selected ? (
-                  chart
-                ) : (
-                  <Skeleton className="h-48 w-full" />
-                )}
+                {rendered[slide]?.chart ?? <Skeleton className="h-48 w-full" />}
               </div>
             ))}
           </div>
@@ -174,9 +188,11 @@ const CategoryMonthCarousel = ({
         </div>
       </div>
       {categories ? (
-        <div className={cn('flex flex-col gap-2', pendingClassName)}>
+        <div className="flex flex-col gap-2">
           <h2 className="text-xl font-semibold">Categories</h2>
-          {categories}
+          {rendered[displayedMonth]?.categories ?? (
+            <SpendingByCategorySkeleton />
+          )}
         </div>
       ) : null}
     </>
