@@ -137,6 +137,7 @@ const CategoryContent = async ({
               <SpendingByCategory
                 category={category.category_id}
                 dataFetch={subCategorySpendingFetch}
+                limit={4}
               />
             </Suspense>
           )
