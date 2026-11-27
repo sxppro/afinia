@@ -1,9 +1,8 @@
 'use client';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { cn } from '@/lib/ui';
 import { parseAsString, useQueryState } from 'nuqs';
-import { ReactNode, useTransition } from 'react';
+import { ReactNode } from 'react';
 
 const SpendingHourlyTabs = ({
   queryKey,
@@ -16,7 +15,6 @@ const SpendingHourlyTabs = ({
   options: { label: string; value: string }[];
   children: ReactNode;
 }) => {
-  const [isPending, startTransition] = useTransition();
   const [tab, setTab] = useQueryState(
     queryKey,
     parseAsString
@@ -25,7 +23,6 @@ const SpendingHourlyTabs = ({
         scroll: false,
         shallow: false,
         clearOnDefault: true,
-        startTransition,
       })
       .withDefault(defaultValue)
   );
@@ -42,12 +39,7 @@ const SpendingHourlyTabs = ({
           </TabsTrigger>
         ))}
       </TabsList>
-      <TabsContent
-        value={activeTab}
-        className={cn('transition-opacity', isPending && 'opacity-60')}
-      >
-        {children}
-      </TabsContent>
+      <TabsContent value={activeTab}>{children}</TabsContent>
     </Tabs>
   );
 };
