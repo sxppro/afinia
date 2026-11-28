@@ -1,0 +1,166 @@
+name: Code Review
+
+on:
+  pull_request:
+    types: [opened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: PR to review and summarise
+        required: true
+        type: number
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number || inputs.pr }}
+  cancel-in-progress: false
+
+env:
+  PR: ${{ github.event.pull_request.number || inputs.pr }}
+  GH_TOKEN: ${{ github.token }}
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+  id-token: write
+
+jobs:
+  # Skip drafts, bot PRs and runs not triggered by the PR author
+  check-pr:
+    if: |
+      github.event_name == 'workflow_dispatch' || (
+        github.event.pull_request.draft == false &&
+        github.event.pull_request.user.type != 'Bot' &&
+        github.actor == github.event.pull_request.user.login)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require a valid open PR
+        run: |
+          read -r state fork < <(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" \
+            --json state,isCrossRepository -q '"\(.state) \(.isCrossRepository)"')
+          [ "$state" = OPEN ] || { echo "::error::PR #$PR is $state"; exit 1; }
+          [ "$fork" = false ] || { echo "::error::PR #$PR from a fork; skipping"; exit 1; }
+
+  # For manual runs only - resolve earlier findings
+  triage-previous:
+    needs: [check-pr]
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - &checkout
+        name: Checkout PR head
+        uses: actions/checkout@v6
+        with:
+          ref: refs/pull/${{ env.PR }}/head
+
+      - name: List unresolved Claude review threads
+        id: threads
+        run: |
+          gh api graphql -F owner="${GITHUB_REPOSITORY%/*}" -F repo="${GITHUB_REPOSITORY#*/}" -F pr="$PR" -f query='
+            query($owner: String!, $repo: String!, $pr: Int!) {
+              repository(owner: $owner, name: $repo) { pullRequest(number: $pr) {
+                reviewThreads(first: 100) { nodes {
+                  id isResolved path line
+                  comments(first: 1) { nodes { author { login } body } }
+                } }
+              } }
+            }' \
+            -q '[.data.repository.pullRequest.reviewThreads.nodes[]
+                 | select(.isResolved | not)
+                 | select(.comments.nodes[0].author.login | IN("claude", "claude[bot]"))
+                 | {id, path, line, body: .comments.nodes[0].body}]' > /tmp/threads.json
+          echo "count=$(jq length /tmp/threads.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Decide which findings are fixed
+        if: steps.threads.outputs.count != '0'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            /tmp/threads.json lists earlier review findings on PR ${{ github.repository }}#${{ env.PR }}
+            (thread id, file, line, comment text). The checkout is the PR's current head.
+            For each finding, read the current code and decide whether the issue is now fixed.
+            Write the ids of FIXED threads to /tmp/fixed.txt, one per line; create an empty file if none are fixed.
+            If unsure, treat it as not fixed. Do NOT post or edit anything on GitHub.
+          claude_args: |
+            --model sonnet
+            --allowedTools "Read,Grep,Glob,Write,Bash(gh pr diff:*)"
+
+      - name: Resolve fixed threads
+        if: steps.threads.outputs.count != '0'
+        run: |
+          [ -f /tmp/fixed.txt ] || { echo "::warning::No triage output; nothing resolved"; exit 0; }
+          while read -r id; do
+            [ -n "$id" ] && gh api graphql -f id="$id" \
+              -f query='mutation($id: ID!) { resolveReviewThread(input: { threadId: $id }) { thread { id } } }' > /dev/null
+          done < /tmp/fixed.txt
+          echo "Resolved $(grep -c . /tmp/fixed.txt || true) of ${{ steps.threads.outputs.count }} threads"
+
+  claude-review:
+    needs: [check-pr, triage-previous]
+    if: ${{ !cancelled() && needs.check-pr.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - *checkout
+
+      # Remove previous top-level code review comment
+      - name:  Remove previous comment
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
+            -q '.[] | select(.user.login == "claude[bot]" and (.body | startswith("## Code review"))) | .id' |
+          while read -r id; do gh api -X DELETE "repos/$GITHUB_REPOSITORY/issues/comments/$id"; done
+
+      - name: Run Code Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
+          plugins: 'code-review@claude-code-plugins'
+          prompt: |
+            /code-review:code-review --comment ${{ github.repository }}/pull/${{ env.PR }}
+            ${{ github.event_name == 'workflow_dispatch' && 'This is a requested re-review after new commits. Ignore the "Claude has already commented" condition in step 1. Do not re-post issues already raised in unresolved Claude review threads; post only new issues.' || '' }}
+          claude_args: |
+            --model opus
+            --permission-mode auto
+
+  # Summary of changes
+  pr-summary:
+    needs: [check-pr]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - *checkout
+
+      - name: Generate PR summary
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            Summarise PR ${{ github.repository }}#${{ env.PR }} and assess whether it is safe to merge.
+            Use `gh pr view` and `gh pr diff`; read surrounding code as needed. Follow AGENTS.md. Ignore CI status.
+            Do NOT post any GitHub comments. Write the report to /tmp/pr-summary.md with these sections:
+              ## PR summary: what changed, in at most 3 short paragraphs.
+              ## Impact: affected areas (web UI, tRPC, ingest lambdas, DB schema/migrations, auth, Up API writes) and why each matters.
+              ## Merge readiness: the main findings that affect merging, as bullets (unmigrated or destructive schema
+                changes, Up API write paths, auth changes, missing pieces). End with one line: Ready / Needs changes / Blocked.
+          claude_args: |
+            --model sonnet
+            --allowedTools "Bash(gh pr view:*),Bash(gh pr diff:*),Read,Grep,Glob,Write"
+
+      # Posted as github-actions[bot] so code-review skips if multiple claude comments
+      - name: Post or update summary comment
+        run: |
+          test -s /tmp/pr-summary.md || { echo "::error::Claude did not write /tmp/pr-summary.md"; exit 1; }
+          marker='<!-- claude-pr-summary -->'
+          { echo "$marker"; cat /tmp/pr-summary.md; } > /tmp/pr-comment.md
+          id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
+                 -q ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id" | head -1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@/tmp/pr-comment.md
+          else
+            gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file /tmp/pr-comment.md
+          fi
