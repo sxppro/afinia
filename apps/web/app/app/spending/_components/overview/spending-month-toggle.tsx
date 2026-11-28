@@ -122,8 +122,8 @@ const SpendingMonthToggle = ({
           className="relative flex-1 cursor-grab overflow-hidden active:cursor-grabbing"
           ref={emblaRef}
         >
+          {/* Hidden until embla hydrates */}
           <div
-            // Hidden until embla hydrates
             className={cn('flex touch-pan-y', !emblaApi && 'invisible')}
             aria-live="polite"
           >

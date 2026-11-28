@@ -88,21 +88,33 @@ const LONG_RANGE_OPTIONS = [
   },
 ];
 
-const DateRangePicker = ({ lowerBound }: { lowerBound?: Date }) => {
-  const [range, setRange] = useQueryState('range', {
-    defaultValue: '1m',
+const DateRangePicker = ({
+  lowerBound,
+  queryKey = 'range',
+  defaultValue = '1m',
+  options,
+}: {
+  lowerBound?: Date;
+  queryKey?: string;
+  defaultValue?: string;
+  options?: { label: string; value: string }[];
+}) => {
+  const [range, setRange] = useQueryState(queryKey, {
+    defaultValue,
     shallow: false,
   });
 
   // Compute options based on lower bound, if provided
   const years = lowerBound ? differenceInYears(now(), lowerBound) : null;
-  const rangeOptions = years
-    ? years >= 5
-      ? LONG_RANGE_OPTIONS
-      : years >= 2
-        ? EXTENDED_RANGE_OPTIONS
-        : RANGE_OPTIONS
-    : RANGE_OPTIONS;
+  const rangeOptions =
+    options ??
+    (years
+      ? years >= 5
+        ? LONG_RANGE_OPTIONS
+        : years >= 2
+          ? EXTENDED_RANGE_OPTIONS
+          : RANGE_OPTIONS
+      : RANGE_OPTIONS);
 
   return (
     <ButtonGroup>

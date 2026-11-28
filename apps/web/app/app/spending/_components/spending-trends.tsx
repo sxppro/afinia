@@ -1,7 +1,9 @@
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ReactNode, Suspense } from 'react';
-import SpendingHourly from './trends/spending-hourly';
+import SpendingHourly, {
+  SpendingHourlySkeleton,
+} from './trends/spending-hourly';
 import SpendingMonthly from './trends/spending-monthly';
 import SpendingPace from './trends/spending-pace';
 
@@ -9,11 +11,13 @@ const Section = ({
   title,
   description,
   fallbackClassName,
+  fallback,
   children,
 }: {
   title: string;
   description?: string;
-  fallbackClassName: string;
+  fallbackClassName?: string;
+  fallback?: ReactNode;
   children: ReactNode;
 }) => (
   <section>
@@ -21,13 +25,20 @@ const Section = ({
     {description && (
       <p className="text-muted-foreground mb-2 text-sm">{description}</p>
     )}
-    <Suspense fallback={<Skeleton className={fallbackClassName} />}>
+    <Suspense fallback={fallback ?? <Skeleton className={fallbackClassName} />}>
       {children}
     </Suspense>
   </section>
 );
 
-const SpendingTrends = () => (
+const SpendingTrends = ({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    heatmap?: string | string[];
+    heatmapView?: string | string[];
+  }>;
+}) => (
   <div className="flex flex-col gap-6">
     <Section
       title="How you're tracking this month"
@@ -37,11 +48,11 @@ const SpendingTrends = () => (
     </Section>
     <Separator />
     <Section
-      title="When you spend"
-      description="Total spending by weekday and hour over 12 months"
-      fallbackClassName="h-80 w-full"
+      title="Spending patterns"
+      description="By time of day and day of week"
+      fallback={<SpendingHourlySkeleton />}
     >
-      <SpendingHourly />
+      <SpendingHourly searchParams={searchParams} />
     </Section>
     <Separator />
     <Section
