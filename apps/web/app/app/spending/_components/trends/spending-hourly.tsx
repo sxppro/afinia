@@ -1,6 +1,8 @@
 import DateRangePicker from '@/components/misc/date-range-picker';
 import { Skeleton } from '@/components/ui/skeleton';
-import SpendingByHourHeatmapChart from '@/components/vis/spending/spending-by-hour-heatmap';
+import SpendingByHourHeatmapChart, {
+  SpendingByHourHeatmapSkeleton,
+} from '@/components/vis/spending/spending-by-hour-heatmap';
 import { getDateRange, getStartOfDay } from '@/lib/dateTime';
 import { getEarliestAccountCreatedAt } from '@/lib/db/account';
 import {
@@ -112,7 +114,7 @@ const SpendingHourly = async ({
 export const SpendingHourlySkeleton = () => (
   <div className="flex flex-col gap-2">
     <Skeleton className="h-9 w-full rounded-lg" />
-    <Skeleton className="h-88 w-full" />
+    <SpendingByHourHeatmapSkeleton />
     <Skeleton className="h-8 w-56 self-center rounded-md" />
   </div>
 );
